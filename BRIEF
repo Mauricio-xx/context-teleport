@@ -1,0 +1,247 @@
+# Context Teleport: Portable State for Agentic Coding Sessions
+
+
+
+## Problem Statement
+
+
+
+When an AI coding agent (Claude Code, Cursor, Copilot Workspace, etc.) builds deep context over multiple sessions -- architectural decisions, project conventions, debugging history, test strategies -- that context is trapped on the local machine. There is no standard mechanism to:
+
+
+
+1. **Move a session** to another machine (same developer, different workstation)
+
+2. **Share context** between team members working on the same codebase
+
+3. **Fork context** for parallel workstreams on the same project
+
+4. **Merge context** when parallel workstreams converge
+
+
+
+Git solves code portability. It does not solve agent context portability.
+
+
+
+## What "Context" Actually Means
+
+
+
+Agent context is not just chat history. It includes:
+
+
+
+| Layer | Example | Where it lives today |
+|-------|---------|---------------------|
+| **Session state** | Current task, blockers, progress | Agent memory (volatile) |
+| **Project knowledge** | Architecture decisions, file patterns, conventions | MEMORY.md, CLAUDE.md (local files) |
+| **Interaction patterns** | User preferences, communication style | Global config (~/.claude/) |
+| **Decision history** | Why X was chosen over Y, tradeoffs evaluated | Nowhere standard |
+| **Test/build context** | Known flaky tests, env quirks, workarounds | Developer's head |
+| **Cross-session continuity** | Phase tracking, roadmap progress | Manual files (SESSION_LOG) |
+
+
+
+Today each agent tool stores these differently, with no interop and no portability.
+
+
+
+## Why Git Doesn't Solve This
+
+
+
+- **Git tracks code, not agent state.** A commit message says *what* changed, not *what the agent knows* about the project.
+
+- **Agent context includes private/local knowledge.** Not everything belongs in the repo (user preferences, local env quirks, in-progress plans).
+
+- **Multi-agent teams amplify the problem.** If Agent A (on machine 1) learns that "test X is flaky on ARM", Agent B (on machine 2) has no way to know this unless a human manually transfers the knowledge.
+
+- **Context is path-dependent.** Claude Code's MEMORY.md is keyed to the absolute filesystem path. Same repo, different clone location = different context store.
+
+
+
+## The Multi-Team Gap
+
+
+
+In a team setting, the problem compounds:
+
+
+
+- Developer A's agent learns project conventions over 50 sessions. Developer B onboards and their agent starts from zero.
+
+- Two developers work on related features. Their agents independently discover the same architectural constraints.
+
+- A senior developer's agent accumulates deep knowledge about edge cases. When they leave, that knowledge is lost.
+
+- Code review agents (Greptile, etc.) build their own context in parallel, with no feedback loop to developer agents.
+
+
+
+This is the "institutional knowledge" problem, but for AI agents. Organizations already lose knowledge when people leave -- now they'll lose it when agent sessions end too.
+
+
+
+## Landscape Analysis (Feb 2026)
+
+### Commercial Tools
+
+| Tool | Context mechanism | Shareable? | Cross-device? | Cross-tool? |
+|------|------------------|------------|---------------|-------------|
+| **Claude Code** | CLAUDE.md, rules (git); MEMORY.md, sessions (local) | Partial (git-committed files only) | No | No |
+| **Claude Enterprise (web)** | Project memory, knowledge bases, Cowork | Yes (within claude.ai teams) | Yes (cloud) | No (disconnected from Claude Code) |
+| **GitHub Copilot** | Cross-agent memory, Copilot Spaces | Yes (within GitHub ecosystem) | Yes (cloud) | No (GitHub-locked) |
+| **OpenAI Codex** | Sessions (fork/resume), AGENTS.md | No team sharing | Partial (unified account) | No |
+| **Cursor** | .cursorrules, chat history (SQLite) | No | No | No |
+| **Greptile** | Cloud-indexed repo knowledge | No export | Cloud-only | No |
+
+**Key finding:** GitHub Copilot is the most advanced on shared agent context (cross-agent memory validated against code, Copilot Spaces for curated team context), but is fully locked to the GitHub ecosystem with no export capability and no manual memory seeding.
+
+**Key finding:** Claude Enterprise has rich team memory on the web platform (claude.ai), but it operates in a completely separate silo from Claude Code. There is no unified memory between the two. Open feature requests for this exist but have no official response.
+
+### Open-Source Agents
+
+| Tool | Persistence | Session export | Team sharing | Cross-tool |
+|------|-------------|----------------|--------------|------------|
+| **OpenCode** | SQLite, auto-compaction | JSON/Markdown/URL (`/share`) | Share URLs | No |
+| **Aider** | None (Git repo map only) | No | No | No |
+| **Cline** | Memory Bank (manual markdown) | No (`new_task` for intra-Cline handoff) | No | No |
+| **Continue.dev** | rules-memory plugin | No | Hub (rules/config only) | No |
+
+### Emerging Memory/Portability Tools
+
+| Tool | What it does | Limitation |
+|------|-------------|------------|
+| **OpenMemory (Mem0)** | Local MCP server sharing memory across MCP-compatible tools | Local only, no team sync |
+| **OneContext** | Cross-agent context layer, session import, sharing via URL | Very new, unproven |
+| **Engram** | MCP memory server with SQLite + FTS5 | Own format, no cross-tool schema |
+| **EchoVault** | Local markdown memory with FTS5 + semantic search | Agent-agnostic but no team features |
+| **CodeMem** | REST API + MCP memory server | Enterprise self-host planned Q3 2026 |
+
+### Standards Landscape
+
+| Standard | Governed by | What it covers | What it doesn't cover |
+|----------|-------------|----------------|----------------------|
+| **MCP** | AAIF (Linux Foundation) | Tool integration, server distribution (.mcpb) | Memory schema, session format, context handoff |
+| **AGENTS.md** | AAIF | Static project instructions for agents | Dynamic/learned context, session state |
+| **Agent Skills** | Anthropic (open standard) | Packaged agent capabilities | Memory, context, session state |
+
+### Confirmed Gaps
+
+No tool or standard currently provides:
+
+1. **A standard context/memory schema** portable between agent tools
+2. **Team context synchronization** (N people, N machines, N agents)
+3. **Context merge** when agents learn contradictory things
+4. **Cross-tool export/import** of accumulated agent knowledge
+5. **Context handoff protocol** for agent-to-agent delegation
+
+
+
+## Strategic Positioning
+
+Based on the landscape analysis:
+
+- **Complement, don't compete with AGENTS.md**: AGENTS.md handles static instructions. Context Teleport handles dynamic/learned context -- the memory an agent builds over time. These are complementary layers.
+- **MCP is the distribution channel**: Any solution should expose itself as an MCP server to be consumable by Claude Code, OpenCode, Continue, Cursor, and any future MCP-compatible tool.
+- **Highest-value target: team context**: Individual persistence has reasonable solutions (OpenMemory, Engram, etc.). The underserved need is N developers with N agents sharing and merging context across machines. This is where Context Teleport should focus.
+- **Claude Code first, portable second**: Initial implementation targets Claude Code (MEMORY.md, sessions, CLAUDE.md). Architecture should allow adapters for other tools (OpenCode, Cline, etc.) without redesign.
+
+
+
+## What a Solution Might Look Like
+
+
+
+### Core Concepts
+
+
+
+- **Context Bundle**: A portable, serializable package containing all layers of agent context for a project.
+
+- **Context Merge**: Combining context from two agents/sessions that diverged (like git merge, but for knowledge).
+
+- **Context Scope**: Public (team-shared), private (user-specific), ephemeral (session-only).
+
+- **Context Schema**: A standard format that multiple agent tools can read/write.
+
+
+
+### Possible Architecture
+
+
+
+```
+context-bundle/
+  manifest.json          # schema version, agent tool, project ref
+  knowledge/
+    architecture.md      # project structure, patterns, conventions
+    decisions/           # ADR-style decision records with agent attribution
+    known-issues.md      # flaky tests, env quirks, workarounds
+  state/
+    session.json         # current tasks, progress, blockers
+    roadmap.json         # phase tracking, planned work
+  preferences/
+    interaction.json     # communication style, verbosity, language
+    workflow.json        # commit style, test patterns, tool preferences
+  history/
+    sessions.ndjson      # compressed session summaries (not full transcripts)
+```
+
+
+
+### Key Design Questions
+
+
+
+1. **Where does it live?** In the repo (`.agent-context/`)? Separate repo? Cloud service? Sidecar file alongside the repo?
+
+2. **Who owns merge conflicts?** When two agents learn contradictory things, who resolves it?
+
+3. **What's the privacy model?** Some context is personal (user preferences), some is team-shared (architecture decisions). How to separate?
+
+4. **How to handle staleness?** Agent knowledge can become wrong as code evolves. How to expire or invalidate context?
+
+5. **What's the minimum viable format?** What's the simplest thing that would actually be useful across tools?
+
+6. **How to integrate with MCP?** What MCP primitives (Resources, Tools, Prompts) map to context bundle operations?
+
+7. **How to handle the AGENTS.md boundary?** Where does AGENTS.md end and Context Teleport begin? How to avoid duplication?
+
+
+
+## Opportunity
+
+
+
+This is an infrastructure-level gap in the agentic development ecosystem. As AI coding agents become standard tooling, teams will need:
+
+
+
+- Onboarding acceleration (new developer's agent inherits team context)
+
+- Cross-machine continuity (same developer, multiple workstations)
+
+- Agent collaboration (multiple agents sharing knowledge about a codebase)
+
+- Knowledge preservation (agent context survives team changes)
+
+
+
+The first tool/standard that solves this well will have significant adoption leverage. It's analogous to what `.editorconfig` did for editor settings, or what `.gitignore` did for VCS exclusions -- a small, boring standard that everyone eventually adopts because the alternative is chaos.
+
+
+
+## Next Steps
+
+
+
+- [x] Survey existing agent tools for export/import capabilities
+- [x] Research academic/industry work on agent memory portability
+- [ ] Define prototype scope and target use cases
+- [ ] Design the minimal context bundle schema (knowledge + state layers)
+- [ ] Build a Claude Code adapter (read/write MEMORY.md, sessions, CLAUDE.md)
+- [ ] Implement as MCP server for cross-tool consumption
+- [ ] Test manual context transfer between Claude Code instances on different machines
+- [ ] Evaluate team sync mechanism (git-backed vs. cloud vs. hybrid)
