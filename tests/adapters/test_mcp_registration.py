@@ -1,0 +1,84 @@
+"""Tests for MCP server registration/unregistration in .claude/mcp.json."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from ctx.adapters.claude_code import ClaudeCodeAdapter
+from ctx.core.store import ContextStore
+
+
+@pytest.fixture
+def store(tmp_path):
+    s = ContextStore(tmp_path)
+    s.init(project_name="test-registration")
+    return s
+
+
+class TestRegisterMCP:
+    def test_register_creates_config(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.register_mcp_server()
+
+        assert result["status"] == "registered"
+        config_path = store.root / ".claude" / "mcp.json"
+        assert config_path.is_file()
+
+        config = json.loads(config_path.read_text())
+        assert "context-teleport" in config["mcpServers"]
+        assert config["mcpServers"]["context-teleport"]["command"] == "ctx-mcp"
+
+    def test_register_is_idempotent(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        adapter.register_mcp_server()
+        adapter.register_mcp_server()
+
+        config_path = store.root / ".claude" / "mcp.json"
+        config = json.loads(config_path.read_text())
+        # Should still have exactly one entry
+        assert len(config["mcpServers"]) == 1
+
+    def test_register_preserves_existing_servers(self, store):
+        config_path = store.root / ".claude" / "mcp.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps({
+            "mcpServers": {
+                "other-server": {"command": "other-cmd"}
+            }
+        }))
+
+        adapter = ClaudeCodeAdapter(store)
+        adapter.register_mcp_server()
+
+        config = json.loads(config_path.read_text())
+        assert "other-server" in config["mcpServers"]
+        assert "context-teleport" in config["mcpServers"]
+
+    def test_unregister_removes_server(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        adapter.register_mcp_server()
+        result = adapter.unregister_mcp_server()
+
+        assert result["status"] == "unregistered"
+        config_path = store.root / ".claude" / "mcp.json"
+        config = json.loads(config_path.read_text())
+        assert "context-teleport" not in config["mcpServers"]
+
+    def test_unregister_when_not_registered(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.unregister_mcp_server()
+        assert result["status"] == "not_registered"
+
+    def test_register_handles_corrupt_json(self, store):
+        config_path = store.root / ".claude" / "mcp.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text("not valid json{{{")
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.register_mcp_server()
+
+        assert result["status"] == "registered"
+        config = json.loads(config_path.read_text())
+        assert "context-teleport" in config["mcpServers"]

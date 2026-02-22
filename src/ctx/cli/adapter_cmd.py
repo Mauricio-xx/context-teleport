@@ -1,4 +1,4 @@
-"""Import/export subcommands: adapter operations and bundle I/O."""
+"""Import/export subcommands: adapter operations, bundle I/O, MCP registration."""
 
 from __future__ import annotations
 
@@ -12,6 +12,39 @@ from ctx.utils.output import error, info, output, success
 
 adapter_app = typer.Typer(no_args_is_help=True)
 export_app = typer.Typer(no_args_is_help=True)
+
+
+def register_mcp_commands(app: typer.Typer) -> None:
+    """Register top-level `ctx register` and `ctx unregister` commands."""
+
+    @app.command("register")
+    def register_cmd(fmt: Optional[str] = FORMAT_OPTION) -> None:
+        """Register ctx-mcp server in .claude/mcp.json."""
+        store = get_store()
+        from ctx.adapters.claude_code import ClaudeCodeAdapter
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.register_mcp_server()
+        if fmt == "json":
+            output(result, fmt="json")
+        else:
+            success(f"MCP server registered at {result['path']}")
+
+    @app.command("unregister")
+    def unregister_cmd(fmt: Optional[str] = FORMAT_OPTION) -> None:
+        """Remove ctx-mcp server from .claude/mcp.json."""
+        store = get_store()
+        from ctx.adapters.claude_code import ClaudeCodeAdapter
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.unregister_mcp_server()
+        if fmt == "json":
+            output(result, fmt="json")
+        else:
+            if result["status"] == "unregistered":
+                success("MCP server unregistered")
+            else:
+                info("MCP server was not registered")
 
 
 # -- Import commands (under `ctx import`) --

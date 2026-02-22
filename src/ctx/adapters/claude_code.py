@@ -1,7 +1,8 @@
-"""Claude Code adapter: read/write MEMORY.md, CLAUDE.md, rules."""
+"""Claude Code adapter: read/write MEMORY.md, CLAUDE.md, rules, MCP registration."""
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -9,7 +10,6 @@ from pathlib import Path
 from ctx.core.store import ContextStore
 from ctx.utils.paths import (
     claude_home,
-    claude_projects_dir,
     find_claude_project_dir,
     get_author,
 )
@@ -73,16 +73,19 @@ class ClaudeCodeAdapter:
     def _parse_memory_into_knowledge(self, memory_text: str) -> list[tuple[str, str]]:
         """Parse MEMORY.md content into knowledge entries.
 
-        Splits by top-level headers (## or #) into separate entries.
-        If no headers found, stores as a single 'memory' entry.
+        Splits by ## headers into separate entries. Nested ### and ####
+        headers are kept as content under their parent ## section.
+        If no ## headers found, tries # headers.
+        If no headers at all, stores as a single 'memory' entry.
         """
         sections: list[tuple[str, str]] = []
         current_key = ""
         current_lines: list[str] = []
 
         for line in memory_text.split("\n"):
+            # Match ## headers as section boundaries (### and #### are nested content)
             header_match = re.match(r"^(#{1,2})\s+(.+)", line)
-            if header_match:
+            if header_match and len(header_match.group(1)) <= 2:
                 if current_key and current_lines:
                     sections.append((current_key, "\n".join(current_lines).strip()))
                 raw = header_match.group(2).strip()
@@ -237,6 +240,61 @@ class ClaudeCodeAdapter:
             exported += 1
 
         return {"items": items, "exported": exported, "dry_run": False}
+
+    def register_mcp_server(self) -> dict:
+        """Register the ctx-mcp server in .claude/mcp.json.
+
+        Creates the file if it doesn't exist. Merges with existing config
+        if it does. Idempotent: running twice doesn't duplicate.
+        """
+        mcp_config_path = self.store.root / ".claude" / "mcp.json"
+        config = _safe_read_json(mcp_config_path)
+
+        if "mcpServers" not in config:
+            config["mcpServers"] = {}
+
+        config["mcpServers"]["context-teleport"] = {
+            "command": "ctx-mcp",
+            "type": "stdio",
+        }
+
+        mcp_config_path.parent.mkdir(parents=True, exist_ok=True)
+        mcp_config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+        return {
+            "status": "registered",
+            "path": str(mcp_config_path),
+            "server": "context-teleport",
+        }
+
+    def unregister_mcp_server(self) -> dict:
+        """Remove the ctx-mcp server from .claude/mcp.json."""
+        mcp_config_path = self.store.root / ".claude" / "mcp.json"
+        config = _safe_read_json(mcp_config_path)
+
+        servers = config.get("mcpServers", {})
+        if "context-teleport" not in servers:
+            return {"status": "not_registered"}
+
+        del servers["context-teleport"]
+        config["mcpServers"] = servers
+
+        mcp_config_path.write_text(json.dumps(config, indent=2) + "\n")
+
+        return {
+            "status": "unregistered",
+            "path": str(mcp_config_path),
+        }
+
+
+def _safe_read_json(path: Path) -> dict:
+    """Read a JSON file, returning empty dict on any error."""
+    if not path.is_file():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 def _slugify(text: str) -> str:

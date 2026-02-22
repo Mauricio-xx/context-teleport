@@ -86,7 +86,7 @@ from ctx.cli.knowledge_cmd import knowledge_app
 from ctx.cli.decision_cmd import decision_app
 from ctx.cli.state_cmd import state_app
 from ctx.cli.sync_cmd import sync_app, register_sync_shortcuts
-from ctx.cli.adapter_cmd import adapter_app, export_app
+from ctx.cli.adapter_cmd import adapter_app, export_app, register_mcp_commands
 from ctx.cli.agent_cmd import register_agent_commands
 
 app.add_typer(knowledge_app, name="knowledge", help="Manage knowledge entries")
@@ -98,3 +98,4 @@ app.add_typer(export_app, name="export", help="Export to adapters/bundles")
 
 register_agent_commands(app)
 register_sync_shortcuts(app)
+register_mcp_commands(app)
