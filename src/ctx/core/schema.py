@@ -9,6 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from ctx.core.migrations import SCHEMA_VERSION
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -38,7 +40,7 @@ class ProjectInfo(BaseModel):
 
 
 class Manifest(BaseModel):
-    schema_version: str = "0.1.0"
+    schema_version: str = SCHEMA_VERSION
     project: ProjectInfo
     adapters: dict[str, AdapterConfig] = Field(
         default_factory=lambda: {"claude_code": AdapterConfig(enabled=True)}

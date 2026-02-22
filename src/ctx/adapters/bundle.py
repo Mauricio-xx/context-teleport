@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+from ctx.core.migrations import SCHEMA_VERSION, check_version_compatible
 from ctx.core.store import ContextStore
 from ctx.utils.paths import STORE_DIR
 
@@ -44,6 +45,17 @@ def import_bundle(store: ContextStore, bundle_path: Path) -> dict:
         extracted_store = Path(tmpdir) / STORE_DIR
         if not extracted_store.is_dir():
             raise ValueError("Invalid bundle: no .context-teleport directory found")
+
+        # Check bundle version compatibility
+        manifest_path = extracted_store / "manifest.json"
+        if manifest_path.is_file():
+            bundle_manifest = json.loads(manifest_path.read_text())
+            bundle_version = bundle_manifest.get("schema_version", "0.1.0")
+            if not check_version_compatible(bundle_version):
+                raise ValueError(
+                    f"Incompatible bundle version {bundle_version} "
+                    f"(current: {SCHEMA_VERSION}). No migration path available."
+                )
 
         # If store not initialized, copy wholesale
         if not store.initialized:
