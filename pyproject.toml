@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "context-teleport"
+version = "0.1.0"
+description = "Portable, git-backed context store for AI coding agents"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+dependencies = [
+    "typer>=0.9.0",
+    "pydantic>=2.0",
+    "gitpython>=3.1",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+ctx = "ctx.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
