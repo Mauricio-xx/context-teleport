@@ -1,10 +1,11 @@
-"""Three-way merge for knowledge (text) and JSON files."""
+"""Three-way merge for knowledge (text), JSON, and markdown files."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any
+
+from ctx.core.conflicts import Strategy
 
 
 @dataclass
@@ -14,7 +15,9 @@ class MergeResult:
     conflict_details: list[str] = field(default_factory=list)
 
 
-def merge_json(base: dict, ours: dict, theirs: dict) -> MergeResult:
+def merge_json(
+    base: dict, ours: dict, theirs: dict, strategy: Strategy = Strategy.ours
+) -> MergeResult:
     """Field-level three-way merge for JSON objects.
 
     For each key:
@@ -52,7 +55,10 @@ def merge_json(base: dict, ours: dict, theirs: dict) -> MergeResult:
                 del result[key]
         else:
             # Both changed differently -- conflict
-            result[key] = our_val  # default to ours
+            if strategy == Strategy.theirs:
+                result[key] = their_val
+            else:
+                result[key] = our_val  # default to ours
             conflicts.append(
                 f"Conflict on '{key}': ours={json.dumps(our_val)}, theirs={json.dumps(their_val)}"
             )
@@ -84,3 +90,28 @@ def merge_ndjson(ours: str, theirs: str) -> MergeResult:
                 lines.append(line)
 
     return MergeResult(content="\n".join(lines) + "\n" if lines else "", has_conflicts=False)
+
+
+def merge_markdown(
+    ours: str, theirs: str, strategy: Strategy = Strategy.ours
+) -> MergeResult:
+    """Merge two markdown files.
+
+    If the files are identical, return as-is.
+    Otherwise, report a conflict and apply the strategy.
+    """
+    if ours == theirs:
+        return MergeResult(content=ours, has_conflicts=False)
+
+    if strategy == Strategy.theirs:
+        chosen = theirs
+    else:
+        chosen = ours
+
+    return MergeResult(
+        content=chosen,
+        has_conflicts=True,
+        conflict_details=[
+            f"Markdown conflict: ours ({len(ours)} chars) vs theirs ({len(theirs)} chars)"
+        ],
+    )

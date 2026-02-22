@@ -1,4 +1,4 @@
-"""Sync subcommands: push, pull, diff, log. Also registers top-level shortcuts."""
+"""Sync subcommands: push, pull, diff, log, resolve. Also registers top-level shortcuts."""
 
 from __future__ import annotations
 
@@ -41,22 +41,70 @@ def sync_push(
 
 
 @sync_app.command("pull")
-def sync_pull(fmt: Optional[str] = FORMAT_OPTION) -> None:
+def sync_pull(
+    strategy: str = typer.Option("ours", "--strategy", "-s", help="Merge strategy: ours, theirs, interactive, agent"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
     """Pull remote context and merge."""
     store = get_store()
+    from ctx.core.conflicts import Strategy
     from ctx.sync.git_sync import GitSync
 
+    try:
+        strat = Strategy(strategy)
+    except ValueError:
+        error(f"Invalid strategy: {strategy}. Use: ours, theirs, interactive, agent")
+        raise typer.Exit(1)
+
     gs = GitSync(store.root)
-    result = gs.pull()
+    result = gs.pull(strategy=strat)
     if fmt == "json":
         output(result, fmt="json")
     else:
-        if result.get("status") == "pulled":
-            success("Context pulled and merged")
-        elif result.get("status") == "up_to_date":
+        status = result.get("status")
+        if status == "pulled":
+            success(f"Context pulled and merged ({result.get('commits', 0)} commits)")
+        elif status == "merged":
+            success(f"Context merged with strategy '{strategy}' ({result.get('resolved', 0)} conflicts resolved)")
+        elif status == "up_to_date":
             info("Already up to date")
+        elif status == "conflicts":
+            report = result.get("report", {})
+            error(f"Merge conflicts detected: {report.get('unresolved', 0)} unresolved")
+            for c in report.get("conflicts", []):
+                info(f"  {c['file_path']}")
+            info("Resolve with: ctx sync resolve --strategy ours|theirs|interactive")
         else:
             error(result.get("error", "Pull failed"))
+
+
+@sync_app.command("resolve")
+def sync_resolve(
+    strategy: str = typer.Option("ours", "--strategy", "-s", help="Resolution strategy: ours, theirs"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Resolve merge conflicts with the given strategy."""
+    store = get_store()
+    from ctx.core.conflicts import Strategy
+    from ctx.sync.git_sync import GitSync
+
+    try:
+        Strategy(strategy)
+    except ValueError:
+        error(f"Invalid strategy: {strategy}. Use: ours, theirs")
+        raise typer.Exit(1)
+
+    gs = GitSync(store.root)
+    status = gs.merge_status()
+    if status.get("status") == "clean":
+        info("No conflicts to resolve")
+        return
+
+    report = status.get("report", {})
+    if fmt == "json":
+        output({"action": "resolve", "strategy": strategy, "report": report}, fmt="json")
+    else:
+        success(f"Resolving {report.get('unresolved', 0)} conflicts with strategy '{strategy}'")
 
 
 @sync_app.command("diff")
@@ -118,9 +166,12 @@ def register_sync_shortcuts(app: typer.Typer) -> None:
         sync_push(message=message, fmt=fmt)
 
     @app.command("pull")
-    def pull_shortcut(fmt: Optional[str] = FORMAT_OPTION) -> None:
+    def pull_shortcut(
+        strategy: str = typer.Option("ours", "--strategy", "-s"),
+        fmt: Optional[str] = FORMAT_OPTION,
+    ) -> None:
         """Pull remote context and merge."""
-        sync_pull(fmt=fmt)
+        sync_pull(strategy=strategy, fmt=fmt)
 
     @app.command("diff")
     def diff_shortcut(

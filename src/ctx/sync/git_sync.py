@@ -1,4 +1,4 @@
-"""Git-backed sync: push, pull, merge, log, diff."""
+"""Git-backed sync: push, pull, merge, log, diff, conflict detection."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 
 import git
 
+from ctx.core.conflicts import ConflictEntry, ConflictReport, Strategy, resolve_conflicts
 from ctx.utils.paths import STORE_DIR
 
 
@@ -117,20 +118,135 @@ class GitSync:
                 "push_error": str(e),
             }
 
-    def pull(self) -> dict:
-        """Pull remote context and validate."""
+    _pending_report: ConflictReport | None = None
+
+    def pull(self, strategy: Strategy = Strategy.ours) -> dict:
+        """Pull remote context, detect conflicts, and optionally resolve them.
+
+        Args:
+            strategy: How to resolve conflicts (ours/theirs/interactive/agent)
+        """
         if not self.repo.remotes:
             return {"status": "no_remote", "error": "No remote configured"}
 
         try:
             origin = self.repo.remotes.origin
-            info = origin.pull()
-            # Check if anything was updated
-            if info and info[0].flags & info[0].FAST_FORWARD:
-                return {"status": "pulled"}
-            return {"status": "up_to_date"}
+            origin.fetch()
         except Exception as e:
             return {"status": "error", "error": str(e)}
+
+        branch = self.repo.active_branch.name
+        remote_ref = f"origin/{branch}"
+
+        # Check if there are changes to merge
+        try:
+            behind = list(self.repo.iter_commits(f"{branch}..{remote_ref}"))
+        except git.GitCommandError:
+            return {"status": "up_to_date"}
+
+        if not behind:
+            return {"status": "up_to_date"}
+
+        # Attempt merge
+        try:
+            self.repo.git.merge(remote_ref)
+            return {"status": "pulled", "commits": len(behind)}
+        except git.GitCommandError:
+            pass
+
+        # Merge failed -- detect conflicts
+        report = self._build_conflict_report()
+        self._pending_report = report
+
+        if strategy in (Strategy.interactive, Strategy.agent):
+            # Abort the merge so the user can resolve manually
+            self.repo.git.merge("--abort")
+            return {
+                "status": "conflicts",
+                "report": report.to_dict(),
+            }
+
+        # Auto-resolve with strategy
+        resolutions = resolve_conflicts(report, strategy)
+        for file_path, content in resolutions:
+            abs_path = self.root / file_path
+            abs_path.write_text(content)
+            self.repo.index.add([file_path])
+
+        if report.has_conflicts:
+            # Some couldn't be resolved
+            self.repo.git.merge("--abort")
+            return {
+                "status": "conflicts",
+                "report": report.to_dict(),
+            }
+
+        # All resolved -- complete the merge
+        self.repo.index.commit(f"ctx: merge {remote_ref} (strategy: {strategy.value})")
+        self._pending_report = None
+        return {
+            "status": "merged",
+            "strategy": strategy.value,
+            "resolved": len(resolutions),
+        }
+
+    def _build_conflict_report(self) -> ConflictReport:
+        """Inspect git status after a failed merge to find conflicted files."""
+        report = ConflictReport()
+        unmerged = self.repo.index.unmerged_blobs()
+
+        for path, blobs in unmerged.items():
+            if not path.startswith(STORE_DIR + "/"):
+                continue
+
+            # blobs is a list of (stage, Blob) tuples
+            # stage 1 = base, 2 = ours, 3 = theirs
+            base_content = ""
+            ours_content = ""
+            theirs_content = ""
+
+            for stage, blob in blobs:
+                content = blob.data_stream.read().decode("utf-8", errors="replace")
+                if stage == 1:
+                    base_content = content
+                elif stage == 2:
+                    ours_content = content
+                elif stage == 3:
+                    theirs_content = content
+
+            report.conflicts.append(
+                ConflictEntry(
+                    file_path=path,
+                    ours_content=ours_content,
+                    theirs_content=theirs_content,
+                    base_content=base_content,
+                )
+            )
+
+        return report
+
+    def merge_status(self) -> dict:
+        """Return the current conflict report, if any."""
+        if self._pending_report is None:
+            return {"status": "clean"}
+        return {"status": "conflicts", "report": self._pending_report.to_dict()}
+
+    def resolve(self, file_path: str, content: str) -> dict:
+        """Resolve a single conflict by providing final content."""
+        if self._pending_report is None:
+            return {"status": "error", "error": "No pending conflicts"}
+
+        from ctx.core.conflicts import resolve_single
+
+        found = resolve_single(self._pending_report, file_path, content)
+        if not found:
+            return {"status": "error", "error": f"No conflict for {file_path}"}
+
+        return {
+            "status": "resolved",
+            "file_path": file_path,
+            "remaining": self._pending_report.unresolved_count,
+        }
 
     def diff(self, remote: bool = False) -> dict:
         """Show context changes."""

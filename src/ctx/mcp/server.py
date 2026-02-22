@@ -284,6 +284,34 @@ def context_sync_pull() -> str:
 
 
 @mcp.tool()
+def context_merge_status() -> str:
+    """Check if there are unresolved merge conflicts."""
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+        return json.dumps(gs.merge_status(), default=str)
+    except GitSyncError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_resolve_conflict(file_path: str, content: str) -> str:
+    """Resolve a single merge conflict by providing the final content.
+
+    Args:
+        file_path: Path of the conflicted file (relative to project root)
+        content: Final resolved content for the file
+    """
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+        result = gs.resolve(file_path, content)
+        return json.dumps(result, default=str)
+    except GitSyncError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
 def context_get(dotpath: str) -> str:
     """Read any value by dotpath.
 
