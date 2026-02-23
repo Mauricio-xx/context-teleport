@@ -51,16 +51,22 @@ context-bundle/
 
 ## Project Phase
 
-Research complete. Next: define prototype scope and begin implementation.
+Core implementation complete. 150 tests passing. Ready for integration testing.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
-- [ ] Define prototype scope and target use cases
-- [ ] Design minimal context bundle schema
-- [ ] Build Claude Code adapter
-- [ ] Implement MCP server
+- [x] Define prototype scope and target use cases
+- [x] Design minimal context bundle schema
+- [x] Build Claude Code adapter (import/export + MCP registration)
+- [x] Implement MCP server (10 tools, 8 resources, 3 prompts)
+- [x] Bundle versioning / migration framework
+- [x] Merge conflict detection and resolution UX
 
 ## Development Notes
 
-- No build system, tests, or dependencies yet
-- When implementation begins, expect Python with venv (per global rules)
+- Python 3.11+, venv, hatchling build system
+- `pytest tests/ -v` to run full suite (150 tests)
+- `ruff check src/ tests/` for linting
+- `pip install -e ".[dev]"` to install with dev deps
+- MCP server: `ctx-mcp` entry point (stdio transport)
+- Register with Claude Code: `ctx register`
