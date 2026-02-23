@@ -58,6 +58,25 @@ def sync_pull(
 
     gs = GitSync(store.root)
     result = gs.pull(strategy=strat)
+
+    # Interactive strategy: walk the user through each conflict
+    if result.get("status") == "conflicts" and strat == Strategy.interactive:
+        from ctx.cli.interactive import interactive_resolve
+        from ctx.utils.output import is_piped
+
+        if is_piped():
+            info("Non-interactive mode detected, falling back to 'ours' strategy")
+            result = gs.pull(strategy=Strategy.ours)
+        else:
+            resolutions = interactive_resolve(gs._pending_report)
+            if resolutions:
+                result = gs.apply_resolutions(resolutions)
+            else:
+                info("No resolutions applied (all skipped)")
+                if fmt == "json":
+                    output(result, fmt="json")
+                return
+
     if fmt == "json":
         output(result, fmt="json")
     else:
@@ -65,7 +84,12 @@ def sync_pull(
         if status == "pulled":
             success(f"Context pulled and merged ({result.get('commits', 0)} commits)")
         elif status == "merged":
-            success(f"Context merged with strategy '{strategy}' ({result.get('resolved', 0)} conflicts resolved)")
+            resolved = result.get("resolved", 0)
+            skipped = result.get("skipped", 0)
+            detail = f"{resolved} resolved"
+            if skipped:
+                detail += f", {skipped} skipped (kept ours)"
+            success(f"Context merged with strategy '{strategy}' ({detail})")
         elif status == "up_to_date":
             info("Already up to date")
         elif status == "conflicts":
@@ -73,7 +97,7 @@ def sync_pull(
             error(f"Merge conflicts detected: {report.get('unresolved', 0)} unresolved")
             for c in report.get("conflicts", []):
                 info(f"  {c['file_path']}")
-            info("Resolve with: ctx sync resolve --strategy ours|theirs|interactive")
+            info("Resolve with: ctx sync resolve --strategy ours|theirs")
         else:
             error(result.get("error", "Pull failed"))
 
@@ -83,28 +107,48 @@ def sync_resolve(
     strategy: str = typer.Option("ours", "--strategy", "-s", help="Resolution strategy: ours, theirs"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
-    """Resolve merge conflicts with the given strategy."""
+    """Resolve pending merge conflicts by retrying pull with the given strategy.
+
+    Only supports 'ours' and 'theirs'. For interactive resolution, use
+    `ctx pull --strategy interactive` which handles the full TUI flow.
+    """
     store = get_store()
     from ctx.core.conflicts import Strategy
     from ctx.sync.git_sync import GitSync
 
+    if strategy not in ("ours", "theirs"):
+        error(f"Invalid strategy: {strategy}. Use: ours, theirs")
+        info("For interactive resolution, use: ctx pull --strategy interactive")
+        raise typer.Exit(1)
+
     try:
-        Strategy(strategy)
+        strat = Strategy(strategy)
     except ValueError:
         error(f"Invalid strategy: {strategy}. Use: ours, theirs")
         raise typer.Exit(1)
 
     gs = GitSync(store.root)
-    status = gs.merge_status()
-    if status.get("status") == "clean":
+    status_info = gs.merge_status()
+    if status_info.get("status") == "clean":
         info("No conflicts to resolve")
         return
 
-    report = status.get("report", {})
+    # Retry pull with the chosen strategy
+    result = gs.pull(strategy=strat)
+
     if fmt == "json":
-        output({"action": "resolve", "strategy": strategy, "report": report}, fmt="json")
+        output(result, fmt="json")
     else:
-        success(f"Resolving {report.get('unresolved', 0)} conflicts with strategy '{strategy}'")
+        res_status = result.get("status")
+        if res_status == "merged":
+            success(f"Resolved {result.get('resolved', 0)} conflicts with strategy '{strategy}'")
+        elif res_status == "pulled":
+            success("Context pulled and merged (conflicts resolved upstream)")
+        elif res_status == "conflicts":
+            report = result.get("report", {})
+            error(f"Still {report.get('unresolved', 0)} unresolved conflicts")
+        else:
+            error(result.get("error", "Resolution failed"))
 
 
 @sync_app.command("diff")

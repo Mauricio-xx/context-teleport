@@ -225,6 +225,65 @@ class GitSync:
 
         return report
 
+    def apply_resolutions(self, resolutions: list[tuple[str, str]]) -> dict:
+        """Re-merge and apply interactive resolutions.
+
+        After an aborted merge (interactive strategy), this method replays the
+        merge: fetch, attempt merge (expect failure), write resolved files,
+        fall back to 'ours' for any skipped files, and commit.
+
+        Args:
+            resolutions: List of (file_path, content) from interactive_resolve.
+
+        Returns:
+            dict with status, strategy, resolved count, skipped count.
+        """
+        if not self.repo.remotes:
+            return {"status": "error", "error": "No remote configured"}
+
+        origin = self.repo.remotes.origin
+        origin.fetch()
+
+        branch = self.repo.active_branch.name
+        remote_ref = f"origin/{branch}"
+
+        # Attempt merge -- may succeed if remote changed since last attempt
+        try:
+            self.repo.git.merge(remote_ref)
+            self._pending_report = None
+            return {"status": "pulled"}
+        except git.GitCommandError:
+            pass
+
+        # Build conflict report from the failed merge
+        report = self._build_conflict_report()
+        resolved_paths = {fp for fp, _ in resolutions}
+
+        # Apply user resolutions (use git add via CLI to clear unmerged entries)
+        for file_path, content in resolutions:
+            abs_path = self.root / file_path
+            abs_path.write_text(content)
+            self.repo.git.add(file_path)
+
+        # Apply 'ours' for skipped/unresolved files
+        skipped = 0
+        for conflict in report.conflicts:
+            if conflict.file_path not in resolved_paths:
+                abs_path = self.root / conflict.file_path
+                abs_path.write_text(conflict.ours_content)
+                self.repo.git.add(conflict.file_path)
+                skipped += 1
+
+        self.repo.git.commit("-m", f"ctx: merge {remote_ref} (interactive resolution)")
+        self._pending_report = None
+
+        return {
+            "status": "merged",
+            "strategy": "interactive",
+            "resolved": len(resolutions),
+            "skipped": skipped,
+        }
+
     def merge_status(self) -> dict:
         """Return the current conflict report, if any."""
         if self._pending_report is None:

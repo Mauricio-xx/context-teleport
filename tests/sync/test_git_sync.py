@@ -1,10 +1,51 @@
 """Tests for git sync operations."""
 
+from pathlib import Path
+
 import git
 import pytest
 
+from ctx.core.conflicts import Strategy
 from ctx.core.store import ContextStore
 from ctx.sync.git_sync import GitSync, GitSyncError
+from ctx.utils.paths import STORE_DIR
+
+
+@pytest.fixture
+def two_repos(tmp_path: Path):
+    """Create a bare upstream repo and two clones with initialized context stores.
+
+    Returns (upstream_path, clone_a_path, clone_b_path).
+    Clone A and B both have the initial context committed and pushed.
+    """
+    # Create a non-bare seed repo, commit, then clone bare from it.
+    # This avoids the "empty bare repo has no branch" issue.
+    seed = tmp_path / "seed"
+    seed_repo = git.Repo.init(seed)
+    (seed / "README.md").write_text("# Test\n")
+    seed_repo.index.add(["README.md"])
+    seed_repo.index.commit("initial")
+    upstream = tmp_path / "upstream.git"
+    git.Repo.clone_from(str(seed), str(upstream), bare=True)
+
+    # Clone A: init context store with some baseline knowledge, then push
+    clone_a = tmp_path / "clone_a"
+    repo_a = git.Repo.clone_from(str(upstream), str(clone_a))
+
+    store_a = ContextStore(clone_a)
+    store_a.init(project_name="test-project")
+    # Seed knowledge files so both clones have them (avoids empty-dir issues)
+    store_a.set_knowledge("arch", "baseline architecture")
+    store_a.set_knowledge("stack", "baseline stack")
+    repo_a.index.add([STORE_DIR])
+    repo_a.index.commit("init context store with baseline knowledge")
+    repo_a.remotes.origin.push()
+
+    # Clone B: gets the full context store including knowledge files
+    clone_b = tmp_path / "clone_b"
+    git.Repo.clone_from(str(upstream), str(clone_b))
+
+    return upstream, clone_a, clone_b
 
 
 class TestGitSync:
@@ -89,3 +130,102 @@ class TestGitSync:
         gs = GitSync(store.root)
         msg = gs._auto_message()
         assert "decision" in msg
+
+
+class TestApplyResolutions:
+    def test_apply_resolutions_success(self, two_repos):
+        """Create a conflict between two clones, resolve interactively."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify a knowledge file and push
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        # Clone B: modify the same file differently (diverge)
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        # Pull with interactive strategy -- should detect conflict and abort merge
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.interactive)
+        assert result["status"] == "conflicts"
+        assert gs_b._pending_report is not None
+
+        # Build resolutions (choose "theirs" = clone A's version)
+        conflict = gs_b._pending_report.conflicts[0]
+        resolutions = [(conflict.file_path, conflict.theirs_content)]
+
+        # Apply
+        apply_result = gs_b.apply_resolutions(resolutions)
+        assert apply_result["status"] == "merged"
+        assert apply_result["strategy"] == "interactive"
+        assert apply_result["resolved"] == 1
+        assert apply_result["skipped"] == 0
+
+        # Verify the file has the resolved content
+        resolved_content = (clone_b / conflict.file_path).read_text()
+        assert "Version from A" in resolved_content
+
+    def test_apply_with_skipped_files(self, two_repos):
+        """Skipped files should get 'ours' content."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify two knowledge files and push
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "A-arch")
+        store_a.set_knowledge("stack", "A-stack")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch and stack")
+        repo_a.remotes.origin.push()
+
+        # Clone B: modify the same files differently
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "B-arch")
+        store_b.set_knowledge("stack", "B-stack")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch and stack")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.interactive)
+        assert result["status"] == "conflicts"
+
+        # Resolve only one file, skip the other
+        conflicts = gs_b._pending_report.conflicts
+        assert len(conflicts) == 2
+        # Sort for determinism
+        conflicts.sort(key=lambda c: c.file_path)
+
+        # Resolve first, skip second
+        resolutions = [(conflicts[0].file_path, conflicts[0].theirs_content)]
+
+        apply_result = gs_b.apply_resolutions(resolutions)
+        assert apply_result["status"] == "merged"
+        assert apply_result["resolved"] == 1
+        assert apply_result["skipped"] == 1
+
+    def test_apply_no_conflicts(self, two_repos):
+        """If re-merge succeeds (e.g., remote conflict resolved), return 'pulled'."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify a file and push
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "A-only change")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        # Clone B: no conflicting changes, just needs to pull
+        gs_b = GitSync(clone_b)
+        # apply_resolutions should pull cleanly
+        result = gs_b.apply_resolutions([])
+        assert result["status"] == "pulled"
