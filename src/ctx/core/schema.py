@@ -58,6 +58,7 @@ class KnowledgeEntry(BaseModel):
     content: str
     updated_at: datetime = Field(default_factory=_now)
     author: str = ""
+    agent: str = ""
 
 
 # -- Decisions (ADR) --

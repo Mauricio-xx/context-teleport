@@ -13,38 +13,157 @@ from ctx.utils.output import error, info, output, success
 adapter_app = typer.Typer(no_args_is_help=True)
 export_app = typer.Typer(no_args_is_help=True)
 
+# Tool name to adapter registry key mapping
+_TOOL_MAP: dict[str, str] = {
+    "claude-code": "claude_code",
+    "opencode": "opencode",
+    "codex": "codex",
+    "gemini": "gemini",
+    "cursor": "cursor",
+}
+
+
+def _import_adapter(adapter_name: str, label: str, dry_run: bool, fmt: str | None) -> None:
+    """Generic import handler for any adapter."""
+    store = get_store()
+    from ctx.adapters.registry import get_adapter
+
+    adapter = get_adapter(adapter_name, store)
+    if adapter is None:
+        error(f"Unknown adapter: {adapter_name}")
+        raise typer.Exit(1)
+
+    result = adapter.import_context(dry_run=dry_run)
+    if fmt == "json":
+        output(result, fmt="json")
+    elif dry_run:
+        info("Dry run -- the following would be imported:")
+        for item in result.get("items", []):
+            info(f"  {item.get('type', 'item')}: {item.get('key', '?')} ({item.get('source', '?')})")
+    else:
+        imported = result.get("imported", 0)
+        if imported:
+            success(f"Imported {imported} items from {label}")
+        else:
+            info(f"Nothing to import from {label}")
+
+
+def _export_adapter(adapter_name: str, label: str, dry_run: bool, fmt: str | None) -> None:
+    """Generic export handler for any adapter."""
+    store = get_store()
+    from ctx.adapters.registry import get_adapter
+
+    adapter = get_adapter(adapter_name, store)
+    if adapter is None:
+        error(f"Unknown adapter: {adapter_name}")
+        raise typer.Exit(1)
+
+    result = adapter.export_context(dry_run=dry_run)
+    if fmt == "json":
+        output(result, fmt="json")
+    elif dry_run:
+        info("Dry run -- the following would be exported:")
+        for item in result.get("items", []):
+            info(f"  {item.get('target', '?')}: {item.get('description', '?')}")
+    else:
+        exported = result.get("exported", 0)
+        if exported:
+            success(f"Exported {exported} items to {label}")
+        else:
+            info("Nothing to export")
+
 
 def register_mcp_commands(app: typer.Typer) -> None:
     """Register top-level `ctx register` and `ctx unregister` commands."""
 
     @app.command("register")
-    def register_cmd(fmt: Optional[str] = FORMAT_OPTION) -> None:
-        """Register ctx-mcp server in .claude/mcp.json."""
+    def register_cmd(
+        tool: Optional[str] = typer.Argument(
+            None,
+            help="Tool name (auto-detect if omitted). Options: claude-code, opencode, codex, gemini, cursor",
+        ),
+        fmt: Optional[str] = FORMAT_OPTION,
+    ) -> None:
+        """Register ctx-mcp server. Auto-detects available tools or specify one."""
         store = get_store()
-        from ctx.adapters.claude_code import ClaudeCodeAdapter
+        from ctx.adapters.registry import detect_adapters, get_adapter
 
-        adapter = ClaudeCodeAdapter(store)
-        result = adapter.register_mcp_server()
-        if fmt == "json":
-            output(result, fmt="json")
+        if tool is not None:
+            adapter_key = _TOOL_MAP.get(tool, tool.replace("-", "_"))
+            adapter = get_adapter(adapter_key, store)
+            if adapter is None:
+                error(f"Unknown tool: {tool}")
+                raise typer.Exit(1)
+            result = adapter.register_mcp()
+            if fmt == "json":
+                output(result, fmt="json")
+            elif result["status"] == "registered":
+                success(f"MCP server registered for {tool}")
+            elif result["status"] == "unsupported":
+                info(f"MCP registration not supported for {tool}")
+            else:
+                info(f"MCP registration: {result['status']}")
         else:
-            success(f"MCP server registered at {result['path']}")
+            # Auto-detect: register for all detected tools
+            detected = detect_adapters(store)
+            registered = []
+            for name, available in detected.items():
+                if available:
+                    adapter = get_adapter(name, store)
+                    if adapter is None:
+                        continue
+                    result = adapter.register_mcp()
+                    if result.get("status") == "registered":
+                        registered.append(name.replace("_", "-"))
+            if fmt == "json":
+                output({"registered": registered}, fmt="json")
+            elif registered:
+                success(f"MCP server registered for: {', '.join(registered)}")
+            else:
+                info("No supported tools detected")
 
     @app.command("unregister")
-    def unregister_cmd(fmt: Optional[str] = FORMAT_OPTION) -> None:
-        """Remove ctx-mcp server from .claude/mcp.json."""
+    def unregister_cmd(
+        tool: Optional[str] = typer.Argument(
+            None,
+            help="Tool name (all detected if omitted). Options: claude-code, opencode, codex, gemini, cursor",
+        ),
+        fmt: Optional[str] = FORMAT_OPTION,
+    ) -> None:
+        """Remove ctx-mcp server registration. Unregisters from all detected tools if none specified."""
         store = get_store()
-        from ctx.adapters.claude_code import ClaudeCodeAdapter
+        from ctx.adapters.registry import detect_adapters, get_adapter
 
-        adapter = ClaudeCodeAdapter(store)
-        result = adapter.unregister_mcp_server()
-        if fmt == "json":
-            output(result, fmt="json")
-        else:
-            if result["status"] == "unregistered":
-                success("MCP server unregistered")
+        if tool is not None:
+            adapter_key = _TOOL_MAP.get(tool, tool.replace("-", "_"))
+            adapter = get_adapter(adapter_key, store)
+            if adapter is None:
+                error(f"Unknown tool: {tool}")
+                raise typer.Exit(1)
+            result = adapter.unregister_mcp()
+            if fmt == "json":
+                output(result, fmt="json")
+            elif result["status"] == "unregistered":
+                success(f"MCP server unregistered from {tool}")
             else:
-                info("MCP server was not registered")
+                info(f"MCP server was not registered for {tool}")
+        else:
+            detected = detect_adapters(store)
+            unregistered = []
+            for name, available in detected.items():
+                if available:
+                    adapter = get_adapter(name, store)
+                    if adapter is None:
+                        continue
+                    result = adapter.unregister_mcp()
+                    if result.get("status") == "unregistered":
+                        unregistered.append(name.replace("_", "-"))
+            if fmt == "json":
+                output({"unregistered": unregistered}, fmt="json")
+            elif unregistered:
+                success(f"MCP server unregistered from: {', '.join(unregistered)}")
+            else:
+                info("No registrations found to remove")
 
 
 # -- Import commands (under `ctx import`) --
@@ -56,25 +175,43 @@ def import_claude_code(
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Extract from Claude Code internals into store."""
-    store = get_store()
-    from ctx.adapters.claude_code import ClaudeCodeAdapter
+    _import_adapter("claude_code", "Claude Code", dry_run, fmt)
 
-    adapter = ClaudeCodeAdapter(store)
-    result = adapter.import_context(dry_run=dry_run)
 
-    if fmt == "json":
-        output(result, fmt="json")
-    else:
-        if dry_run:
-            info("Dry run -- the following would be imported:")
-            for item in result.get("items", []):
-                info(f"  {item['type']}: {item['key']} ({item['source']})")
-        else:
-            imported = result.get("imported", 0)
-            if imported:
-                success(f"Imported {imported} items from Claude Code")
-            else:
-                info("Nothing to import from Claude Code")
+@adapter_app.command("opencode")
+def import_opencode(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import from OpenCode (AGENTS.md, sessions) into store."""
+    _import_adapter("opencode", "OpenCode", dry_run, fmt)
+
+
+@adapter_app.command("codex")
+def import_codex(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import from Codex (AGENTS.md, instructions) into store."""
+    _import_adapter("codex", "Codex", dry_run, fmt)
+
+
+@adapter_app.command("gemini")
+def import_gemini(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import from Gemini (.gemini/rules, STYLEGUIDE.md) into store."""
+    _import_adapter("gemini", "Gemini", dry_run, fmt)
+
+
+@adapter_app.command("cursor")
+def import_cursor(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import from Cursor (.cursor/rules, .cursorrules) into store."""
+    _import_adapter("cursor", "Cursor", dry_run, fmt)
 
 
 @adapter_app.command("bundle")
@@ -102,25 +239,43 @@ def export_claude_code(
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Inject store content into Claude Code locations."""
-    store = get_store()
-    from ctx.adapters.claude_code import ClaudeCodeAdapter
+    _export_adapter("claude_code", "Claude Code", dry_run, fmt)
 
-    adapter = ClaudeCodeAdapter(store)
-    result = adapter.export_context(dry_run=dry_run)
 
-    if fmt == "json":
-        output(result, fmt="json")
-    else:
-        if dry_run:
-            info("Dry run -- the following would be exported:")
-            for item in result.get("items", []):
-                info(f"  {item['target']}: {item['description']}")
-        else:
-            exported = result.get("exported", 0)
-            if exported:
-                success(f"Exported {exported} items to Claude Code")
-            else:
-                info("Nothing to export")
+@export_app.command("opencode")
+def export_opencode(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be exported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Export store content to OpenCode (AGENTS.md)."""
+    _export_adapter("opencode", "OpenCode", dry_run, fmt)
+
+
+@export_app.command("codex")
+def export_codex(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be exported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Export store content to Codex (AGENTS.md)."""
+    _export_adapter("codex", "Codex", dry_run, fmt)
+
+
+@export_app.command("gemini")
+def export_gemini(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be exported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Export store content to Gemini (.gemini/rules)."""
+    _export_adapter("gemini", "Gemini", dry_run, fmt)
+
+
+@export_app.command("cursor")
+def export_cursor(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be exported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Export store content to Cursor (.cursor/rules)."""
+    _export_adapter("cursor", "Cursor", dry_run, fmt)
 
 
 @export_app.command("bundle")

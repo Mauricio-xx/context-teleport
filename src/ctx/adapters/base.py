@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol, runtime_checkable
-
-from ctx.core.store import ContextStore
 
 
 @runtime_checkable
@@ -23,4 +22,16 @@ class AdapterProtocol(Protocol):
 
     def export_context(self, dry_run: bool = False) -> dict:
         """Inject store content into the tool's locations."""
+        ...
+
+    def mcp_config_path(self) -> Path | None:
+        """Return the path to this tool's MCP config file, or None if unsupported."""
+        ...
+
+    def register_mcp(self) -> dict:
+        """Register ctx-mcp in the tool's MCP config."""
+        ...
+
+    def unregister_mcp(self) -> dict:
+        """Remove ctx-mcp from the tool's MCP config."""
         ...

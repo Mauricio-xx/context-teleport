@@ -283,3 +283,134 @@ class TestScopeSync:
         knowledge_tree = tree[STORE_DIR]["knowledge"]
         committed_names = [blob.name for blob in knowledge_tree.blobs]
         assert ".scope.json" in committed_names
+
+
+class TestSectionMerge:
+    def test_different_sections_auto_merged(self, two_repos):
+        """Both add different sections at EOF -> git conflicts -> section merge resolves."""
+        _, clone_a, clone_b = two_repos
+
+        # Both start with same single-section file
+        base_content = "## Core\nShared core logic\n"
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", base_content)
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("setup single-section arch")
+        repo_a.remotes.origin.push()
+
+        # Clone B: pull to get baseline
+        repo_b = git.Repo(clone_b)
+        repo_b.remotes.origin.pull()
+
+        # Clone A: add Frontend section at end
+        store_a.set_knowledge(
+            "arch",
+            "## Core\nShared core logic\n\n## Frontend\nReact with TypeScript\n",
+        )
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: add frontend section")
+        repo_a.remotes.origin.push()
+
+        # Clone B: add DevOps section at end (different section, same position)
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge(
+            "arch",
+            "## Core\nShared core logic\n\n## DevOps\nDocker and Kubernetes\n",
+        )
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: add devops section")
+
+        # Pull should trigger git conflict (both added at EOF), section merge resolves
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "merged"
+        assert result.get("strategy") == "section-auto"
+
+        # Verify merged content has both new sections plus original
+        merged = store_b.get_knowledge("arch")
+        assert "Shared core logic" in merged.content
+        assert "React" in merged.content
+        assert "Docker" in merged.content
+
+    def test_same_section_conflict(self, two_repos):
+        """Both modify same line/section -> section merge can't resolve -> ours strategy."""
+        _, clone_a, clone_b = two_repos
+
+        base_content = "## Backend\nPython with FastAPI\n\n## Frontend\nReact\n"
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", base_content)
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("setup multi-section arch")
+        repo_a.remotes.origin.push()
+
+        repo_b = git.Repo(clone_b)
+        repo_b.remotes.origin.pull()
+
+        # Clone A: modify Backend section (changes line 2)
+        store_a.set_knowledge(
+            "arch",
+            "## Backend\nPython with Django\n\n## Frontend\nReact\n",
+        )
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: Django")
+        repo_a.remotes.origin.push()
+
+        # Clone B: also modify Backend section (same line, different value)
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge(
+            "arch",
+            "## Backend\nRuby on Rails\n\n## Frontend\nReact\n",
+        )
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: Rails")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        # Section merge finds conflict in Backend, falls through to ours strategy
+        assert result["status"] == "merged"
+        assert result.get("strategy") == "ours"
+
+    def test_add_and_edit_auto_merged(self, two_repos):
+        """One adds section + other edits existing and adds different section -> auto-merged."""
+        _, clone_a, clone_b = two_repos
+
+        base_content = "## Backend\nPython\n"
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", base_content)
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("setup single-section arch")
+        repo_a.remotes.origin.push()
+
+        repo_b = git.Repo(clone_b)
+        repo_b.remotes.origin.pull()
+
+        # Clone A: add Frontend section at end
+        store_a.set_knowledge(
+            "arch",
+            "## Backend\nPython\n\n## Frontend\nReact\n",
+        )
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: add frontend")
+        repo_a.remotes.origin.push()
+
+        # Clone B: modify Backend + add Infra at end (overlaps with A's addition)
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge(
+            "arch",
+            "## Backend\nPython with FastAPI\n\n## Infra\nDocker\n",
+        )
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: edit backend + add infra")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "merged"
+
+        # Verify all sections present
+        merged = store_b.get_knowledge("arch")
+        assert "FastAPI" in merged.content
+        assert "React" in merged.content or "Frontend" in merged.content
+        assert "Docker" in merged.content

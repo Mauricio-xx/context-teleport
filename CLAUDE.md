@@ -51,7 +51,7 @@ context-bundle/
 
 ## Project Phase
 
-Core implementation complete. 235 tests passing. Schema v0.2.0.
+Multi-agent merge + tool adapters complete. 345 tests passing. Schema v0.3.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
@@ -62,12 +62,17 @@ Core implementation complete. 235 tests passing. Schema v0.2.0.
 - [x] Bundle versioning / migration framework
 - [x] Merge conflict detection and resolution UX
 - [x] Context scoping (public/private/ephemeral boundaries)
+- [x] Section-level markdown merge (reduces false conflicts in multi-agent scenarios)
+- [x] Multi-tool adapters (OpenCode, Codex, Gemini, Cursor)
+- [x] Agent attribution on writes
+- [x] Schema migration to v0.3.0
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (235 tests)
+- `pytest tests/ -v` to run full suite (345 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
 - MCP server: `ctx-mcp` entry point (stdio transport)
-- Register with Claude Code: `ctx register`
+- Register with any tool: `ctx register [tool]` (auto-detects if no tool specified)
+- Import/export: `ctx import <tool>`, `ctx export <tool>` (claude-code, opencode, codex, gemini, cursor)

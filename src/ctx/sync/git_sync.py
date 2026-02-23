@@ -8,6 +8,7 @@ from pathlib import Path
 import git
 
 from ctx.core.conflicts import ConflictEntry, ConflictReport, Strategy, resolve_conflicts
+from ctx.core.merge_sections import merge_markdown_sections
 from ctx.core.scope import ScopeMap
 from ctx.utils.paths import STORE_DIR
 
@@ -186,7 +187,26 @@ class GitSync:
 
         # Merge failed -- detect conflicts
         report = self._build_conflict_report()
+
+        # Try section-level auto-merge for markdown files
+        self._try_section_merge(report)
+
         self._pending_report = report
+
+        if not report.has_conflicts:
+            # All conflicts auto-resolved via section merge
+            for conflict in report.conflicts:
+                if conflict.resolved:
+                    abs_path = self.root / conflict.file_path
+                    abs_path.write_text(conflict.resolution)
+                    self.repo.git.add(conflict.file_path)
+            self.repo.git.commit("-m", f"ctx: merge {remote_ref} (section auto-merge)")
+            self._pending_report = None
+            return {
+                "status": "merged",
+                "strategy": "section-auto",
+                "auto_resolved": report.auto_resolved,
+            }
 
         if strategy in (Strategy.interactive, Strategy.agent):
             # Abort the merge so the user can resolve manually
@@ -201,7 +221,7 @@ class GitSync:
         for file_path, content in resolutions:
             abs_path = self.root / file_path
             abs_path.write_text(content)
-            self.repo.index.add([file_path])
+            self.repo.git.add(file_path)
 
         if report.has_conflicts:
             # Some couldn't be resolved
@@ -212,13 +232,39 @@ class GitSync:
             }
 
         # All resolved -- complete the merge
-        self.repo.index.commit(f"ctx: merge {remote_ref} (strategy: {strategy.value})")
+        self.repo.git.commit("-m", f"ctx: merge {remote_ref} (strategy: {strategy.value})")
         self._pending_report = None
         return {
             "status": "merged",
             "strategy": strategy.value,
             "resolved": len(resolutions),
         }
+
+    def _try_section_merge(self, report: ConflictReport) -> None:
+        """Try section-level merge for .md files with base content available.
+
+        For each conflicted markdown file that has base content, attempt a
+        section-level 3-way merge.  If the merge succeeds without conflicts,
+        mark the ConflictEntry as resolved and track the path in
+        ``report.auto_resolved``.
+        """
+        for conflict in report.conflicts:
+            if conflict.resolved:
+                continue
+            if not conflict.file_path.endswith(".md"):
+                continue
+            if not conflict.base_content:
+                continue
+
+            result = merge_markdown_sections(
+                conflict.base_content,
+                conflict.ours_content,
+                conflict.theirs_content,
+            )
+            if not result.has_conflicts:
+                conflict.resolved = True
+                conflict.resolution = result.content
+                report.auto_resolved.append(conflict.file_path)
 
     def _build_conflict_report(self) -> ConflictReport:
         """Inspect git status after a failed merge to find conflicted files."""

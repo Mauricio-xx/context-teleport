@@ -51,7 +51,7 @@ class TestResources:
     def test_manifest(self, store):
         result = json.loads(resource_manifest())
         assert result["project"]["name"] == "test-mcp-project"
-        assert result["schema_version"] == "0.2.0"
+        assert result["schema_version"] == "0.3.0"
 
     def test_knowledge_empty(self, store):
         result = json.loads(resource_knowledge())
@@ -209,6 +209,35 @@ class TestTools:
     def test_sync_pull_no_git(self, store):
         result = json.loads(context_sync_pull())
         assert result["status"] == "error"
+
+    def test_add_knowledge_includes_agent(self, store):
+        """MCP tool writes should include agent attribution."""
+        import os
+        old = os.environ.get("MCP_CALLER")
+        os.environ["MCP_CALLER"] = "mcp:claude-code"
+        try:
+            result = json.loads(context_add_knowledge("attr-test", "Test content"))
+            assert result["status"] == "ok"
+            entry = store.get_knowledge("attr-test")
+            assert entry.author == "mcp:claude-code"
+        finally:
+            if old is None:
+                os.environ.pop("MCP_CALLER", None)
+            else:
+                os.environ["MCP_CALLER"] = old
+
+    def test_add_knowledge_default_agent(self, store):
+        """Without MCP_CALLER env, falls back to mcp:unknown."""
+        import os
+        old = os.environ.pop("MCP_CALLER", None)
+        try:
+            result = json.loads(context_add_knowledge("default-agent", "Content"))
+            assert result["status"] == "ok"
+            entry = store.get_knowledge("default-agent")
+            assert entry.author == "mcp:unknown"
+        finally:
+            if old is not None:
+                os.environ["MCP_CALLER"] = old
 
 
 class TestPrompts:

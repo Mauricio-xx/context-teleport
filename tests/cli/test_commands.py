@@ -246,3 +246,100 @@ class TestSync:
 
         result = runner.invoke(app, ["log", "--oneline"])
         assert result.exit_code == 0
+
+
+class TestAdapterImportExport:
+    def test_import_opencode(self, initialized_project):
+        agents = initialized_project / "AGENTS.md"
+        agents.write_text("## Architecture\nHexagonal pattern\n")
+        result = runner.invoke(app, ["import", "opencode", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["imported"] >= 1
+
+    def test_import_opencode_dry_run(self, initialized_project):
+        agents = initialized_project / "AGENTS.md"
+        agents.write_text("## Stack\nPython\n")
+        result = runner.invoke(app, ["import", "opencode", "--dry-run"])
+        assert result.exit_code == 0
+        assert "Dry run" in result.output
+
+    def test_import_codex(self, initialized_project):
+        codex_dir = initialized_project / ".codex"
+        codex_dir.mkdir()
+        (codex_dir / "instructions.md").write_text("Use type hints always.\n")
+        result = runner.invoke(app, ["import", "codex", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["imported"] >= 1
+
+    def test_import_gemini(self, initialized_project):
+        gemini_dir = initialized_project / ".gemini"
+        rules_dir = gemini_dir / "rules"
+        rules_dir.mkdir(parents=True)
+        (rules_dir / "safety.md").write_text("Always validate input.\n")
+        result = runner.invoke(app, ["import", "gemini", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["imported"] >= 1
+
+    def test_import_cursor(self, initialized_project):
+        cursor_dir = initialized_project / ".cursor"
+        rules_dir = cursor_dir / "rules"
+        rules_dir.mkdir(parents=True)
+        (rules_dir / "style.mdc").write_text(
+            "---\ndescription: Style rules\nalwaysApply: true\n---\n\nUse black formatter.\n"
+        )
+        result = runner.invoke(app, ["import", "cursor", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["imported"] >= 1
+
+    def test_export_opencode(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "arch", "Architecture notes"])
+        result = runner.invoke(app, ["export", "opencode", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["exported"] >= 1
+
+    def test_export_cursor(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "style", "Use black formatter"])
+        result = runner.invoke(app, ["export", "cursor", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["exported"] >= 1
+
+    def test_export_gemini(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "lint", "Run ruff check"])
+        result = runner.invoke(app, ["export", "gemini", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["exported"] >= 1
+
+
+class TestMCPRegistration:
+    def test_register_specific_tool(self, initialized_project):
+        result = runner.invoke(app, ["register", "opencode", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["status"] == "registered"
+
+    def test_register_cursor(self, initialized_project):
+        result = runner.invoke(app, ["register", "cursor", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["status"] == "registered"
+
+    def test_unregister_specific_tool(self, initialized_project):
+        # Register first
+        runner.invoke(app, ["register", "opencode"])
+        result = runner.invoke(app, ["unregister", "opencode", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["status"] == "unregistered"
+
+    def test_register_unsupported(self, initialized_project):
+        result = runner.invoke(app, ["register", "codex", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["status"] == "unsupported"

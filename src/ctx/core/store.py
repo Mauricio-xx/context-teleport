@@ -87,6 +87,37 @@ class ContextStore:
 
     _GITIGNORE_BASE = ["state/active.json", "preferences/user.json"]
 
+    def _knowledge_meta_path(self) -> Path:
+        return self.knowledge_dir() / ".meta.json"
+
+    def _read_knowledge_meta(self) -> dict[str, dict[str, str]]:
+        path = self._knowledge_meta_path()
+        if not path.is_file():
+            return {}
+        import json
+        try:
+            data = json.loads(path.read_text())
+            return data if isinstance(data, dict) else {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def _write_knowledge_meta(self, data: dict[str, dict[str, str]]) -> None:
+        import json
+        self._knowledge_meta_path().write_text(
+            json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+
+    def _set_knowledge_author(self, filename: str, author: str) -> None:
+        data = self._read_knowledge_meta()
+        entry = data.setdefault(filename, {})
+        entry["author"] = author
+        self._write_knowledge_meta(data)
+
+    def _get_knowledge_author(self, filename: str) -> str:
+        data = self._read_knowledge_meta()
+        entry = data.get(filename, {})
+        return entry.get("author", "")
+
     def _knowledge_scope_map(self) -> ScopeMap:
         return ScopeMap(self.knowledge_dir())
 
@@ -169,6 +200,7 @@ class ContextStore:
                     key=f.stem,
                     content=f.read_text(),
                     updated_at=_datetime_from_mtime(f),
+                    author=self._get_knowledge_author(f.name),
                 )
             )
         return entries
@@ -183,6 +215,7 @@ class ContextStore:
             key=safe_key,
             content=path.read_text(),
             updated_at=_datetime_from_mtime(path),
+            author=self._get_knowledge_author(f"{safe_key}.md"),
         )
 
     def set_knowledge(
@@ -192,22 +225,30 @@ class ContextStore:
         safe_key = sanitize_key(key)
         path = self.knowledge_dir() / f"{safe_key}.md"
         path.write_text(content)
+        resolved_author = author or get_author()
+        self._set_knowledge_author(f"{safe_key}.md", resolved_author)
         if scope is not None:
             self._knowledge_scope_map().set(f"{safe_key}.md", scope)
             self._rebuild_gitignore()
         return KnowledgeEntry(
             key=safe_key,
             content=content,
-            author=author or get_author(),
+            author=resolved_author,
         )
 
     def rm_knowledge(self, key: str) -> bool:
         self._require_init()
         safe_key = sanitize_key(key)
-        path = self.knowledge_dir() / f"{safe_key}.md"
+        filename = f"{safe_key}.md"
+        path = self.knowledge_dir() / filename
         if path.is_file():
             path.unlink()
-            self._knowledge_scope_map().remove(f"{safe_key}.md")
+            self._knowledge_scope_map().remove(filename)
+            # Clean up metadata sidecar entry
+            meta = self._read_knowledge_meta()
+            if filename in meta:
+                del meta[filename]
+                self._write_knowledge_meta(meta)
             self._rebuild_gitignore()
             return True
         return False

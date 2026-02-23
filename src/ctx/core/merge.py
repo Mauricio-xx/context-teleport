@@ -93,13 +93,36 @@ def merge_ndjson(ours: str, theirs: str) -> MergeResult:
 
 
 def merge_markdown(
-    ours: str, theirs: str, strategy: Strategy = Strategy.ours
+    ours: str,
+    theirs: str,
+    strategy: Strategy = Strategy.ours,
+    base: str | None = None,
 ) -> MergeResult:
     """Merge two markdown files.
 
-    If the files are identical, return as-is.
-    Otherwise, report a conflict and apply the strategy.
+    If *base* content is provided, uses section-level 3-way merge first.
+    Otherwise falls back to binary comparison.
     """
+    if base is not None:
+        from ctx.core.merge_sections import merge_markdown_sections
+
+        result = merge_markdown_sections(base, ours, theirs)
+        if not result.has_conflicts:
+            return result
+        # Section merge had conflicts -- fall back to strategy-based resolution
+        if strategy == Strategy.theirs:
+            return MergeResult(
+                content=theirs,
+                has_conflicts=True,
+                conflict_details=result.conflict_details,
+            )
+        return MergeResult(
+            content=ours,
+            has_conflicts=True,
+            conflict_details=result.conflict_details,
+        )
+
+    # Original 2-way behavior
     if ours == theirs:
         return MergeResult(content=ours, has_conflicts=False)
 

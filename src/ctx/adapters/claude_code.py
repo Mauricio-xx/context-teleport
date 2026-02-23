@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import re
 import shutil
 from pathlib import Path
 
+from ctx.adapters._mcp_reg import register_mcp_json, unregister_mcp_json
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import (
@@ -242,60 +242,25 @@ class ClaudeCodeAdapter:
 
         return {"items": items, "exported": exported, "dry_run": False}
 
+    def mcp_config_path(self) -> Path:
+        """Return the path to Claude Code's MCP config file."""
+        return self.store.root / ".claude" / "mcp.json"
+
     def register_mcp_server(self) -> dict:
-        """Register the ctx-mcp server in .claude/mcp.json.
-
-        Creates the file if it doesn't exist. Merges with existing config
-        if it does. Idempotent: running twice doesn't duplicate.
-        """
-        mcp_config_path = self.store.root / ".claude" / "mcp.json"
-        config = _safe_read_json(mcp_config_path)
-
-        if "mcpServers" not in config:
-            config["mcpServers"] = {}
-
-        config["mcpServers"]["context-teleport"] = {
-            "command": "ctx-mcp",
-            "type": "stdio",
-        }
-
-        mcp_config_path.parent.mkdir(parents=True, exist_ok=True)
-        mcp_config_path.write_text(json.dumps(config, indent=2) + "\n")
-
-        return {
-            "status": "registered",
-            "path": str(mcp_config_path),
-            "server": "context-teleport",
-        }
+        """Register the ctx-mcp server in .claude/mcp.json."""
+        return register_mcp_json(self.mcp_config_path())
 
     def unregister_mcp_server(self) -> dict:
         """Remove the ctx-mcp server from .claude/mcp.json."""
-        mcp_config_path = self.store.root / ".claude" / "mcp.json"
-        config = _safe_read_json(mcp_config_path)
+        return unregister_mcp_json(self.mcp_config_path())
 
-        servers = config.get("mcpServers", {})
-        if "context-teleport" not in servers:
-            return {"status": "not_registered"}
+    def register_mcp(self) -> dict:
+        """Register ctx-mcp (AdapterProtocol method)."""
+        return self.register_mcp_server()
 
-        del servers["context-teleport"]
-        config["mcpServers"] = servers
-
-        mcp_config_path.write_text(json.dumps(config, indent=2) + "\n")
-
-        return {
-            "status": "unregistered",
-            "path": str(mcp_config_path),
-        }
-
-
-def _safe_read_json(path: Path) -> dict:
-    """Read a JSON file, returning empty dict on any error."""
-    if not path.is_file():
-        return {}
-    try:
-        return json.loads(path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return {}
+    def unregister_mcp(self) -> dict:
+        """Remove ctx-mcp (AdapterProtocol method)."""
+        return self.unregister_mcp_server()
 
 
 def _slugify(text: str) -> str:

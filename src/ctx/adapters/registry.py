@@ -4,11 +4,19 @@ from __future__ import annotations
 
 from ctx.adapters.base import AdapterProtocol
 from ctx.adapters.claude_code import ClaudeCodeAdapter
+from ctx.adapters.codex import CodexAdapter
+from ctx.adapters.cursor import CursorAdapter
+from ctx.adapters.gemini import GeminiAdapter
+from ctx.adapters.opencode import OpenCodeAdapter
 from ctx.core.store import ContextStore
 
 
 _ADAPTER_CLASSES = {
     "claude_code": ClaudeCodeAdapter,
+    "opencode": OpenCodeAdapter,
+    "codex": CodexAdapter,
+    "gemini": GeminiAdapter,
+    "cursor": CursorAdapter,
 }
 
 

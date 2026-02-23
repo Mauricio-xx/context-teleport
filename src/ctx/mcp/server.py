@@ -52,6 +52,16 @@ def _parse_scope(value: str) -> Scope | None:
         return None
 
 
+def _get_agent_name() -> str:
+    """Detect the calling agent's identity.
+
+    Checks MCP_CALLER environment variable first, then falls back to generic.
+    Individual adapters set MCP_CALLER when they register.
+    """
+    import os
+    return os.environ.get("MCP_CALLER", "mcp:unknown")
+
+
 # ---------------------------------------------------------------------------
 # Resources (read-only)
 # ---------------------------------------------------------------------------
@@ -187,7 +197,8 @@ def context_add_knowledge(key: str, content: str, scope: str = "") -> str:
     """
     store = _get_store()
     scope_val = _parse_scope(scope)
-    entry = store.set_knowledge(key, content, scope=scope_val)
+    author = _get_agent_name()
+    entry = store.set_knowledge(key, content, author=author, scope=scope_val)
     return json.dumps({"status": "ok", "key": entry.key}, default=str)
 
 
@@ -224,11 +235,13 @@ def context_record_decision(
     """
     store = _get_store()
     scope_val = _parse_scope(scope)
+    author = _get_agent_name()
     dec = store.add_decision(
         title=title,
         context=context,
         decision_text=decision,
         consequences=consequences,
+        author=author,
         scope=scope_val,
     )
     return json.dumps(
