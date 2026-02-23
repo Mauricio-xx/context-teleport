@@ -32,6 +32,7 @@ packages = ["src/ctx"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+anyio_mode = "auto"
 
 [tool.ruff]
 target-version = "py311"
