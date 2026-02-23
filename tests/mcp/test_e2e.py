@@ -109,7 +109,7 @@ class TestResourceReads:
             content = _extract_text(result)
             data = json.loads(content)
             assert data["project"]["name"] == "e2e-test-project"
-            assert data["schema_version"] == "0.1.0"
+            assert data["schema_version"] == "0.2.0"
 
     async def test_read_knowledge_empty(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:

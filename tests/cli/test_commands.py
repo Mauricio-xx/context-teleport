@@ -165,6 +165,69 @@ class TestAgentCommands:
         assert len(data) > 0
 
 
+class TestKnowledgeScope:
+    def test_set_with_scope(self, initialized_project):
+        result = runner.invoke(app, ["knowledge", "set", "notes", "Private notes", "--scope", "private"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["knowledge", "list", "--format", "json"])
+        data = json.loads(result.output)
+        notes = [e for e in data if e["key"] == "notes"][0]
+        assert notes["scope"] == "private"
+
+    def test_scope_subcommand(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "arch", "Architecture"])
+        result = runner.invoke(app, ["knowledge", "scope", "arch", "private"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["knowledge", "list", "--format", "json"])
+        data = json.loads(result.output)
+        arch = [e for e in data if e["key"] == "arch"][0]
+        assert arch["scope"] == "private"
+
+    def test_list_filter_by_scope(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "pub", "Public entry"])
+        runner.invoke(app, ["knowledge", "set", "priv", "Private entry", "--scope", "private"])
+
+        result = runner.invoke(app, ["knowledge", "list", "--scope", "public", "--format", "json"])
+        data = json.loads(result.output)
+        assert len(data) == 1
+        assert data[0]["key"] == "pub"
+
+    def test_list_shows_scope_column(self, initialized_project):
+        runner.invoke(app, ["knowledge", "set", "arch", "Architecture"])
+        result = runner.invoke(app, ["knowledge", "list"])
+        assert result.exit_code == 0
+        assert "scope" in result.output.lower() or "public" in result.output.lower()
+
+
+class TestDecisionScope:
+    def test_add_with_scope(self, initialized_project):
+        result = runner.invoke(
+            app, ["decision", "add", "Private Decision", "--scope", "private"],
+            input="## Context\nInternal\n",
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["decision", "list", "--format", "json"])
+        data = json.loads(result.output)
+        assert data[0]["scope"] == "private"
+
+    def test_list_filter(self, initialized_project):
+        runner.invoke(
+            app, ["decision", "add", "Public Dec"], input="## Context\nPublic\n"
+        )
+        runner.invoke(
+            app, ["decision", "add", "Private Dec", "--scope", "private"],
+            input="## Context\nPrivate\n",
+        )
+
+        result = runner.invoke(app, ["decision", "list", "--scope", "public", "--format", "json"])
+        data = json.loads(result.output)
+        assert len(data) == 1
+        assert data[0]["title"] == "Public Dec"
+
+
 class TestSync:
     def test_push_no_changes(self, initialized_project):
         # First commit the store

@@ -27,3 +27,12 @@ class TestSearch:
         results = search_files(populated_store.knowledge_dir(), "Flaky test")
         assert len(results) > 0
         assert results[0].key == "known-issues"
+
+    def test_exclude_files(self, populated_store):
+        results = search_files(
+            populated_store.knowledge_dir(),
+            "hexagonal",
+            exclude_files={"architecture.md"},
+        )
+        # architecture.md contains "hexagonal" but should be excluded
+        assert all(r.key != "architecture" for r in results)

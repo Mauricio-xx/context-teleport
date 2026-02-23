@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from ctx.adapters.claude_code import ClaudeCodeAdapter, _slugify, _strip_ctx_section
+from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 
 
@@ -97,3 +98,29 @@ class TestImportExport:
         assert result["dry_run"] is True
         assert result["exported"] == 0
         assert len(result["items"]) > 0
+
+    def test_export_excludes_private(self, store):
+        store.set_knowledge("public-arch", "Public architecture notes")
+        store.set_knowledge("private-notes", "My private notes", scope=Scope.private)
+
+        adapter = ClaudeCodeAdapter(store)
+        claude_md = store.root / "CLAUDE.md"
+        claude_md.write_text("# Project\n")
+
+        result = adapter.export_context(dry_run=False)
+        content = claude_md.read_text()
+        assert "public-arch" in content
+        assert "private-notes" not in content
+
+    def test_export_excludes_ephemeral(self, store):
+        store.set_knowledge("public-info", "Public info")
+        store.set_knowledge("scratch", "Ephemeral scratch", scope=Scope.ephemeral)
+
+        adapter = ClaudeCodeAdapter(store)
+        claude_md = store.root / "CLAUDE.md"
+        claude_md.write_text("# Project\n")
+
+        adapter.export_context(dry_run=False)
+        content = claude_md.read_text()
+        assert "public-info" in content
+        assert "scratch" not in content

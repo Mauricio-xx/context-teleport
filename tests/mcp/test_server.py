@@ -7,6 +7,7 @@ import json
 import pytest
 
 from ctx.core.store import ContextStore
+from ctx.core.scope import Scope
 from ctx.mcp.server import (
     mcp,
     set_store,
@@ -20,6 +21,8 @@ from ctx.mcp.server import (
     context_sync_pull,
     context_get,
     context_set,
+    context_get_scope,
+    context_set_scope,
     resource_manifest,
     resource_knowledge,
     resource_knowledge_item,
@@ -48,7 +51,7 @@ class TestResources:
     def test_manifest(self, store):
         result = json.loads(resource_manifest())
         assert result["project"]["name"] == "test-mcp-project"
-        assert result["schema_version"] == "0.1.0"
+        assert result["schema_version"] == "0.2.0"
 
     def test_knowledge_empty(self, store):
         result = json.loads(resource_knowledge())
@@ -245,6 +248,50 @@ class TestPrompts:
         assert "copyleft" in result
 
 
+class TestScopeTools:
+    def test_add_knowledge_with_scope(self, store):
+        result = json.loads(context_add_knowledge("notes", "My private notes", scope="private"))
+        assert result["status"] == "ok"
+        assert store.get_knowledge_scope("notes") == Scope.private
+
+    def test_record_decision_with_scope(self, store):
+        result = json.loads(context_record_decision(title="Internal", scope="private"))
+        assert result["status"] == "ok"
+        scope = store.get_decision_scope(str(result["id"]))
+        assert scope == Scope.private
+
+    def test_get_scope_knowledge(self, store):
+        store.set_knowledge("arch", "Architecture", scope=Scope.private)
+        result = json.loads(context_get_scope("knowledge", "arch"))
+        assert result["scope"] == "private"
+
+    def test_get_scope_decision(self, store):
+        store.add_decision(title="Public Dec")
+        result = json.loads(context_get_scope("decision", "1"))
+        assert result["scope"] == "public"
+
+    def test_set_scope(self, store):
+        store.set_knowledge("arch", "Architecture")
+        result = json.loads(context_set_scope("knowledge", "arch", "ephemeral"))
+        assert result["status"] == "ok"
+        assert store.get_knowledge_scope("arch") == Scope.ephemeral
+
+    def test_knowledge_resource_includes_scope(self, store):
+        store.set_knowledge("pub", "Public entry")
+        store.set_knowledge("priv", "Private entry", scope=Scope.private)
+        result = json.loads(resource_knowledge())
+        scopes = {e["key"]: e["scope"] for e in result}
+        assert scopes["pub"] == "public"
+        assert scopes["priv"] == "private"
+
+    def test_onboarding_only_public(self, store):
+        store.set_knowledge("pub", "Public knowledge")
+        store.set_knowledge("priv", "Secret knowledge", scope=Scope.private)
+        result = context_onboarding()
+        assert "Public knowledge" in result
+        assert "Secret knowledge" not in result
+
+
 class TestMCPRegistration:
     """Verify the FastMCP app has all expected tools/resources/prompts registered."""
 
@@ -261,11 +308,13 @@ class TestMCPRegistration:
             "context_sync_pull",
             "context_get",
             "context_set",
+            "context_get_scope",
+            "context_set_scope",
         }
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
-    def test_has_at_least_10_tools(self, store):
-        assert len(mcp._tool_manager._tools) >= 10
+    def test_has_at_least_12_tools(self, store):
+        assert len(mcp._tool_manager._tools) >= 12
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())

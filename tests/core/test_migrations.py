@@ -132,3 +132,22 @@ class TestCheckVersionCompatible:
             return data
 
         assert check_version_compatible("0.0.9") is True
+
+
+class TestScopeMigration:
+    def test_current_version_is_020(self):
+        assert SCHEMA_VERSION == "0.2.0"
+
+    def test_010_to_020_migration_exists(self):
+        path = get_migration_path("0.1.0", "0.2.0")
+        assert path == ["0.1.0", "0.2.0"]
+
+    def test_migrate_010_bundle(self):
+        data = {
+            "manifest": {"schema_version": "0.1.0"},
+            "knowledge": {"arch": "Architecture notes"},
+        }
+        result = migrate_bundle(data, target_version="0.2.0")
+        assert result["manifest"]["schema_version"] == "0.2.0"
+        # Data is preserved unchanged
+        assert result["knowledge"]["arch"] == "Architecture notes"

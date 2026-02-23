@@ -51,21 +51,22 @@ context-bundle/
 
 ## Project Phase
 
-Core implementation complete. 150 tests passing. Ready for integration testing.
+Core implementation complete. 235 tests passing. Schema v0.2.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
 - [x] Define prototype scope and target use cases
 - [x] Design minimal context bundle schema
 - [x] Build Claude Code adapter (import/export + MCP registration)
-- [x] Implement MCP server (10 tools, 8 resources, 3 prompts)
+- [x] Implement MCP server (12 tools, 8 resources, 3 prompts)
 - [x] Bundle versioning / migration framework
 - [x] Merge conflict detection and resolution UX
+- [x] Context scoping (public/private/ephemeral boundaries)
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (150 tests)
+- `pytest tests/ -v` to run full suite (235 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
 - MCP server: `ctx-mcp` entry point (stdio transport)

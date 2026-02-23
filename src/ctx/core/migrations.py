@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any, Callable
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 
 MigrationFn = Callable[[dict[str, Any]], dict[str, Any]]
 
@@ -93,6 +93,17 @@ def migrate_bundle(bundle_data: dict[str, Any], target_version: str | None = Non
         result["manifest"]["schema_version"] = target
 
     return result
+
+
+@register_migration("0.1.0", "0.2.0")
+def migrate_010_to_020(bundle_data: dict[str, Any]) -> dict[str, Any]:
+    """Migrate 0.1.0 -> 0.2.0: add scope support.
+
+    No data transformation needed. Scope metadata (.scope.json) is created
+    lazily when entries are scoped. The schema version bump signals that
+    the bundle is scope-aware.
+    """
+    return bundle_data
 
 
 def check_version_compatible(bundle_version: str) -> bool:

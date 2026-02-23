@@ -1,4 +1,4 @@
-"""Knowledge subcommands: list, get, set, rm, search."""
+"""Knowledge subcommands: list, get, set, rm, search, scope."""
 
 from __future__ import annotations
 
@@ -8,27 +8,49 @@ from typing import Optional
 import typer
 
 from ctx.cli._shared import FORMAT_OPTION, get_store
+from ctx.core.scope import Scope
 from ctx.core.search import search_files
 from ctx.utils.output import error, info, output, output_table, success
 
 knowledge_app = typer.Typer(no_args_is_help=True)
 
 
+def _parse_scope(value: str) -> Scope | None:
+    """Parse a scope string, returning None for empty/invalid."""
+    if not value:
+        return None
+    try:
+        return Scope(value.lower())
+    except ValueError:
+        return None
+
+
 @knowledge_app.command("list")
-def knowledge_list(fmt: Optional[str] = FORMAT_OPTION) -> None:
+def knowledge_list(
+    scope: Optional[str] = typer.Option(None, "--scope", "-s", help="Filter by scope (public/private/ephemeral)"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
     """List knowledge entries."""
     store = get_store()
-    entries = store.list_knowledge()
+    scope_filter = _parse_scope(scope) if scope else None
+    entries = store.list_knowledge(scope=scope_filter)
     if fmt == "json":
-        output([{"key": e.key, "updated_at": str(e.updated_at)} for e in entries], fmt="json")
+        items = []
+        for e in entries:
+            item = {"key": e.key, "updated_at": str(e.updated_at)}
+            item["scope"] = store.get_knowledge_scope(e.key).value
+            items.append(item)
+        output(items, fmt="json")
     else:
         if not entries:
             info("No knowledge entries yet. Use `ctx knowledge set <key>` to add one.")
             return
-        output_table(
-            [{"key": e.key, "updated": str(e.updated_at.date())} for e in entries],
-            columns=["key", "updated"],
-        )
+        rows = []
+        for e in entries:
+            row = {"key": e.key, "updated": str(e.updated_at.date())}
+            row["scope"] = store.get_knowledge_scope(e.key).value
+            rows.append(row)
+        output_table(rows, columns=["key", "scope", "updated"])
 
 
 @knowledge_app.command("get")
@@ -53,6 +75,7 @@ def knowledge_set(
     key: str = typer.Argument(..., help="Knowledge entry key"),
     content: Optional[str] = typer.Argument(None, help="Content (reads stdin if omitted)"),
     file: Optional[str] = typer.Option(None, "--file", "-f", help="Read content from file"),
+    scope: Optional[str] = typer.Option(None, "--scope", "-s", help="Scope (public/private/ephemeral)"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Write or update a knowledge entry."""
@@ -70,7 +93,8 @@ def knowledge_set(
         error("Provide content as argument, --file, or via stdin")
         raise typer.Exit(1)
 
-    entry = store.set_knowledge(key, text)
+    scope_val = _parse_scope(scope) if scope else None
+    entry = store.set_knowledge(key, text, scope=scope_val)
     if fmt == "json":
         output({"key": entry.key, "status": "written"}, fmt="json")
     else:
@@ -89,6 +113,29 @@ def knowledge_rm(
             output({"key": key, "status": "removed"}, fmt="json")
         else:
             success(f"Knowledge '{key}' removed")
+    else:
+        error(f"Knowledge entry '{key}' not found")
+        raise typer.Exit(1)
+
+
+@knowledge_app.command("scope")
+def knowledge_scope(
+    key: str = typer.Argument(..., help="Knowledge entry key"),
+    scope: str = typer.Argument(..., help="New scope (public/private/ephemeral)"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Change the scope of an existing knowledge entry."""
+    store = get_store()
+    scope_val = _parse_scope(scope)
+    if scope_val is None:
+        error(f"Invalid scope '{scope}'. Use public, private, or ephemeral.")
+        raise typer.Exit(1)
+
+    if store.set_knowledge_scope(key, scope_val):
+        if fmt == "json":
+            output({"key": key, "scope": scope_val.value, "status": "updated"}, fmt="json")
+        else:
+            success(f"Knowledge '{key}' scope set to {scope_val.value}")
     else:
         error(f"Knowledge entry '{key}' not found")
         raise typer.Exit(1)

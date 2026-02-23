@@ -7,6 +7,7 @@ import re
 import shutil
 from pathlib import Path
 
+from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import (
     claude_home,
@@ -157,10 +158,10 @@ class ClaudeCodeAdapter:
         return {"items": items, "imported": imported, "dry_run": False}
 
     def export_context(self, dry_run: bool = False) -> dict:
-        """Inject store content into Claude Code locations."""
+        """Inject store content into Claude Code locations (public entries only)."""
         items: list[dict] = []
-        knowledge = self.store.list_knowledge()
-        decisions = self.store.list_decisions()
+        knowledge = self.store.list_knowledge(scope=Scope.public)
+        decisions = self.store.list_decisions(scope=Scope.public)
 
         if not knowledge and not decisions:
             return {"items": [], "exported": 0, "dry_run": dry_run}

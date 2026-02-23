@@ -14,7 +14,7 @@ from ctx.core.schema import (
 class TestManifest:
     def test_create_default(self):
         m = Manifest(project=ProjectInfo(name="test"))
-        assert m.schema_version == "0.1.0"
+        assert m.schema_version == "0.2.0"
         assert m.project.name == "test"
         assert m.project.id  # UUID generated
         assert "claude_code" in m.adapters

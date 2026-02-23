@@ -6,6 +6,7 @@ import git
 import pytest
 
 from ctx.core.conflicts import Strategy
+from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.sync.git_sync import GitSync, GitSyncError
 from ctx.utils.paths import STORE_DIR
@@ -229,3 +230,56 @@ class TestApplyResolutions:
         # apply_resolutions should pull cleanly
         result = gs_b.apply_resolutions([])
         assert result["status"] == "pulled"
+
+
+class TestScopeSync:
+    def test_push_excludes_private_knowledge(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        store.set_knowledge("public-arch", "Public architecture")
+        store.set_knowledge("private-notes", "Secret notes", scope=Scope.private)
+
+        gs = GitSync(store.root)
+        result = gs.push()
+        assert result["status"] == "committed"
+
+        # Verify: the private file should not be in the committed tree
+        tree = repo.head.commit.tree
+        store_tree = tree[STORE_DIR]
+        knowledge_tree = store_tree["knowledge"]
+        committed_names = [blob.name for blob in knowledge_tree.blobs]
+        assert "public-arch.md" in committed_names
+        assert "private-notes.md" not in committed_names
+
+    def test_push_excludes_ephemeral(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        store.set_knowledge("scratch", "Ephemeral scratch", scope=Scope.ephemeral)
+
+        gs = GitSync(store.root)
+        result = gs.push()
+        assert result["status"] == "committed"
+
+        tree = repo.head.commit.tree
+        knowledge_tree = tree[STORE_DIR]["knowledge"]
+        committed_names = [blob.name for blob in knowledge_tree.blobs]
+        assert "scratch.md" not in committed_names
+
+    def test_push_includes_scope_json(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        store.set_knowledge("private-stuff", "Secret", scope=Scope.private)
+
+        gs = GitSync(store.root)
+        gs.push()
+
+        tree = repo.head.commit.tree
+        knowledge_tree = tree[STORE_DIR]["knowledge"]
+        committed_names = [blob.name for blob in knowledge_tree.blobs]
+        assert ".scope.json" in committed_names

@@ -8,6 +8,7 @@ from mcp.server.fastmcp import FastMCP
 
 from ctx.core.dotpath import resolve_dotpath, set_dotpath
 from ctx.core.schema import SessionSummary
+from ctx.core.scope import Scope
 from ctx.core.search import search_files
 from ctx.core.store import ContextStore
 from ctx.sync.git_sync import GitSync, GitSyncError
@@ -41,6 +42,16 @@ def set_store(store: ContextStore) -> None:
     _store = store
 
 
+def _parse_scope(value: str) -> Scope | None:
+    """Parse a scope string, returning None for empty/invalid."""
+    if not value:
+        return None
+    try:
+        return Scope(value.lower())
+    except ValueError:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Resources (read-only)
 # ---------------------------------------------------------------------------
@@ -59,7 +70,12 @@ def resource_knowledge() -> str:
     store = _get_store()
     entries = store.list_knowledge()
     return json.dumps(
-        [{"key": e.key, "content": e.content} for e in entries], indent=2, default=str
+        [
+            {"key": e.key, "content": e.content, "scope": store.get_knowledge_scope(e.key).value}
+            for e in entries
+        ],
+        indent=2,
+        default=str,
     )
 
 
@@ -78,10 +94,16 @@ def resource_decisions() -> str:
     """List all architectural decisions."""
     store = _get_store()
     decisions = store.list_decisions()
-    return json.dumps(
-        [{"id": d.id, "title": d.title, "status": d.status.value} for d in decisions],
-        indent=2,
-    )
+    result = []
+    for d in decisions:
+        dec_scope = store.get_decision_scope(str(d.id))
+        result.append({
+            "id": d.id,
+            "title": d.title,
+            "status": d.status.value,
+            "scope": dec_scope.value if dec_scope else "public",
+        })
+    return json.dumps(result, indent=2)
 
 
 @mcp.resource("context://decisions/{id}")
@@ -155,15 +177,17 @@ def context_search(query: str) -> str:
 
 
 @mcp.tool()
-def context_add_knowledge(key: str, content: str) -> str:
+def context_add_knowledge(key: str, content: str, scope: str = "") -> str:
     """Add or update a knowledge entry.
 
     Args:
         key: Identifier for the entry (e.g. 'architecture', 'tech-stack')
         content: Markdown content for the entry
+        scope: Optional scope (public/private/ephemeral). Empty means no change.
     """
     store = _get_store()
-    entry = store.set_knowledge(key, content)
+    scope_val = _parse_scope(scope)
+    entry = store.set_knowledge(key, content, scope=scope_val)
     return json.dumps({"status": "ok", "key": entry.key}, default=str)
 
 
@@ -187,6 +211,7 @@ def context_record_decision(
     context: str = "",
     decision: str = "",
     consequences: str = "",
+    scope: str = "",
 ) -> str:
     """Record an architectural decision (ADR-style).
 
@@ -195,13 +220,16 @@ def context_record_decision(
         context: Why this decision was needed
         decision: What was decided
         consequences: Expected impact
+        scope: Optional scope (public/private/ephemeral). Empty means public.
     """
     store = _get_store()
+    scope_val = _parse_scope(scope)
     dec = store.add_decision(
         title=title,
         context=context,
         decision_text=decision,
         consequences=consequences,
+        scope=scope_val,
     )
     return json.dumps(
         {"status": "ok", "id": dec.id, "title": dec.title}, default=str
@@ -312,6 +340,56 @@ def context_resolve_conflict(file_path: str, content: str) -> str:
 
 
 @mcp.tool()
+def context_get_scope(entry_type: str, key: str) -> str:
+    """Get the current scope of a knowledge entry or decision.
+
+    Args:
+        entry_type: Either 'knowledge' or 'decision'
+        key: The entry key (knowledge key or decision ID/title)
+    """
+    store = _get_store()
+    if entry_type == "knowledge":
+        entry = store.get_knowledge(key)
+        if entry is None:
+            return json.dumps({"error": f"Knowledge entry '{key}' not found"})
+        scope = store.get_knowledge_scope(key)
+        return json.dumps({"key": key, "scope": scope.value})
+    elif entry_type == "decision":
+        scope = store.get_decision_scope(key)
+        if scope is None:
+            return json.dumps({"error": f"Decision '{key}' not found"})
+        return json.dumps({"key": key, "scope": scope.value})
+    else:
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge' or 'decision'."})
+
+
+@mcp.tool()
+def context_set_scope(entry_type: str, key: str, scope: str) -> str:
+    """Change the scope of a knowledge entry or decision.
+
+    Args:
+        entry_type: Either 'knowledge' or 'decision'
+        key: The entry key (knowledge key or decision ID/title)
+        scope: New scope (public/private/ephemeral)
+    """
+    store = _get_store()
+    scope_val = _parse_scope(scope)
+    if scope_val is None:
+        return json.dumps({"error": f"Invalid scope '{scope}'. Use public, private, or ephemeral."})
+
+    if entry_type == "knowledge":
+        if store.set_knowledge_scope(key, scope_val):
+            return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
+        return json.dumps({"error": f"Knowledge entry '{key}' not found"})
+    elif entry_type == "decision":
+        if store.set_decision_scope(key, scope_val):
+            return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
+        return json.dumps({"error": f"Decision '{key}' not found"})
+    else:
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge' or 'decision'."})
+
+
+@mcp.tool()
 def context_get(dotpath: str) -> str:
     """Read any value by dotpath.
 
@@ -354,13 +432,13 @@ def context_set(dotpath: str, value: str) -> str:
 def context_onboarding() -> str:
     """Full project context for a new agent session.
 
-    Provides the complete knowledge base, decisions, current state,
+    Provides the public knowledge base, decisions, current state,
     and recent history to quickly onboard a new agent.
     """
     store = _get_store()
     manifest = store.read_manifest()
-    knowledge = store.list_knowledge()
-    decisions = store.list_decisions()
+    knowledge = store.list_knowledge(scope=Scope.public)
+    decisions = store.list_decisions(scope=Scope.public)
     state = store.read_active_state()
     sessions = store.list_sessions(limit=5)
 

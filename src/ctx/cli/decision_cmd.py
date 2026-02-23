@@ -11,40 +11,53 @@ from typing import Optional
 import typer
 
 from ctx.cli._shared import FORMAT_OPTION, get_store
+from ctx.core.scope import Scope
 from ctx.utils.output import error, info, output, output_table, success
+
+
+def _parse_scope(value: str) -> Scope | None:
+    if not value:
+        return None
+    try:
+        return Scope(value.lower())
+    except ValueError:
+        return None
 
 decision_app = typer.Typer(no_args_is_help=True)
 
 
 @decision_app.command("list")
-def decision_list(fmt: Optional[str] = FORMAT_OPTION) -> None:
+def decision_list(
+    scope: Optional[str] = typer.Option(None, "--scope", "-s", help="Filter by scope (public/private/ephemeral)"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
     """List decision records."""
     store = get_store()
-    decisions = store.list_decisions()
+    scope_filter = _parse_scope(scope) if scope else None
+    decisions = store.list_decisions(scope=scope_filter)
     if fmt == "json":
-        output(
-            [
-                {"id": d.id, "title": d.title, "status": d.status.value, "date": str(d.date.date())}
-                for d in decisions
-            ],
-            fmt="json",
-        )
+        items = []
+        for d in decisions:
+            item = {"id": d.id, "title": d.title, "status": d.status.value, "date": str(d.date.date())}
+            dec_scope = store.get_decision_scope(str(d.id))
+            item["scope"] = dec_scope.value if dec_scope else "public"
+            items.append(item)
+        output(items, fmt="json")
     else:
         if not decisions:
             info("No decisions recorded yet. Use `ctx decision add <title>` to create one.")
             return
-        output_table(
-            [
-                {
-                    "id": f"{d.id:04d}",
-                    "title": d.title,
-                    "status": d.status.value,
-                    "date": str(d.date.date()),
-                }
-                for d in decisions
-            ],
-            columns=["id", "title", "status", "date"],
-        )
+        rows = []
+        for d in decisions:
+            dec_scope = store.get_decision_scope(str(d.id))
+            rows.append({
+                "id": f"{d.id:04d}",
+                "title": d.title,
+                "status": d.status.value,
+                "scope": dec_scope.value if dec_scope else "public",
+                "date": str(d.date.date()),
+            })
+        output_table(rows, columns=["id", "title", "status", "scope", "date"])
 
 
 @decision_app.command("get")
@@ -68,6 +81,7 @@ def decision_get(
 def decision_add(
     title: str = typer.Argument(..., help="Decision title"),
     file: Optional[str] = typer.Option(None, "--file", "-f", help="Read from file"),
+    scope: Optional[str] = typer.Option(None, "--scope", "-s", help="Scope (public/private/ephemeral)"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Create a new decision record (ADR)."""
@@ -128,11 +142,13 @@ What follows.
         finally:
             os.unlink(tmp_path)
 
+    scope_val = _parse_scope(scope) if scope else None
     dec = store.add_decision(
         title=title,
         context=context_text,
         decision_text=decision_text,
         consequences=consequences_text,
+        scope=scope_val,
     )
     if fmt == "json":
         output(dec, fmt="json")

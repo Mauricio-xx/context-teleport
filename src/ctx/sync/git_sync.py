@@ -8,6 +8,7 @@ from pathlib import Path
 import git
 
 from ctx.core.conflicts import ConflictEntry, ConflictReport, Strategy, resolve_conflicts
+from ctx.core.scope import ScopeMap
 from ctx.utils.paths import STORE_DIR
 
 
@@ -86,19 +87,48 @@ class GitSync:
             return "ctx: " + ", ".join(parts)
         return "ctx: update context"
 
+    def _get_excluded_files(self) -> set[str]:
+        """Return relative paths (from repo root) of non-public files to exclude."""
+        excluded = set()
+        knowledge_dir = self.store_dir / "knowledge"
+        decisions_dir = knowledge_dir / "decisions"
+
+        if knowledge_dir.is_dir():
+            smap = ScopeMap(knowledge_dir)
+            for fname in smap.non_public_files():
+                excluded.add(f"{STORE_DIR}/knowledge/{fname}")
+
+        if decisions_dir.is_dir():
+            smap = ScopeMap(decisions_dir)
+            for fname in smap.non_public_files():
+                excluded.add(f"{STORE_DIR}/knowledge/decisions/{fname}")
+
+        return excluded
+
+    def _get_stageable_files(self) -> list[str]:
+        """Return all store files eligible for staging (excludes non-public)."""
+        excluded = self._get_excluded_files()
+        stageable = []
+
+        # Walk the store directory for tracked and modified files
+        for path in self.store_dir.rglob("*"):
+            if path.is_dir():
+                continue
+            rel = str(path.relative_to(self.root))
+            if rel not in excluded:
+                stageable.append(rel)
+
+        return stageable
+
     def push(self, message: str | None = None) -> dict:
         """Stage .context-teleport/ changes, commit, and push."""
         if not self._has_changes():
             return {"status": "nothing_to_push"}
 
-        # Stage all context files
-        self.repo.index.add([STORE_DIR])
-        # Also add any untracked files in the store
-        untracked = [
-            f for f in self.repo.untracked_files if f.startswith(STORE_DIR + "/")
-        ]
-        if untracked:
-            self.repo.index.add(untracked)
+        # Stage only public files (excludes private/ephemeral)
+        stageable = self._get_stageable_files()
+        if stageable:
+            self.repo.index.add(stageable)
 
         commit_msg = message or self._auto_message()
         self.repo.index.commit(commit_msg)

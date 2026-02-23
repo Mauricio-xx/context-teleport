@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,7 +16,10 @@ class SearchResult:
 
 
 def search_files(
-    root: Path, query: str, file_pattern: str = "*.md"
+    root: Path,
+    query: str,
+    file_pattern: str = "*.md",
+    exclude_files: set[str] | None = None,
 ) -> list[SearchResult]:
     """Search markdown files for a query string. Returns ranked results."""
     results: list[SearchResult] = []
@@ -25,6 +27,8 @@ def search_files(
     terms = query_lower.split()
 
     for path in sorted(root.rglob(file_pattern)):
+        if exclude_files and path.name in exclude_files:
+            continue
         rel = str(path.relative_to(root))
         key = path.stem
         text = path.read_text()

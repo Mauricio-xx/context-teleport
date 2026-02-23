@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -18,6 +17,7 @@ from ctx.core.schema import (
     TeamPreferences,
     UserPreferences,
 )
+from ctx.core.scope import Scope, ScopeMap
 from ctx.utils.paths import STORE_DIR, get_author, sanitize_key
 
 
@@ -61,9 +61,12 @@ class ContextStore:
         )
         self._write_json(self.store_dir / "manifest.json", manifest)
 
+        # Create scope sidecar files
+        ScopeMap.ensure_exists(self.store_dir / "knowledge")
+        ScopeMap.ensure_exists(self.store_dir / "knowledge" / "decisions")
+
         # Create .gitignore for private files
-        gitignore = self.store_dir / ".gitignore"
-        gitignore.write_text("state/active.json\npreferences/user.json\n")
+        self._rebuild_gitignore()
 
         # Create empty state/roadmap.json
         self._write_json(self.store_dir / "state" / "roadmap.json", Roadmap())
@@ -79,6 +82,59 @@ class ContextStore:
     def _require_init(self) -> None:
         if not self.initialized:
             raise StoreError("Context store not initialized. Run `ctx init` first.")
+
+    # -- Scope management --
+
+    _GITIGNORE_BASE = ["state/active.json", "preferences/user.json"]
+
+    def _knowledge_scope_map(self) -> ScopeMap:
+        return ScopeMap(self.knowledge_dir())
+
+    def _decisions_scope_map(self) -> ScopeMap:
+        return ScopeMap(self.decisions_dir())
+
+    def _rebuild_gitignore(self) -> None:
+        """Regenerate .gitignore from base entries + non-public files."""
+        lines = list(self._GITIGNORE_BASE)
+        for fname in sorted(self._knowledge_scope_map().non_public_files()):
+            lines.append(f"knowledge/{fname}")
+        for fname in sorted(self._decisions_scope_map().non_public_files()):
+            lines.append(f"knowledge/decisions/{fname}")
+        gitignore = self.store_dir / ".gitignore"
+        gitignore.write_text("\n".join(lines) + "\n")
+
+    def get_knowledge_scope(self, key: str) -> Scope:
+        """Return the scope for a knowledge entry."""
+        safe_key = sanitize_key(key)
+        return self._knowledge_scope_map().get(f"{safe_key}.md")
+
+    def set_knowledge_scope(self, key: str, scope: Scope) -> bool:
+        """Change scope for an existing knowledge entry. Returns False if not found."""
+        self._require_init()
+        safe_key = sanitize_key(key)
+        path = self.knowledge_dir() / f"{safe_key}.md"
+        if not path.is_file():
+            return False
+        self._knowledge_scope_map().set(f"{safe_key}.md", scope)
+        self._rebuild_gitignore()
+        return True
+
+    def get_decision_scope(self, id_or_title: str) -> Scope | None:
+        """Return the scope for a decision, or None if decision not found."""
+        dec = self.get_decision(id_or_title)
+        if dec is None:
+            return None
+        return self._decisions_scope_map().get(dec.filename)
+
+    def set_decision_scope(self, id_or_title: str, scope: Scope) -> bool:
+        """Change scope for an existing decision. Returns False if not found."""
+        self._require_init()
+        dec = self.get_decision(id_or_title)
+        if dec is None:
+            return False
+        self._decisions_scope_map().set(dec.filename, scope)
+        self._rebuild_gitignore()
+        return True
 
     # -- Manifest --
 
@@ -100,11 +156,14 @@ class ContextStore:
     def knowledge_dir(self) -> Path:
         return self.store_dir / "knowledge"
 
-    def list_knowledge(self) -> list[KnowledgeEntry]:
+    def list_knowledge(self, scope: Scope | None = None) -> list[KnowledgeEntry]:
         self._require_init()
+        smap = self._knowledge_scope_map()
         entries = []
         kdir = self.knowledge_dir()
         for f in sorted(kdir.glob("*.md")):
+            if scope is not None and smap.get(f.name) != scope:
+                continue
             entries.append(
                 KnowledgeEntry(
                     key=f.stem,
@@ -126,11 +185,16 @@ class ContextStore:
             updated_at=_datetime_from_mtime(path),
         )
 
-    def set_knowledge(self, key: str, content: str, author: str = "") -> KnowledgeEntry:
+    def set_knowledge(
+        self, key: str, content: str, author: str = "", scope: Scope | None = None
+    ) -> KnowledgeEntry:
         self._require_init()
         safe_key = sanitize_key(key)
         path = self.knowledge_dir() / f"{safe_key}.md"
         path.write_text(content)
+        if scope is not None:
+            self._knowledge_scope_map().set(f"{safe_key}.md", scope)
+            self._rebuild_gitignore()
         return KnowledgeEntry(
             key=safe_key,
             content=content,
@@ -143,6 +207,8 @@ class ContextStore:
         path = self.knowledge_dir() / f"{safe_key}.md"
         if path.is_file():
             path.unlink()
+            self._knowledge_scope_map().remove(f"{safe_key}.md")
+            self._rebuild_gitignore()
             return True
         return False
 
@@ -162,10 +228,13 @@ class ContextStore:
                 ids.append(int(match.group(1)))
         return max(ids, default=0) + 1
 
-    def list_decisions(self) -> list[Decision]:
+    def list_decisions(self, scope: Scope | None = None) -> list[Decision]:
         self._require_init()
+        smap = self._decisions_scope_map()
         decisions = []
         for f in sorted(self.decisions_dir().glob("*.md")):
+            if scope is not None and smap.get(f.name) != scope:
+                continue
             match = re.match(r"^(\d+)-", f.name)
             did = int(match.group(1)) if match else 0
             text = f.read_text()
@@ -200,6 +269,7 @@ class ContextStore:
         consequences: str = "",
         status: DecisionStatus = DecisionStatus.accepted,
         author: str = "",
+        scope: Scope | None = None,
     ) -> Decision:
         self._require_init()
         did = self._next_decision_id()
@@ -214,6 +284,9 @@ class ContextStore:
         )
         path = self.decisions_dir() / dec.filename
         path.write_text(dec.to_markdown())
+        if scope is not None:
+            self._decisions_scope_map().set(dec.filename, scope)
+            self._rebuild_gitignore()
         return dec
 
     # -- State --
