@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -25,6 +27,7 @@ class ConflictEntry:
     resolution: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """Summary dict with truncated previews (for CLI display)."""
         return {
             "file_path": self.file_path,
             "ours_preview": self.ours_content[:200],
@@ -32,12 +35,36 @@ class ConflictEntry:
             "resolved": self.resolved,
         }
 
+    def to_full_dict(self) -> dict[str, Any]:
+        """Full serialization with complete content (for disk persistence)."""
+        return {
+            "file_path": self.file_path,
+            "ours_content": self.ours_content,
+            "theirs_content": self.theirs_content,
+            "base_content": self.base_content,
+            "resolved": self.resolved,
+            "resolution": self.resolution,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ConflictEntry:
+        """Deserialize from a full dict."""
+        return cls(
+            file_path=data["file_path"],
+            ours_content=data["ours_content"],
+            theirs_content=data["theirs_content"],
+            base_content=data.get("base_content", ""),
+            resolved=data.get("resolved", False),
+            resolution=data.get("resolution", ""),
+        )
+
 
 @dataclass
 class ConflictReport:
     """Summary of all conflicts from a merge operation."""
     conflicts: list[ConflictEntry] = field(default_factory=list)
     auto_resolved: list[str] = field(default_factory=list)
+    conflict_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     @property
     def has_conflicts(self) -> bool:
@@ -48,6 +75,7 @@ class ConflictReport:
         return sum(1 for c in self.conflicts if not c.resolved)
 
     def to_dict(self) -> dict[str, Any]:
+        """Summary dict with previews (for CLI display)."""
         return {
             "has_conflicts": self.has_conflicts,
             "total": len(self.conflicts),
@@ -55,6 +83,24 @@ class ConflictReport:
             "auto_resolved": self.auto_resolved,
             "conflicts": [c.to_dict() for c in self.conflicts if not c.resolved],
         }
+
+    def to_json(self) -> str:
+        """Full JSON serialization for disk persistence."""
+        return json.dumps({
+            "conflict_id": self.conflict_id,
+            "auto_resolved": self.auto_resolved,
+            "conflicts": [c.to_full_dict() for c in self.conflicts],
+        }, indent=2)
+
+    @classmethod
+    def from_json(cls, text: str) -> ConflictReport:
+        """Deserialize from JSON string."""
+        data = json.loads(text)
+        return cls(
+            conflict_id=data["conflict_id"],
+            auto_resolved=data.get("auto_resolved", []),
+            conflicts=[ConflictEntry.from_dict(c) for c in data.get("conflicts", [])],
+        )
 
 
 def resolve_conflicts(report: ConflictReport, strategy: Strategy) -> list[tuple[str, str]]:

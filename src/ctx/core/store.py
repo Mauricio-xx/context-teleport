@@ -85,7 +85,7 @@ class ContextStore:
 
     # -- Scope management --
 
-    _GITIGNORE_BASE = ["state/active.json", "preferences/user.json"]
+    _GITIGNORE_BASE = ["state/active.json", "preferences/user.json", ".pending_conflicts.json"]
 
     def _knowledge_meta_path(self) -> Path:
         return self.knowledge_dir() / ".meta.json"

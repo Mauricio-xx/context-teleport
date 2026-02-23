@@ -12,6 +12,8 @@ from ctx.core.merge_sections import merge_markdown_sections
 from ctx.core.scope import ScopeMap
 from ctx.utils.paths import STORE_DIR
 
+_PENDING_CONFLICTS_FILE = ".pending_conflicts.json"
+
 
 class GitSyncError(Exception):
     pass
@@ -27,6 +29,35 @@ class GitSync:
             self.repo = git.Repo(self.root)
         except git.InvalidGitRepositoryError:
             raise GitSyncError(f"Not a git repository: {self.root}")
+
+    # -- Conflict persistence (disk-backed for stateless MCP) --
+
+    def _pending_path(self) -> Path:
+        return self.store_dir / _PENDING_CONFLICTS_FILE
+
+    def save_pending_report(self, report: ConflictReport) -> None:
+        """Persist conflict report to disk."""
+        self._pending_path().write_text(report.to_json())
+
+    def load_pending_report(self) -> ConflictReport | None:
+        """Load conflict report from disk, or None if no pending conflicts."""
+        path = self._pending_path()
+        if not path.is_file():
+            return None
+        try:
+            return ConflictReport.from_json(path.read_text())
+        except (ValueError, KeyError):
+            return None
+
+    def clear_pending_report(self) -> None:
+        """Remove the pending conflicts file."""
+        path = self._pending_path()
+        if path.is_file():
+            path.unlink()
+
+    def has_pending_conflicts(self) -> bool:
+        """Check if there are pending conflicts on disk."""
+        return self._pending_path().is_file()
 
     def _has_changes(self) -> bool:
         """Check if there are uncommitted changes in the store directory."""
@@ -209,8 +240,10 @@ class GitSync:
             }
 
         if strategy in (Strategy.interactive, Strategy.agent):
-            # Abort the merge so the user can resolve manually
+            # Abort the merge so the user/agent can resolve
             self.repo.git.merge("--abort")
+            if strategy == Strategy.agent:
+                self.save_pending_report(report)
             return {
                 "status": "conflicts",
                 "report": report.to_dict(),
@@ -352,6 +385,7 @@ class GitSync:
 
         self.repo.git.commit("-m", f"ctx: merge {remote_ref} (interactive resolution)")
         self._pending_report = None
+        self.clear_pending_report()
 
         return {
             "status": "merged",

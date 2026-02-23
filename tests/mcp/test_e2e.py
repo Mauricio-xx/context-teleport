@@ -55,6 +55,9 @@ class TestToolDiscovery:
                 "context_set",
                 "context_merge_status",
                 "context_resolve_conflict",
+                "context_conflict_detail",
+                "context_merge_finalize",
+                "context_merge_abort",
             }
             assert expected.issubset(names), f"Missing tools: {expected - names}"
 
@@ -96,7 +99,12 @@ class TestPromptDiscovery:
         async with spawn_mcp_session(e2e_store) as session:
             result = await session.list_prompts()
             names = {p.name for p in result.prompts}
-            expected = {"context_onboarding", "context_handoff", "context_review_decisions"}
+            expected = {
+                "context_onboarding",
+                "context_handoff",
+                "context_review_decisions",
+                "context_resolve_conflicts",
+            }
             assert expected.issubset(names), f"Missing prompts: {expected - names}"
 
 
@@ -229,6 +237,26 @@ class TestToolInvocation:
             result = await session.call_tool("context_sync_push", {})
             data = json.loads(result.content[0].text)
             assert data["status"] == "committed"
+
+    async def test_sync_pull_accepts_strategy(self, e2e_store):
+        """Sync pull accepts a strategy parameter."""
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.call_tool(
+                "context_sync_pull", {"strategy": "ours"}
+            )
+            data = json.loads(result.content[0].text)
+            # No remote, so expect no_remote status
+            assert data["status"] == "no_remote"
+
+    async def test_sync_pull_invalid_strategy(self, e2e_store):
+        """Sync pull rejects invalid strategy."""
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.call_tool(
+                "context_sync_pull", {"strategy": "invalid"}
+            )
+            data = json.loads(result.content[0].text)
+            assert data["status"] == "error"
+            assert "Invalid strategy" in data["error"]
 
 
 class TestRoundTrip:

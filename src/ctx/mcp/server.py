@@ -6,6 +6,7 @@ import json
 
 from mcp.server.fastmcp import FastMCP
 
+from ctx.core.conflicts import Strategy, resolve_single
 from ctx.core.dotpath import resolve_dotpath, set_dotpath
 from ctx.core.schema import SessionSummary
 from ctx.core.scope import Scope
@@ -313,12 +314,22 @@ def context_sync_push(message: str = "") -> str:
 
 
 @mcp.tool()
-def context_sync_pull() -> str:
-    """Pull context changes from git remote."""
+def context_sync_pull(strategy: str = "ours") -> str:
+    """Pull context changes from git remote.
+
+    Args:
+        strategy: Conflict resolution strategy. Use 'agent' to inspect and resolve
+                  conflicts via context_conflict_detail / context_resolve_conflict /
+                  context_merge_finalize. Options: ours, theirs, agent.
+    """
     store = _get_store()
     try:
         gs = GitSync(store.root)
-        result = gs.pull()
+        try:
+            strat = Strategy(strategy.lower())
+        except ValueError:
+            return json.dumps({"status": "error", "error": f"Invalid strategy '{strategy}'. Use: ours, theirs, agent."})
+        result = gs.pull(strategy=strat)
         return json.dumps(result, default=str)
     except GitSyncError as e:
         return json.dumps({"status": "error", "error": str(e)})
@@ -326,11 +337,21 @@ def context_sync_pull() -> str:
 
 @mcp.tool()
 def context_merge_status() -> str:
-    """Check if there are unresolved merge conflicts."""
+    """Check if there are unresolved merge conflicts.
+
+    Reads from disk-persisted conflict state (survives across MCP calls).
+    """
     store = _get_store()
     try:
         gs = GitSync(store.root)
-        return json.dumps(gs.merge_status(), default=str)
+        report = gs.load_pending_report()
+        if report is None:
+            return json.dumps({"status": "clean"})
+        return json.dumps({
+            "status": "conflicts",
+            "conflict_id": report.conflict_id,
+            "report": report.to_dict(),
+        }, default=str)
     except GitSyncError as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -339,6 +360,9 @@ def context_merge_status() -> str:
 def context_resolve_conflict(file_path: str, content: str) -> str:
     """Resolve a single merge conflict by providing the final content.
 
+    The resolution is persisted to disk. Call context_merge_finalize when all
+    conflicts are resolved to complete the merge.
+
     Args:
         file_path: Path of the conflicted file (relative to project root)
         content: Final resolved content for the file
@@ -346,8 +370,20 @@ def context_resolve_conflict(file_path: str, content: str) -> str:
     store = _get_store()
     try:
         gs = GitSync(store.root)
-        result = gs.resolve(file_path, content)
-        return json.dumps(result, default=str)
+        report = gs.load_pending_report()
+        if report is None:
+            return json.dumps({"status": "error", "error": "No pending conflicts"})
+
+        found = resolve_single(report, file_path, content)
+        if not found:
+            return json.dumps({"status": "error", "error": f"No unresolved conflict for {file_path}"})
+
+        gs.save_pending_report(report)
+        return json.dumps({
+            "status": "resolved",
+            "file_path": file_path,
+            "remaining": report.unresolved_count,
+        }, default=str)
     except GitSyncError as e:
         return json.dumps({"status": "error", "error": str(e)})
 
@@ -400,6 +436,110 @@ def context_set_scope(entry_type: str, key: str, scope: str) -> str:
         return json.dumps({"error": f"Decision '{key}' not found"})
     else:
         return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge' or 'decision'."})
+
+
+@mcp.tool()
+def context_conflict_detail(file_path: str) -> str:
+    """Get detailed conflict information for a single file.
+
+    Returns full ours/theirs/base content, a unified diff, and section-level
+    analysis for markdown files. Use this to examine each conflict before
+    resolving it with context_resolve_conflict.
+
+    Args:
+        file_path: Path of the conflicted file (relative to project root)
+    """
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+        report = gs.load_pending_report()
+        if report is None:
+            return json.dumps({"status": "error", "error": "No pending conflicts"})
+
+        entry = None
+        for c in report.conflicts:
+            if c.file_path == file_path and not c.resolved:
+                entry = c
+                break
+
+        if entry is None:
+            return json.dumps({"status": "error", "error": f"No unresolved conflict for {file_path}"})
+
+        import difflib
+        diff = "\n".join(difflib.unified_diff(
+            entry.ours_content.splitlines(),
+            entry.theirs_content.splitlines(),
+            fromfile=f"{file_path} (ours)",
+            tofile=f"{file_path} (theirs)",
+            lineterm="",
+        ))
+
+        result: dict = {
+            "file_path": entry.file_path,
+            "ours_content": entry.ours_content,
+            "theirs_content": entry.theirs_content,
+            "base_content": entry.base_content,
+            "diff": diff,
+        }
+
+        if file_path.endswith(".md") and entry.base_content:
+            from ctx.core.merge_sections import merge_markdown_sections
+            section_result = merge_markdown_sections(
+                entry.base_content, entry.ours_content, entry.theirs_content,
+            )
+            result["section_analysis"] = {
+                "has_section_conflicts": section_result.has_conflicts,
+                "conflict_details": section_result.conflict_details,
+                "auto_merged_content": section_result.content if not section_result.has_conflicts else None,
+            }
+
+        return json.dumps(result, default=str)
+    except GitSyncError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_merge_finalize() -> str:
+    """Finalize the merge after resolving all (or some) conflicts.
+
+    Applies resolved content to files, falls back to 'ours' for any
+    unresolved files, and commits the merge. Clears pending conflict state.
+    """
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+        report = gs.load_pending_report()
+        if report is None:
+            return json.dumps({"status": "error", "error": "No pending conflicts to finalize"})
+
+        resolutions = [
+            (c.file_path, c.resolution)
+            for c in report.conflicts
+            if c.resolved
+        ]
+
+        result = gs.apply_resolutions(resolutions)
+        return json.dumps(result, default=str)
+    except GitSyncError as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_merge_abort() -> str:
+    """Abort the pending merge and discard conflict state.
+
+    Cleans up the pending conflicts file without merging.
+    The next pull will re-detect conflicts.
+    """
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+        if not gs.has_pending_conflicts():
+            return json.dumps({"status": "error", "error": "No pending conflicts to abort"})
+        gs.clear_pending_report()
+        return json.dumps({"status": "aborted"})
+    except GitSyncError as e:
+        return json.dumps({"status": "error", "error": str(e)})
 
 
 @mcp.tool()
@@ -565,6 +705,65 @@ def context_review_decisions() -> str:
             lines.append("")
         lines.append("---")
         lines.append("")
+
+    return "\n".join(lines)
+
+
+@mcp.prompt()
+def context_resolve_conflicts() -> str:
+    """Guide for resolving merge conflicts via MCP tools.
+
+    Provides conflict overview, per-file summary, and step-by-step instructions
+    for the agent to resolve conflicts using the available MCP tools.
+    """
+    store = _get_store()
+    try:
+        gs = GitSync(store.root)
+    except GitSyncError:
+        return "Error: not in a git repository."
+
+    report = gs.load_pending_report()
+    if report is None:
+        return "No pending merge conflicts. Use context_sync_pull(strategy='agent') to pull with conflict detection."
+
+    lines = [
+        "# Merge Conflict Resolution Guide",
+        "",
+        f"**Conflict ID:** {report.conflict_id}",
+        f"**Total conflicts:** {len(report.conflicts)}",
+        f"**Unresolved:** {report.unresolved_count}",
+        f"**Auto-resolved:** {len(report.auto_resolved)}",
+        "",
+        "## Conflicted Files",
+        "",
+    ]
+
+    for c in report.conflicts:
+        status = "resolved" if c.resolved else "UNRESOLVED"
+        is_md = "markdown" if c.file_path.endswith(".md") else "other"
+        lines.append(
+            f"- `{c.file_path}` [{status}] ({is_md}, "
+            f"ours: {len(c.ours_content)} chars, theirs: {len(c.theirs_content)} chars)"
+        )
+
+    lines.extend([
+        "",
+        "## Resolution Steps",
+        "",
+        "1. **Examine each file:** Call `context_conflict_detail(file_path)` for each unresolved file",
+        "2. **Resolve:** Call `context_resolve_conflict(file_path, content)` with the merged content",
+        "3. **Finalize:** Call `context_merge_finalize()` to commit the merge",
+        "",
+        "## Merge Guidelines",
+        "",
+        "- **Combine knowledge:** merge complementary information from both sides",
+        "- **Never drop decisions:** if both sides added different ADRs, keep both",
+        "- **Prefer newer data:** for state/progress fields, the more recent update wins",
+        "- **Preserve structure:** maintain section headers and formatting",
+        "- If section_analysis shows no conflicts, use the auto_merged_content directly",
+        "",
+        "To abort the merge instead: call `context_merge_abort()`",
+    ])
 
     return "\n".join(lines)
 

@@ -133,6 +133,113 @@ class TestGitSync:
         assert "decision" in msg
 
 
+class TestConflictPersistence:
+    def test_save_and_load_report(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        from ctx.core.conflicts import ConflictEntry, ConflictReport
+        gs = GitSync(store.root)
+
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs", "base"),
+        ])
+        gs.save_pending_report(report)
+
+        loaded = gs.load_pending_report()
+        assert loaded is not None
+        assert loaded.conflict_id == report.conflict_id
+        assert len(loaded.conflicts) == 1
+        assert loaded.conflicts[0].file_path == "knowledge/arch.md"
+        assert loaded.conflicts[0].ours_content == "ours"
+
+    def test_clear_pending_report(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        from ctx.core.conflicts import ConflictReport
+        gs = GitSync(store.root)
+
+        gs.save_pending_report(ConflictReport())
+        assert gs.has_pending_conflicts()
+
+        gs.clear_pending_report()
+        assert not gs.has_pending_conflicts()
+        assert gs.load_pending_report() is None
+
+    def test_has_pending_false_when_no_file(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        gs = GitSync(store.root)
+        assert not gs.has_pending_conflicts()
+
+    def test_load_returns_none_for_corrupt_file(self, store):
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        gs = GitSync(store.root)
+        gs._pending_path().write_text("not json at all {{{")
+        assert gs.load_pending_report() is None
+
+    def test_pull_agent_strategy_persists_report(self, two_repos):
+        _, clone_a, clone_b = two_repos
+
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.agent)
+        assert result["status"] == "conflicts"
+
+        # Report persisted to disk
+        assert gs_b.has_pending_conflicts()
+        loaded = gs_b.load_pending_report()
+        assert loaded is not None
+        assert loaded.unresolved_count > 0
+
+    def test_apply_resolutions_clears_pending(self, two_repos):
+        _, clone_a, clone_b = two_repos
+
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.agent)
+        assert result["status"] == "conflicts"
+        assert gs_b.has_pending_conflicts()
+
+        report = gs_b.load_pending_report()
+        resolutions = [(c.file_path, c.theirs_content) for c in report.conflicts]
+        gs_b.apply_resolutions(resolutions)
+
+        assert not gs_b.has_pending_conflicts()
+
+
 class TestApplyResolutions:
     def test_apply_resolutions_success(self, two_repos):
         """Create a conflict between two clones, resolve interactively."""

@@ -51,14 +51,14 @@ context-bundle/
 
 ## Project Phase
 
-Multi-agent merge + tool adapters complete. 345 tests passing. Schema v0.3.0.
+LLM-based conflict resolution complete. 374 tests passing. Schema v0.3.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
 - [x] Define prototype scope and target use cases
 - [x] Design minimal context bundle schema
 - [x] Build Claude Code adapter (import/export + MCP registration)
-- [x] Implement MCP server (12 tools, 8 resources, 3 prompts)
+- [x] Implement MCP server (15 tools, 8 resources, 4 prompts)
 - [x] Bundle versioning / migration framework
 - [x] Merge conflict detection and resolution UX
 - [x] Context scoping (public/private/ephemeral boundaries)
@@ -66,11 +66,12 @@ Multi-agent merge + tool adapters complete. 345 tests passing. Schema v0.3.0.
 - [x] Multi-tool adapters (OpenCode, Codex, Gemini, Cursor)
 - [x] Agent attribution on writes
 - [x] Schema migration to v0.3.0
+- [x] LLM-based conflict resolution via MCP delegation (Strategy.agent)
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (345 tests)
+- `pytest tests/ -v` to run full suite (374 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
 - MCP server: `ctx-mcp` entry point (stdio transport)

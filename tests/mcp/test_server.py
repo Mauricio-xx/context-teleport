@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import json
 
+import git
 import pytest
 
+from ctx.core.conflicts import ConflictEntry, ConflictReport
 from ctx.core.store import ContextStore
 from ctx.core.scope import Scope
+from ctx.sync.git_sync import GitSync
+from ctx.utils.paths import STORE_DIR
 from ctx.mcp.server import (
     mcp,
     set_store,
@@ -23,6 +27,11 @@ from ctx.mcp.server import (
     context_set,
     context_get_scope,
     context_set_scope,
+    context_merge_status,
+    context_resolve_conflict,
+    context_conflict_detail,
+    context_merge_finalize,
+    context_merge_abort,
     resource_manifest,
     resource_knowledge,
     resource_knowledge_item,
@@ -34,6 +43,7 @@ from ctx.mcp.server import (
     context_onboarding,
     context_handoff,
     context_review_decisions,
+    context_resolve_conflicts,
 )
 
 
@@ -42,6 +52,24 @@ def store(tmp_path):
     """Create and initialize a ContextStore in a temp directory."""
     s = ContextStore(tmp_path)
     s.init(project_name="test-mcp-project")
+    set_store(s)
+    yield s
+    set_store(None)
+
+
+@pytest.fixture
+def git_store(tmp_path):
+    """ContextStore in a git repo (needed for sync tool tests)."""
+    repo = git.Repo.init(tmp_path)
+    (tmp_path / "README.md").write_text("# Test\n")
+    repo.index.add(["README.md"])
+    repo.index.commit("initial")
+
+    s = ContextStore(tmp_path)
+    s.init(project_name="test-mcp-git")
+    repo.index.add([STORE_DIR])
+    repo.index.commit("init context store")
+
     set_store(s)
     yield s
     set_store(None)
@@ -321,6 +349,138 @@ class TestScopeTools:
         assert "Secret knowledge" not in result
 
 
+class TestSyncTools:
+    """Tests for conflict resolution MCP tools (disk-backed state)."""
+
+    def test_sync_pull_with_strategy_param(self, git_store):
+        result = json.loads(context_sync_pull(strategy="ours"))
+        assert result["status"] == "no_remote"
+
+    def test_sync_pull_invalid_strategy(self, git_store):
+        result = json.loads(context_sync_pull(strategy="invalid"))
+        assert result["status"] == "error"
+        assert "Invalid strategy" in result["error"]
+
+    def test_merge_status_clean(self, git_store):
+        result = json.loads(context_merge_status())
+        assert result["status"] == "clean"
+
+    def test_merge_status_with_pending(self, git_store):
+        gs = GitSync(git_store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs", "base"),
+        ])
+        gs.save_pending_report(report)
+
+        result = json.loads(context_merge_status())
+        assert result["status"] == "conflicts"
+        assert result["conflict_id"] == report.conflict_id
+        assert result["report"]["unresolved"] == 1
+
+    def test_conflict_detail_no_pending(self, git_store):
+        result = json.loads(context_conflict_detail("knowledge/arch.md"))
+        assert result["status"] == "error"
+        assert "No pending" in result["error"]
+
+    def test_conflict_detail_returns_full_content(self, git_store):
+        gs = GitSync(git_store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry(
+                "knowledge/arch.md",
+                "## Backend\nDjango\n",
+                "## Backend\nFastAPI\n",
+                "## Backend\nFlask\n",
+            ),
+        ])
+        gs.save_pending_report(report)
+
+        result = json.loads(context_conflict_detail("knowledge/arch.md"))
+        assert result["file_path"] == "knowledge/arch.md"
+        assert result["ours_content"] == "## Backend\nDjango\n"
+        assert result["theirs_content"] == "## Backend\nFastAPI\n"
+        assert result["base_content"] == "## Backend\nFlask\n"
+        assert "diff" in result
+        assert "section_analysis" in result
+
+    def test_conflict_detail_not_found(self, git_store):
+        gs = GitSync(git_store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs"),
+        ])
+        gs.save_pending_report(report)
+
+        result = json.loads(context_conflict_detail("knowledge/other.md"))
+        assert result["status"] == "error"
+
+    def test_resolve_conflict_persists(self, git_store):
+        gs = GitSync(git_store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs"),
+            ConflictEntry("knowledge/stack.md", "ours2", "theirs2"),
+        ])
+        gs.save_pending_report(report)
+
+        result = json.loads(context_resolve_conflict("knowledge/arch.md", "merged content"))
+        assert result["status"] == "resolved"
+        assert result["remaining"] == 1
+
+        # Verify persisted
+        reloaded = gs.load_pending_report()
+        assert reloaded.conflicts[0].resolved is True
+        assert reloaded.conflicts[0].resolution == "merged content"
+
+    def test_resolve_conflict_no_pending(self, git_store):
+        result = json.loads(context_resolve_conflict("knowledge/arch.md", "content"))
+        assert result["status"] == "error"
+        assert "No pending" in result["error"]
+
+    def test_merge_abort(self, git_store):
+        gs = GitSync(git_store.root)
+        gs.save_pending_report(ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs"),
+        ]))
+
+        result = json.loads(context_merge_abort())
+        assert result["status"] == "aborted"
+        assert not gs.has_pending_conflicts()
+
+    def test_merge_abort_no_pending(self, git_store):
+        result = json.loads(context_merge_abort())
+        assert result["status"] == "error"
+
+    def test_merge_finalize_no_pending(self, git_store):
+        result = json.loads(context_merge_finalize())
+        assert result["status"] == "error"
+        assert "No pending" in result["error"]
+
+
+class TestConflictResolutionPrompt:
+    def test_resolve_conflicts_no_pending(self, git_store):
+        result = context_resolve_conflicts()
+        assert "No pending" in result
+
+    def test_resolve_conflicts_with_pending(self, git_store):
+        gs = GitSync(git_store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours-long-content", "theirs-long-content"),
+            ConflictEntry("knowledge/stack.md", "ours2", "theirs2"),
+        ])
+        gs.save_pending_report(report)
+
+        result = context_resolve_conflicts()
+        assert "Merge Conflict Resolution Guide" in result
+        assert report.conflict_id in result
+        assert "knowledge/arch.md" in result
+        assert "knowledge/stack.md" in result
+        assert "context_conflict_detail" in result
+        assert "context_resolve_conflict" in result
+        assert "context_merge_finalize" in result
+
+    def test_resolve_conflicts_no_git(self, store):
+        result = context_resolve_conflicts()
+        assert "Error" in result
+
+
 class TestMCPRegistration:
     """Verify the FastMCP app has all expected tools/resources/prompts registered."""
 
@@ -339,13 +499,23 @@ class TestMCPRegistration:
             "context_set",
             "context_get_scope",
             "context_set_scope",
+            "context_merge_status",
+            "context_resolve_conflict",
+            "context_conflict_detail",
+            "context_merge_finalize",
+            "context_merge_abort",
         }
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
-    def test_has_at_least_12_tools(self, store):
-        assert len(mcp._tool_manager._tools) >= 12
+    def test_has_at_least_15_tools(self, store):
+        assert len(mcp._tool_manager._tools) >= 15
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())
-        expected = {"context_onboarding", "context_handoff", "context_review_decisions"}
+        expected = {
+            "context_onboarding",
+            "context_handoff",
+            "context_review_decisions",
+            "context_resolve_conflicts",
+        }
         assert expected.issubset(prompt_names), f"Missing prompts: {expected - prompt_names}"

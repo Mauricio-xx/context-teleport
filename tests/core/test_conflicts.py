@@ -129,6 +129,83 @@ class TestResolveSingle:
         assert result is False
 
 
+class TestConflictEntrySerialization:
+    def test_to_full_dict_includes_all_content(self):
+        entry = ConflictEntry(
+            file_path="knowledge/arch.md",
+            ours_content="Full ours content here",
+            theirs_content="Full theirs content here",
+            base_content="Full base content",
+        )
+        d = entry.to_full_dict()
+        assert d["ours_content"] == "Full ours content here"
+        assert d["theirs_content"] == "Full theirs content here"
+        assert d["base_content"] == "Full base content"
+        assert d["resolved"] is False
+        assert d["resolution"] == ""
+
+    def test_from_dict_round_trip(self):
+        original = ConflictEntry(
+            file_path="knowledge/stack.md",
+            ours_content="Python 3.12",
+            theirs_content="Python 3.11",
+            base_content="Python 3.10",
+            resolved=True,
+            resolution="Python 3.12",
+        )
+        restored = ConflictEntry.from_dict(original.to_full_dict())
+        assert restored.file_path == original.file_path
+        assert restored.ours_content == original.ours_content
+        assert restored.theirs_content == original.theirs_content
+        assert restored.base_content == original.base_content
+        assert restored.resolved == original.resolved
+        assert restored.resolution == original.resolution
+
+    def test_from_dict_defaults(self):
+        entry = ConflictEntry.from_dict({
+            "file_path": "test.md",
+            "ours_content": "ours",
+            "theirs_content": "theirs",
+        })
+        assert entry.base_content == ""
+        assert entry.resolved is False
+        assert entry.resolution == ""
+
+
+class TestConflictReportSerialization:
+    def test_conflict_id_generated(self):
+        r1 = ConflictReport()
+        r2 = ConflictReport()
+        assert r1.conflict_id != r2.conflict_id
+        assert len(r1.conflict_id) == 36  # UUID format
+
+    def test_to_json_from_json_round_trip(self):
+        original = ConflictReport(
+            conflicts=[
+                ConflictEntry("a.md", "ours-a", "theirs-a", "base-a"),
+                ConflictEntry("b.md", "ours-b", "theirs-b", resolved=True, resolution="merged-b"),
+            ],
+            auto_resolved=["c.md"],
+        )
+        restored = ConflictReport.from_json(original.to_json())
+        assert restored.conflict_id == original.conflict_id
+        assert restored.auto_resolved == ["c.md"]
+        assert len(restored.conflicts) == 2
+        assert restored.conflicts[0].file_path == "a.md"
+        assert restored.conflicts[0].ours_content == "ours-a"
+        assert restored.conflicts[1].resolved is True
+        assert restored.conflicts[1].resolution == "merged-b"
+
+    def test_to_json_is_valid_json(self):
+        import json
+        report = ConflictReport(conflicts=[
+            ConflictEntry("test.md", "ours", "theirs"),
+        ])
+        data = json.loads(report.to_json())
+        assert "conflict_id" in data
+        assert "conflicts" in data
+
+
 class TestMergeJsonWithStrategy:
     def test_ours_strategy(self):
         result = merge_json(
