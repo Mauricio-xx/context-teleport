@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ctx.adapters._mcp_reg import register_mcp_json, unregister_mcp_json
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import get_author
@@ -98,14 +99,11 @@ class GeminiAdapter:
 
         return {"items": items, "exported": exported, "dry_run": False}
 
-    def mcp_config_path(self) -> Path | None:
-        settings = self.store.root / ".gemini" / "settings.json"
-        if settings.is_file():
-            return settings
-        return None
+    def mcp_config_path(self) -> Path:
+        return self.store.root / ".gemini" / "settings.json"
 
-    def register_mcp(self) -> dict:
-        return {"status": "unsupported", "reason": "Gemini MCP registration requires VS Code settings"}
+    def register_mcp(self, local: bool = False) -> dict:
+        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:gemini", local=local)
 
     def unregister_mcp(self) -> dict:
-        return {"status": "unsupported", "reason": "Gemini MCP registration requires VS Code settings"}
+        return unregister_mcp_json(self.mcp_config_path())

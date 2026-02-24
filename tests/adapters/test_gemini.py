@@ -1,5 +1,7 @@
 """Tests for Gemini adapter."""
 
+import json
+
 from ctx.adapters.gemini import GeminiAdapter
 
 
@@ -72,7 +74,44 @@ class TestExport:
 
 
 class TestMcp:
-    def test_mcp_unsupported(self, store):
+    def test_register_creates_config(self, store):
         adapter = GeminiAdapter(store)
         result = adapter.register_mcp()
-        assert result["status"] == "unsupported"
+        assert result["status"] == "registered"
+        config_path = store.root / ".gemini" / "settings.json"
+        assert config_path.is_file()
+        config = json.loads(config_path.read_text())
+        assert "context-teleport" in config["mcpServers"]
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
+
+    def test_register_creates_parent_dir(self, store):
+        adapter = GeminiAdapter(store)
+        assert not (store.root / ".gemini").exists()
+        result = adapter.register_mcp()
+        assert result["status"] == "registered"
+        assert (store.root / ".gemini" / "settings.json").is_file()
+
+    def test_register_is_idempotent(self, store):
+        adapter = GeminiAdapter(store)
+        adapter.register_mcp()
+        adapter.register_mcp()
+        config_path = store.root / ".gemini" / "settings.json"
+        config = json.loads(config_path.read_text())
+        assert len(config["mcpServers"]) == 1
+
+    def test_unregister(self, store):
+        adapter = GeminiAdapter(store)
+        adapter.register_mcp()
+        result = adapter.unregister_mcp()
+        assert result["status"] == "unregistered"
+        config_path = store.root / ".gemini" / "settings.json"
+        config = json.loads(config_path.read_text())
+        assert "context-teleport" not in config["mcpServers"]
+
+    def test_mcp_config_path_always_returns(self, store):
+        adapter = GeminiAdapter(store)
+        path = adapter.mcp_config_path()
+        assert path is not None
+        assert path.name == "settings.json"

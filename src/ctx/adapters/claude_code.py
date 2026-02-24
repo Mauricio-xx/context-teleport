@@ -246,17 +246,17 @@ class ClaudeCodeAdapter:
         """Return the path to Claude Code's MCP config file."""
         return self.store.root / ".claude" / "mcp.json"
 
-    def register_mcp_server(self) -> dict:
+    def register_mcp_server(self, local: bool = False) -> dict:
         """Register the ctx-mcp server in .claude/mcp.json."""
-        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:claude-code")
+        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:claude-code", local=local)
 
     def unregister_mcp_server(self) -> dict:
         """Remove the ctx-mcp server from .claude/mcp.json."""
         return unregister_mcp_json(self.mcp_config_path())
 
-    def register_mcp(self) -> dict:
+    def register_mcp(self, local: bool = False) -> dict:
         """Register ctx-mcp (AdapterProtocol method)."""
-        return self.register_mcp_server()
+        return self.register_mcp_server(local=local)
 
     def unregister_mcp(self) -> dict:
         """Remove ctx-mcp (AdapterProtocol method)."""

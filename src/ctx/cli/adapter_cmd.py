@@ -82,6 +82,11 @@ def register_mcp_commands(app: typer.Typer) -> None:
             None,
             help="Tool name (auto-detect if omitted). Options: claude-code, opencode, codex, gemini, cursor",
         ),
+        local: bool = typer.Option(
+            False,
+            "--local",
+            help="Use local ctx-mcp command instead of uvx (for development)",
+        ),
         fmt: Optional[str] = FORMAT_OPTION,
     ) -> None:
         """Register ctx-mcp server. Auto-detects available tools or specify one."""
@@ -94,7 +99,7 @@ def register_mcp_commands(app: typer.Typer) -> None:
             if adapter is None:
                 error(f"Unknown tool: {tool}")
                 raise typer.Exit(1)
-            result = adapter.register_mcp()
+            result = adapter.register_mcp(local=local)
             if fmt == "json":
                 output(result, fmt="json")
             elif result["status"] == "registered":
@@ -112,7 +117,7 @@ def register_mcp_commands(app: typer.Typer) -> None:
                     adapter = get_adapter(name, store)
                     if adapter is None:
                         continue
-                    result = adapter.register_mcp()
+                    result = adapter.register_mcp(local=local)
                     if result.get("status") == "registered":
                         registered.append(name.replace("_", "-"))
             if fmt == "json":
@@ -223,7 +228,17 @@ def import_bundle(
     store = get_store()
     from ctx.adapters.bundle import import_bundle as do_import
 
-    result = do_import(store, Path(path))
+    try:
+        result = do_import(store, Path(path))
+    except FileNotFoundError:
+        error(f"Bundle not found: {path}")
+        raise typer.Exit(1)
+    except ValueError as e:
+        error(f"Invalid bundle: {e}")
+        raise typer.Exit(1)
+    except Exception as e:
+        error(f"Import failed: {e}")
+        raise typer.Exit(1)
     if fmt == "json":
         output(result, fmt="json")
     else:
@@ -287,7 +302,17 @@ def export_bundle(
     store = get_store()
     from ctx.adapters.bundle import export_bundle as do_export
 
-    result = do_export(store, Path(path))
+    try:
+        result = do_export(store, Path(path))
+    except FileNotFoundError:
+        error(f"Path not found: {path}")
+        raise typer.Exit(1)
+    except PermissionError:
+        error(f"Permission denied: {path}")
+        raise typer.Exit(1)
+    except Exception as e:
+        error(f"Export failed: {e}")
+        raise typer.Exit(1)
     if fmt == "json":
         output(result, fmt="json")
     else:

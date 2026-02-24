@@ -28,7 +28,7 @@ class AdapterProtocol(Protocol):
         """Return the path to this tool's MCP config file, or None if unsupported."""
         ...
 
-    def register_mcp(self) -> dict:
+    def register_mcp(self, local: bool = False) -> dict:
         """Register ctx-mcp in the tool's MCP config."""
         ...
 

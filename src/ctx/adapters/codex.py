@@ -90,7 +90,7 @@ class CodexAdapter:
         # Codex MCP support is TBD
         return None
 
-    def register_mcp(self) -> dict:
+    def register_mcp(self, local: bool = False) -> dict:
         return {"status": "unsupported", "reason": "Codex does not yet support MCP"}
 
     def unregister_mcp(self) -> dict:

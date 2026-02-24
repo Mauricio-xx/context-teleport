@@ -1,8 +1,11 @@
 # Context Teleport
 
-Portable, git-backed context store for AI coding agents.
+![Schema v0.3.0](https://img.shields.io/badge/schema-v0.3.0-blue)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-green)
+![CI](https://github.com/Mauricio-xx/context-teleport/actions/workflows/ci.yml/badge.svg)
 
-Schema v0.3.0 | Python 3.11+ | AGPL-3.0
+Portable, git-backed context store for AI coding agents.
 
 ---
 
@@ -21,12 +24,28 @@ AI coding agents accumulate deep context over sessions -- architecture decisions
 - **Agent attribution** -- tracks which agent wrote each entry
 - **LLM-based conflict resolution** -- agents can inspect and resolve merge conflicts via MCP tools
 
+## Prerequisites
+
+- Python 3.11 or higher
+- git
+- Optional: [watchdog](https://github.com/gorakhargosh/watchdog) for filesystem-based auto-sync (`ctx watch`)
+
+## Installation
+
+```bash
+git clone https://github.com/Mauricio-xx/context-teleport.git
+cd context-teleport
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+# Optional: install watchdog for ctx watch
+pip install -e ".[watch]"
+```
+
 ## Quickstart
 
 ```bash
-# Install
-pip install -e .
-
 # Initialize a context store in your project
 ctx init --name my-project
 
@@ -70,6 +89,8 @@ All commands support `--format json` for machine-readable output.
 | `ctx log` | Show context change history (`--oneline`, `-n`) |
 | `ctx register [tool]` | Register MCP server (auto-detects if no tool specified) |
 | `ctx unregister [tool]` | Remove MCP server registration |
+| `ctx watch` | Monitor store and auto-commit/push on changes |
+| `ctx config get\|set\|list` | Manage global configuration (default strategy, default scope) |
 
 ### `ctx knowledge`
 
@@ -135,17 +156,77 @@ The MCP server exposes the full context store to any MCP-compatible agent over s
 ### Starting the server
 
 ```bash
-# Direct (stdio transport)
-ctx-mcp
-
 # Register with a specific tool
 ctx register claude-code   # writes .claude/mcp.json
 ctx register opencode      # writes opencode.json
 ctx register cursor        # writes .cursor/mcp.json
+ctx register gemini        # writes .gemini/settings.json
 
 # Auto-detect and register all available tools
 ctx register
 ```
+
+### Manual MCP configuration
+
+If you prefer to configure MCP manually instead of using `ctx register`:
+
+**Claude Code** (`.claude/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "context-teleport": {
+      "command": "uvx",
+      "args": ["context-teleport"],
+      "type": "stdio",
+      "env": { "MCP_CALLER": "mcp:claude-code" }
+    }
+  }
+}
+```
+
+**OpenCode** (`opencode.json`):
+```json
+{
+  "mcpServers": {
+    "context-teleport": {
+      "command": "uvx",
+      "args": ["context-teleport"],
+      "type": "stdio",
+      "env": { "MCP_CALLER": "mcp:opencode" }
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "context-teleport": {
+      "command": "uvx",
+      "args": ["context-teleport"],
+      "type": "stdio",
+      "env": { "MCP_CALLER": "mcp:cursor" }
+    }
+  }
+}
+```
+
+**Gemini** (`.gemini/settings.json`):
+```json
+{
+  "mcpServers": {
+    "context-teleport": {
+      "command": "uvx",
+      "args": ["context-teleport"],
+      "type": "stdio",
+      "env": { "MCP_CALLER": "mcp:gemini" }
+    }
+  }
+}
+```
+
+The `MCP_CALLER` env var is used for agent attribution -- it tags knowledge entries and decisions with the agent that wrote them.
 
 ### Resources
 
@@ -248,7 +329,7 @@ ctx register
 | **Claude Code** | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md` | `CLAUDE.md` managed section, `MEMORY.md` | `.claude/mcp.json` |
 | **OpenCode** | `AGENTS.md`, `.opencode/opencode.db` (sessions) | `AGENTS.md` managed section | `opencode.json` |
 | **Codex** | `AGENTS.md`, `.codex/instructions.md` | `AGENTS.md` managed section | Not supported |
-| **Gemini** | `.gemini/rules/*.md`, `.gemini/STYLEGUIDE.md`, `GEMINI.md` | `.gemini/rules/ctx-*.md` | Not supported |
+| **Gemini** | `.gemini/rules/*.md`, `.gemini/STYLEGUIDE.md`, `GEMINI.md` | `.gemini/rules/ctx-*.md` | `.gemini/settings.json` |
 | **Cursor** | `.cursor/rules/*.mdc` (MDC format), `.cursorrules` | `.cursor/rules/ctx-*.mdc` | `.cursor/mcp.json` |
 
 Export writes only public-scope entries. Import attributes each entry with `import:<tool>` as the author.
@@ -314,6 +395,37 @@ When using `strategy=agent`, the workflow is:
 
 Conflict state is persisted to `.context-teleport/.pending_conflicts.json` (gitignored), so it survives across MCP calls and stateless tool invocations. Use `context_merge_abort()` to discard and start over.
 
+## Team sync walkthrough
+
+Context Teleport is built for teams. Here is a typical multi-person workflow:
+
+**Person A** initializes the shared context:
+```bash
+cd my-project
+ctx init --name my-project --repo-url git@github.com:team/my-project.git
+ctx knowledge set architecture "FastAPI + PostgreSQL, hexagonal architecture"
+ctx decision add "Use PostgreSQL over SQLite"
+ctx push -m "Initial project context"
+```
+
+**Person B** clones and starts working:
+```bash
+cd my-project    # already has the git remote
+ctx pull
+ctx summary      # see what Person A shared
+ctx knowledge set deployment "Docker Compose for local, k8s for prod"
+ctx push -m "Add deployment knowledge"
+```
+
+**Handling conflicts** -- if both edit the same file:
+```bash
+# Person B pulls and gets a conflict
+ctx pull --strategy interactive   # TUI to resolve each file
+
+# Or let the agent resolve it
+ctx pull --strategy agent         # conflicts exposed via MCP tools
+```
+
 ## Development
 
 ```bash
@@ -322,12 +434,18 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Run tests (374 tests)
+# Run tests
 pytest tests/ -v
 
 # Lint
 ruff check src/ tests/
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and the PR process.
+
+All contributions require signing the [CLA](CLA.md).
 
 ## License
 

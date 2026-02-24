@@ -8,6 +8,7 @@ import pytest
 
 from ctx.adapters.claude_code import ClaudeCodeAdapter
 from ctx.adapters.cursor import CursorAdapter
+from ctx.adapters.gemini import GeminiAdapter
 from ctx.adapters.opencode import OpenCodeAdapter
 from ctx.core.store import ContextStore
 
@@ -30,7 +31,20 @@ class TestRegisterMCP:
 
         config = json.loads(config_path.read_text())
         assert "context-teleport" in config["mcpServers"]
-        assert config["mcpServers"]["context-teleport"]["command"] == "ctx-mcp"
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
+
+    def test_register_local_mode(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.register_mcp_server(local=True)
+
+        assert result["status"] == "registered"
+        config_path = store.root / ".claude" / "mcp.json"
+        config = json.loads(config_path.read_text())
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "ctx-mcp"
+        assert "args" not in entry
 
     def test_register_is_idempotent(self, store):
         adapter = ClaudeCodeAdapter(store)
@@ -87,7 +101,7 @@ class TestRegisterMCP:
 
 
 class TestRegisterMCPEnv:
-    """Verify MCP_CALLER env is set correctly in each adapter's registration."""
+    """Verify MCP_CALLER env and uvx args are set correctly in each adapter's registration."""
 
     def test_claude_code_sets_env(self, store):
         adapter = ClaudeCodeAdapter(store)
@@ -96,6 +110,8 @@ class TestRegisterMCPEnv:
         config_path = store.root / ".claude" / "mcp.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
         assert entry["env"] == {"MCP_CALLER": "mcp:claude-code"}
 
     def test_opencode_sets_env(self, store):
@@ -105,6 +121,8 @@ class TestRegisterMCPEnv:
         config_path = store.root / "opencode.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
         assert entry["env"] == {"MCP_CALLER": "mcp:opencode"}
 
     def test_cursor_sets_env(self, store):
@@ -114,4 +132,17 @@ class TestRegisterMCPEnv:
         config_path = store.root / ".cursor" / "mcp.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
         assert entry["env"] == {"MCP_CALLER": "mcp:cursor"}
+
+    def test_gemini_sets_env(self, store):
+        adapter = GeminiAdapter(store)
+        adapter.register_mcp()
+
+        config_path = store.root / ".gemini" / "settings.json"
+        config = json.loads(config_path.read_text())
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["command"] == "uvx"
+        assert entry["args"] == ["context-teleport"]
+        assert entry["env"] == {"MCP_CALLER": "mcp:gemini"}

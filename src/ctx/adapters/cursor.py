@@ -154,8 +154,8 @@ class CursorAdapter:
     def mcp_config_path(self) -> Path:
         return self.store.root / ".cursor" / "mcp.json"
 
-    def register_mcp(self) -> dict:
-        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:cursor")
+    def register_mcp(self, local: bool = False) -> dict:
+        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:cursor", local=local)
 
     def unregister_mcp(self) -> dict:
         return unregister_mcp_json(self.mcp_config_path())
