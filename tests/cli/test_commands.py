@@ -317,6 +317,16 @@ class TestAdapterImportExport:
         assert data["exported"] >= 1
 
 
+class TestBundleErrorHandling:
+    def test_import_missing_path(self, initialized_project):
+        result = runner.invoke(app, ["import", "bundle", "/nonexistent/path/bundle.ctxbundle"])
+        assert result.exit_code == 1
+
+    def test_export_invalid_path(self, initialized_project):
+        result = runner.invoke(app, ["export", "bundle", "/nonexistent/dir/out.ctxbundle"])
+        assert result.exit_code == 1
+
+
 class TestMCPRegistration:
     def test_register_specific_tool(self, initialized_project):
         result = runner.invoke(app, ["register", "opencode", "--format", "json"])

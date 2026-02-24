@@ -4,10 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "context-teleport"
-version = "0.1.0"
+version = "0.3.0"
 description = "Portable, git-backed context store for AI coding agents"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
+authors = [
+    {name = "Mauricio-xx", email = "mauricio.xmonatanares@gmail.com"},
+]
+keywords = ["ai", "context", "mcp", "coding-agents", "git"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+]
 dependencies = [
     "typer>=0.9.0",
     "pydantic>=2.0",
@@ -16,18 +28,23 @@ dependencies = [
     "mcp>=1.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Mauricio-xx/context-teleport"
+Repository = "https://github.com/Mauricio-xx/context-teleport"
+Issues = "https://github.com/Mauricio-xx/context-teleport/issues"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
+    "anyio>=4.0",
 ]
 watch = [
     "watchdog>=3.0",
 ]
 
 [project.scripts]
-ctx = "ctx.cli.main:app"
-ctx-mcp = "ctx.mcp.server:main"
+context-teleport = "ctx._entry:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ctx"]

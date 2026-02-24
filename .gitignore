@@ -12,3 +12,26 @@ venv/
 .mypy_cache/
 SESSION_LOG.md
 .claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# IDE
+.idea/
+
+# Swap files
+*.swp
+*.swo

@@ -43,7 +43,7 @@ class TestRegisterMCP:
         config_path = store.root / ".claude" / "mcp.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
-        assert entry["command"] == "ctx-mcp"
+        assert entry["command"] == "context-teleport"
         assert "args" not in entry
 
     def test_register_is_idempotent(self, store):

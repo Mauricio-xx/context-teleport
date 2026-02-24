@@ -74,7 +74,7 @@ def _export_adapter(adapter_name: str, label: str, dry_run: bool, fmt: str | Non
 
 
 def register_mcp_commands(app: typer.Typer) -> None:
-    """Register top-level `ctx register` and `ctx unregister` commands."""
+    """Register top-level `context-teleport register` and `context-teleport unregister` commands."""
 
     @app.command("register")
     def register_cmd(
@@ -85,11 +85,11 @@ def register_mcp_commands(app: typer.Typer) -> None:
         local: bool = typer.Option(
             False,
             "--local",
-            help="Use local ctx-mcp command instead of uvx (for development)",
+            help="Use local context-teleport command instead of uvx (for development)",
         ),
         fmt: Optional[str] = FORMAT_OPTION,
     ) -> None:
-        """Register ctx-mcp server. Auto-detects available tools or specify one."""
+        """Register context-teleport MCP server. Auto-detects available tools or specify one."""
         store = get_store()
         from ctx.adapters.registry import detect_adapters, get_adapter
 
@@ -135,7 +135,7 @@ def register_mcp_commands(app: typer.Typer) -> None:
         ),
         fmt: Optional[str] = FORMAT_OPTION,
     ) -> None:
-        """Remove ctx-mcp server registration. Unregisters from all detected tools if none specified."""
+        """Remove context-teleport MCP server registration. Unregisters from all detected tools if none specified."""
         store = get_store()
         from ctx.adapters.registry import detect_adapters, get_adapter
 
@@ -171,7 +171,7 @@ def register_mcp_commands(app: typer.Typer) -> None:
                 info("No registrations found to remove")
 
 
-# -- Import commands (under `ctx import`) --
+# -- Import commands (under `context-teleport import`) --
 
 
 @adapter_app.command("claude-code")
@@ -245,7 +245,7 @@ def import_bundle(
         success(f"Imported bundle from {path}: {result.get('imported', 0)} items")
 
 
-# -- Export commands (under `ctx export`) --
+# -- Export commands (under `context-teleport export`) --
 
 
 @export_app.command("claude-code")

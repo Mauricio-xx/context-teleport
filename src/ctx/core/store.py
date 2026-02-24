@@ -81,7 +81,7 @@ class ContextStore:
 
     def _require_init(self) -> None:
         if not self.initialized:
-            raise StoreError("Context store not initialized. Run `ctx init` first.")
+            raise StoreError("Context store not initialized. Run `context-teleport init` first.")
 
     # -- Scope management --
 

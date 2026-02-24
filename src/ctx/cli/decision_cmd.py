@@ -45,7 +45,7 @@ def decision_list(
         output(items, fmt="json")
     else:
         if not decisions:
-            info("No decisions recorded yet. Use `ctx decision add <title>` to create one.")
+            info("No decisions recorded yet. Use `context-teleport decision add <title>` to create one.")
             return
         rows = []
         for d in decisions:

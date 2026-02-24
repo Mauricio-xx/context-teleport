@@ -13,11 +13,11 @@ def _server_entry(caller_name: str = "", local: bool = False) -> dict:
 
     When local=False (default), uses ``uvx context-teleport`` so the package
     is resolved automatically without needing an activated venv.
-    When local=True, uses ``ctx-mcp`` directly (requires PATH/venv).
+    When local=True, uses ``context-teleport`` directly (requires PATH/venv).
     """
     if local:
         entry: dict = {
-            "command": "ctx-mcp",
+            "command": "context-teleport",
             "type": "stdio",
         }
     else:
@@ -47,7 +47,7 @@ def register_mcp_json(
     caller_name: str = "",
     local: bool = False,
 ) -> dict:
-    """Register ctx-mcp in a JSON config file with mcpServers key.
+    """Register context-teleport in a JSON config file with mcpServers key.
 
     Works for Claude (.claude/mcp.json), Cursor (.cursor/mcp.json),
     OpenCode (opencode.json), etc.
@@ -67,7 +67,7 @@ def register_mcp_json(
 
 
 def unregister_mcp_json(config_path: Path, server_name: str = SERVER_NAME) -> dict:
-    """Remove ctx-mcp from a JSON config file."""
+    """Remove context-teleport from a JSON config file."""
     config = _safe_read_json(config_path)
     servers = config.get("mcpServers", {})
     if server_name not in servers:

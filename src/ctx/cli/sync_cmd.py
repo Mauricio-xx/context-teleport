@@ -42,10 +42,14 @@ def sync_push(
 
 @sync_app.command("pull")
 def sync_pull(
-    strategy: str = typer.Option("ours", "--strategy", "-s", help="Merge strategy: ours, theirs, interactive, agent"),
+    strategy: Optional[str] = typer.Option(None, "--strategy", "-s", help="Merge strategy: ours, theirs, interactive, agent"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Pull remote context and merge."""
+    if strategy is None:
+        from ctx.utils.config import load_global_config
+        strategy = load_global_config().get("default_strategy", "ours")
+
     store = get_store()
     from ctx.core.conflicts import Strategy
     from ctx.sync.git_sync import GitSync
@@ -97,7 +101,7 @@ def sync_pull(
             error(f"Merge conflicts detected: {report.get('unresolved', 0)} unresolved")
             for c in report.get("conflicts", []):
                 info(f"  {c['file_path']}")
-            info("Resolve with: ctx sync resolve --strategy ours|theirs")
+            info("Resolve with: context-teleport sync resolve --strategy ours|theirs")
         else:
             error(result.get("error", "Pull failed"))
 
@@ -110,7 +114,7 @@ def sync_resolve(
     """Resolve pending merge conflicts by retrying pull with the given strategy.
 
     Only supports 'ours' and 'theirs'. For interactive resolution, use
-    `ctx pull --strategy interactive` which handles the full TUI flow.
+    `context-teleport pull --strategy interactive` which handles the full TUI flow.
     """
     store = get_store()
     from ctx.core.conflicts import Strategy
@@ -118,7 +122,7 @@ def sync_resolve(
 
     if strategy not in ("ours", "theirs"):
         error(f"Invalid strategy: {strategy}. Use: ours, theirs")
-        info("For interactive resolution, use: ctx pull --strategy interactive")
+        info("For interactive resolution, use: context-teleport pull --strategy interactive")
         raise typer.Exit(1)
 
     try:
@@ -211,7 +215,7 @@ def register_sync_shortcuts(app: typer.Typer) -> None:
 
     @app.command("pull")
     def pull_shortcut(
-        strategy: str = typer.Option("ours", "--strategy", "-s"),
+        strategy: Optional[str] = typer.Option(None, "--strategy", "-s"),
         fmt: Optional[str] = FORMAT_OPTION,
     ) -> None:
         """Pull remote context and merge."""

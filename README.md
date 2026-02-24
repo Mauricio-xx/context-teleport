@@ -29,9 +29,9 @@ AI coding agents accumulate deep context over sessions -- architecture decisions
 Context Teleport is an **MCP server**. After a one-time registration, your agent tool manages context autonomously -- you interact through natural language, not terminal commands.
 
 ```
-1. Register         ctx register claude-code
+1. Register         context-teleport register claude-code
                          |
-2. Agent connects   Tool starts a session -> spawns ctx-mcp over stdio
+2. Agent connects   Tool starts a session -> spawns context-teleport over stdio
                          |
 3. Agent works      Reads dynamic onboarding -> uses 17 tools autonomously
                          |
@@ -40,12 +40,12 @@ Context Teleport is an **MCP server**. After a one-time registration, your agent
 
 The lifecycle in detail:
 
-1. **Register once** -- `ctx register <tool>` writes the MCP config for your agent tool (Claude Code, OpenCode, Cursor, Gemini). This is the only time you touch the terminal.
-2. **Agent spawns the server** -- when you open a session, the tool starts `ctx-mcp` automatically over stdio. The server detects the project, reads the store, and presents dynamic onboarding instructions.
+1. **Register once** -- `context-teleport register <tool>` writes the MCP config for your agent tool (Claude Code, OpenCode, Cursor, Gemini). This is the only time you touch the terminal.
+2. **Agent spawns the server** -- when you open a session, the tool starts `context-teleport` automatically over stdio. The server detects the project, reads the store, and presents dynamic onboarding instructions.
 3. **Agent uses tools directly** -- the agent sees 17 tools (`context_add_knowledge`, `context_sync_push`, `context_record_decision`, etc.), 8 resources, and 4 prompts. It reads and writes context as part of normal conversation.
 4. **Git sync happens through the agent** -- the agent pushes/pulls via MCP tools. On server shutdown, uncommitted changes are auto-pushed as a safety net.
 
-You never need to run `ctx` commands during normal usage. The CLI exists for setup and for operations outside of agent sessions.
+You never need to run `context-teleport` commands during normal usage. The CLI exists for setup and for operations outside of agent sessions.
 
 ## Quickstart
 
@@ -66,13 +66,13 @@ pip install context-teleport
 uvx context-teleport init --name my-project
 
 # Or if installed
-ctx init --name my-project
+context-teleport init --name my-project
 ```
 
 ### 3. Register MCP server for your agent tool
 
 ```bash
-ctx register claude-code   # or: opencode, cursor, gemini
+context-teleport register claude-code   # or: opencode, cursor, gemini
 ```
 
 This writes the MCP config file for your tool (e.g. `.claude/mcp.json`). Done.
@@ -115,8 +115,8 @@ After registration, the MCP server config uses `uvx` as the command, so your age
 ```bash
 pip install context-teleport
 
-ctx init --name my-project
-ctx register claude-code
+context-teleport init --name my-project
+context-teleport register claude-code
 ```
 
 ### From source (for development)
@@ -129,7 +129,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Use --local flag to register with a local entry point instead of uvx
-ctx register claude-code --local
+context-teleport register claude-code --local
 ```
 
 ## Team setup
@@ -140,8 +140,8 @@ Context Teleport is built for teams. Each person registers the MCP server once; 
 
 ```bash
 cd my-project
-ctx init --name my-project --repo-url git@github.com:team/my-project.git
-ctx register claude-code
+context-teleport init --name my-project --repo-url git@github.com:team/my-project.git
+context-teleport register claude-code
 ```
 
 Then in the agent session:
@@ -162,7 +162,7 @@ Agent: [calls context_sync_push(message="Initial project context")]
 
 ```bash
 cd my-project    # already has the git remote
-ctx register claude-code
+context-teleport register claude-code
 ```
 
 Then open the agent tool. At session start, the server presents onboarding with all existing team context. Person B is immediately caught up.
@@ -200,18 +200,18 @@ The MCP server is the primary interface. It exposes the full context store to an
 ### Registration
 
 ```bash
-ctx register claude-code   # writes .claude/mcp.json
-ctx register opencode      # writes opencode.json
-ctx register cursor        # writes .cursor/mcp.json
-ctx register gemini        # writes .gemini/settings.json
+context-teleport register claude-code   # writes .claude/mcp.json
+context-teleport register opencode      # writes opencode.json
+context-teleport register cursor        # writes .cursor/mcp.json
+context-teleport register gemini        # writes .gemini/settings.json
 
 # Auto-detect and register all available tools
-ctx register
+context-teleport register
 ```
 
 ### Manual MCP configuration
 
-If you prefer to configure MCP manually instead of using `ctx register`:
+If you prefer to configure MCP manually instead of using `context-teleport register`:
 
 **Claude Code** (`.claude/mcp.json`):
 ```json
@@ -350,22 +350,22 @@ The CLI is available for setup and for operations outside of agent sessions. All
 
 | Command | Description |
 |---------|-------------|
-| `ctx init` | Initialize context store (`--name`, `--repo-url`) |
-| `ctx status` | Show store state, sync status, adapter info |
-| `ctx get <dotpath>` | Read any value by dotpath (e.g. `knowledge.architecture`) |
-| `ctx set <dotpath> <value>` | Write any value by dotpath |
-| `ctx search <query>` | Full-text search across all context (`--json`) |
-| `ctx summary` | One-page context summary for LLM context windows |
-| `ctx push` | Stage, commit, and push context changes (`-m`) |
-| `ctx pull` | Pull remote context and merge (`-s ours\|theirs\|interactive\|agent`) |
-| `ctx diff` | Show context changes (`--remote`) |
-| `ctx log` | Show context change history (`--oneline`, `-n`) |
-| `ctx register [tool]` | Register MCP server (auto-detects if no tool specified) |
-| `ctx unregister [tool]` | Remove MCP server registration |
-| `ctx watch` | Monitor store and auto-commit/push on changes |
-| `ctx config get\|set\|list` | Manage global configuration (default strategy, default scope) |
+| `context-teleport init` | Initialize context store (`--name`, `--repo-url`) |
+| `context-teleport status` | Show store state, sync status, adapter info |
+| `context-teleport get <dotpath>` | Read any value by dotpath (e.g. `knowledge.architecture`) |
+| `context-teleport set <dotpath> <value>` | Write any value by dotpath |
+| `context-teleport search <query>` | Full-text search across all context (`--json`) |
+| `context-teleport summary` | One-page context summary for LLM context windows |
+| `context-teleport push` | Stage, commit, and push context changes (`-m`) |
+| `context-teleport pull` | Pull remote context and merge (`-s ours\|theirs\|interactive\|agent`) |
+| `context-teleport diff` | Show context changes (`--remote`) |
+| `context-teleport log` | Show context change history (`--oneline`, `-n`) |
+| `context-teleport register [tool]` | Register MCP server (auto-detects if no tool specified) |
+| `context-teleport unregister [tool]` | Remove MCP server registration |
+| `context-teleport watch` | Monitor store and auto-commit/push on changes |
+| `context-teleport config get\|set\|list` | Manage global configuration (default strategy, default scope) |
 
-### `ctx knowledge`
+### `context-teleport knowledge`
 
 | Command | Description |
 |---------|-------------|
@@ -376,7 +376,7 @@ The CLI is available for setup and for operations outside of agent sessions. All
 | `knowledge scope <key> <scope>` | Change entry scope |
 | `knowledge search <query>` | Full-text search within knowledge |
 
-### `ctx decision`
+### `context-teleport decision`
 
 | Command | Description |
 |---------|-------------|
@@ -384,7 +384,7 @@ The CLI is available for setup and for operations outside of agent sessions. All
 | `decision get <id\|title>` | Read a decision by ID or title match |
 | `decision add <title>` | Create ADR (opens `$EDITOR`, or `--file`, or stdin) |
 
-### `ctx state`
+### `context-teleport state`
 
 | Command | Description |
 |---------|-------------|
@@ -392,7 +392,7 @@ The CLI is available for setup and for operations outside of agent sessions. All
 | `state set <key> <value>` | Update state field (`current_task`, `blockers`, or custom) |
 | `state clear` | Reset ephemeral session state |
 
-### `ctx sync`
+### `context-teleport sync`
 
 | Command | Description |
 |---------|-------------|
@@ -402,22 +402,22 @@ The CLI is available for setup and for operations outside of agent sessions. All
 | `sync diff` | Show changes (`--remote` to compare with remote) |
 | `sync log` | Show context commit history (`--oneline`, `-n`) |
 
-### `ctx import` / `ctx export`
+### `context-teleport import` / `context-teleport export`
 
 ```bash
-ctx import claude-code    # Extract from Claude Code into store
-ctx import opencode       # Import from OpenCode
-ctx import codex          # Import from Codex
-ctx import gemini         # Import from Gemini
-ctx import cursor         # Import from Cursor
-ctx import bundle <path>  # Import a .ctxbundle archive
+context-teleport import claude-code    # Extract from Claude Code into store
+context-teleport import opencode       # Import from OpenCode
+context-teleport import codex          # Import from Codex
+context-teleport import gemini         # Import from Gemini
+context-teleport import cursor         # Import from Cursor
+context-teleport import bundle <path>  # Import a .ctxbundle archive
 
-ctx export claude-code    # Inject store into Claude Code locations
-ctx export opencode       # Export to OpenCode (AGENTS.md)
-ctx export codex          # Export to Codex (AGENTS.md)
-ctx export gemini         # Export to Gemini (.gemini/rules/)
-ctx export cursor         # Export to Cursor (.cursor/rules/)
-ctx export bundle <path>  # Export as portable .ctxbundle archive
+context-teleport export claude-code    # Inject store into Claude Code locations
+context-teleport export opencode       # Export to OpenCode (AGENTS.md)
+context-teleport export codex          # Export to Codex (AGENTS.md)
+context-teleport export gemini         # Export to Gemini (.gemini/rules/)
+context-teleport export cursor         # Export to Cursor (.cursor/rules/)
+context-teleport export bundle <path>  # Export as portable .ctxbundle archive
 ```
 
 All import/export commands support `--dry-run` to preview changes.
@@ -514,7 +514,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Optional: install watchdog for ctx watch
+# Optional: install watchdog for context-teleport watch
 pip install -e ".[watch]"
 
 # Run tests

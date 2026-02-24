@@ -51,7 +51,7 @@ context-bundle/
 
 ## Project Phase
 
-Pre-production hardening complete. 394 tests passing. Schema v0.3.0.
+Release-ready. 409 tests passing. Schema v0.3.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
@@ -69,18 +69,20 @@ Pre-production hardening complete. 394 tests passing. Schema v0.3.0.
 - [x] LLM-based conflict resolution via MCP delegation (Strategy.agent)
 - [x] Dynamic onboarding instructions at MCP server startup
 - [x] MCP_CALLER env propagation through adapter registration
-- [x] Auto-sync via `ctx watch` (watchdog + polling fallback)
+- [x] Auto-sync via `context-teleport watch` (watchdog + polling fallback)
 - [x] Shutdown push in MCP server lifespan
 - [x] Registration E2E integration tests (register -> spawn -> call chain)
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (394 tests)
+- `pytest tests/ -v` to run full suite (409 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
-- `pip install -e ".[watch]"` to install watchdog for `ctx watch`
-- MCP server: `ctx-mcp` entry point (stdio transport)
-- Register with any tool: `ctx register [tool]` (auto-detects if no tool specified)
-- Import/export: `ctx import <tool>`, `ctx export <tool>` (claude-code, opencode, codex, gemini, cursor)
-- Auto-sync: `ctx watch` monitors the store and auto-commits/pushes on changes
+- `pip install -e ".[watch]"` to install watchdog for `context-teleport watch`
+- MCP server: `context-teleport` entry point (smart dispatch: TTY=CLI, non-TTY=MCP server)
+- Register with any tool: `context-teleport register [tool]` (auto-detects if no tool specified)
+- Import/export: `context-teleport import <tool>`, `context-teleport export <tool>` (claude-code, opencode, codex, gemini, cursor)
+- Auto-sync: `context-teleport watch` monitors the store and auto-commits/pushes on changes
+- Config: `context-teleport config get/set/list` for global settings (default_strategy, default_scope)
+- CI: GitHub Actions on push/PR to main (Python 3.11 + 3.12)

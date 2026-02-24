@@ -846,6 +846,18 @@ def context_resolve_conflicts() -> str:
 
 def main():
     """Run the MCP server on stdio."""
+    import sys
+
+    if sys.stdin.isatty():
+        sys.stderr.write(
+            "context-teleport is an MCP server that communicates over stdio.\n"
+            "It is not meant to be run interactively.\n\n"
+            "Register it with your agent tool instead:\n"
+            "  context-teleport register              # auto-detect tools\n"
+            "  context-teleport register claude-code  # specific tool\n"
+        )
+        sys.exit(1)
+
     mcp._mcp_server.instructions = _generate_instructions()
     mcp.run(transport="stdio")
 

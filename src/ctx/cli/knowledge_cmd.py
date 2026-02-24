@@ -43,7 +43,7 @@ def knowledge_list(
         output(items, fmt="json")
     else:
         if not entries:
-            info("No knowledge entries yet. Use `ctx knowledge set <key>` to add one.")
+            info("No knowledge entries yet. Use `context-teleport knowledge set <key>` to add one.")
             return
         rows = []
         for e in entries:

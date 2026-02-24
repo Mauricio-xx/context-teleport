@@ -13,7 +13,7 @@ from ctx.utils.output import error, info, output, success
 from ctx.utils.paths import find_project_root
 
 app = typer.Typer(
-    name="ctx",
+    name="context-teleport",
     help="Context Teleport: portable, git-backed context store for AI coding agents.",
     no_args_is_help=True,
 )
@@ -45,7 +45,7 @@ def status(fmt: Optional[str] = FORMAT_OPTION) -> None:
     try:
         store = get_store()
         if not store.initialized:
-            error("Context store not initialized. Run `ctx init` first.")
+            error("Context store not initialized. Run `context-teleport init` first.")
             raise typer.Exit(1)
 
         summary_data = store.summary()
@@ -88,6 +88,7 @@ from ctx.cli.state_cmd import state_app
 from ctx.cli.sync_cmd import sync_app, register_sync_shortcuts
 from ctx.cli.adapter_cmd import adapter_app, export_app, register_mcp_commands
 from ctx.cli.agent_cmd import register_agent_commands
+from ctx.cli.config_cmd import config_app
 from ctx.cli.watch_cmd import watch_command
 
 app.add_typer(knowledge_app, name="knowledge", help="Manage knowledge entries")
@@ -96,6 +97,7 @@ app.add_typer(state_app, name="state", help="Manage session state")
 app.add_typer(sync_app, name="sync", help="Git-backed sync commands")
 app.add_typer(adapter_app, name="import", help="Import from adapters/bundles")
 app.add_typer(export_app, name="export", help="Export to adapters/bundles")
+app.add_typer(config_app, name="config", help="Manage global configuration")
 
 register_agent_commands(app)
 register_sync_shortcuts(app)

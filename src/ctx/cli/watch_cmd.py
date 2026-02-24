@@ -116,11 +116,11 @@ def watch_command(
     try:
         store = get_store()
     except (StoreError, SystemExit):
-        error("Context store not initialized. Run `ctx init` first.")
+        error("Context store not initialized. Run `context-teleport init` first.")
         raise typer.Exit(1)
 
     if not store.initialized:
-        error("Context store not initialized. Run `ctx init` first.")
+        error("Context store not initialized. Run `context-teleport init` first.")
         raise typer.Exit(1)
 
     try:
