@@ -58,7 +58,7 @@ LLM-based conflict resolution complete. 374 tests passing. Schema v0.3.0.
 - [x] Define prototype scope and target use cases
 - [x] Design minimal context bundle schema
 - [x] Build Claude Code adapter (import/export + MCP registration)
-- [x] Implement MCP server (15 tools, 8 resources, 4 prompts)
+- [x] Implement MCP server (17 tools, 8 resources, 4 prompts)
 - [x] Bundle versioning / migration framework
 - [x] Merge conflict detection and resolution UX
 - [x] Context scoping (public/private/ephemeral boundaries)
