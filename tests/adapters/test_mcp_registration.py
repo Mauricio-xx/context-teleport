@@ -7,6 +7,8 @@ import json
 import pytest
 
 from ctx.adapters.claude_code import ClaudeCodeAdapter
+from ctx.adapters.cursor import CursorAdapter
+from ctx.adapters.opencode import OpenCodeAdapter
 from ctx.core.store import ContextStore
 
 
@@ -82,3 +84,34 @@ class TestRegisterMCP:
         assert result["status"] == "registered"
         config = json.loads(config_path.read_text())
         assert "context-teleport" in config["mcpServers"]
+
+
+class TestRegisterMCPEnv:
+    """Verify MCP_CALLER env is set correctly in each adapter's registration."""
+
+    def test_claude_code_sets_env(self, store):
+        adapter = ClaudeCodeAdapter(store)
+        adapter.register_mcp_server()
+
+        config_path = store.root / ".claude" / "mcp.json"
+        config = json.loads(config_path.read_text())
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["env"] == {"MCP_CALLER": "mcp:claude-code"}
+
+    def test_opencode_sets_env(self, store):
+        adapter = OpenCodeAdapter(store)
+        adapter.register_mcp()
+
+        config_path = store.root / "opencode.json"
+        config = json.loads(config_path.read_text())
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["env"] == {"MCP_CALLER": "mcp:opencode"}
+
+    def test_cursor_sets_env(self, store):
+        adapter = CursorAdapter(store)
+        adapter.register_mcp()
+
+        config_path = store.root / ".cursor" / "mcp.json"
+        config = json.loads(config_path.read_text())
+        entry = config["mcpServers"]["context-teleport"]
+        assert entry["env"] == {"MCP_CALLER": "mcp:cursor"}

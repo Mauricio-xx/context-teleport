@@ -116,7 +116,7 @@ class OpenCodeAdapter:
         return self.store.root / "opencode.json"
 
     def register_mcp(self) -> dict:
-        return register_mcp_json(self.mcp_config_path())
+        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:opencode")
 
     def unregister_mcp(self) -> dict:
         return unregister_mcp_json(self.mcp_config_path())

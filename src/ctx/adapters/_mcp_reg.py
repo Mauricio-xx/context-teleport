@@ -6,10 +6,17 @@ import json
 from pathlib import Path
 
 SERVER_NAME = "context-teleport"
-SERVER_ENTRY = {
-    "command": "ctx-mcp",
-    "type": "stdio",
-}
+
+
+def _server_entry(caller_name: str = "") -> dict:
+    """Build the MCP server entry dict, optionally setting MCP_CALLER env."""
+    entry: dict = {
+        "command": "ctx-mcp",
+        "type": "stdio",
+    }
+    if caller_name:
+        entry["env"] = {"MCP_CALLER": caller_name}
+    return entry
 
 
 def _safe_read_json(path: Path) -> dict:
@@ -22,7 +29,11 @@ def _safe_read_json(path: Path) -> dict:
         return {}
 
 
-def register_mcp_json(config_path: Path, server_name: str = SERVER_NAME) -> dict:
+def register_mcp_json(
+    config_path: Path,
+    server_name: str = SERVER_NAME,
+    caller_name: str = "",
+) -> dict:
     """Register ctx-mcp in a JSON config file with mcpServers key.
 
     Works for Claude (.claude/mcp.json), Cursor (.cursor/mcp.json),
@@ -32,7 +43,7 @@ def register_mcp_json(config_path: Path, server_name: str = SERVER_NAME) -> dict
     config = _safe_read_json(config_path)
     if "mcpServers" not in config:
         config["mcpServers"] = {}
-    config["mcpServers"][server_name] = dict(SERVER_ENTRY)
+    config["mcpServers"][server_name] = _server_entry(caller_name)
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config, indent=2) + "\n")
     return {

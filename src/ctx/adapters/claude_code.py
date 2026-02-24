@@ -248,7 +248,7 @@ class ClaudeCodeAdapter:
 
     def register_mcp_server(self) -> dict:
         """Register the ctx-mcp server in .claude/mcp.json."""
-        return register_mcp_json(self.mcp_config_path())
+        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:claude-code")
 
     def unregister_mcp_server(self) -> dict:
         """Remove the ctx-mcp server from .claude/mcp.json."""

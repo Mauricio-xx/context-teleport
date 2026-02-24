@@ -13,6 +13,8 @@ from ctx.core.scope import Scope
 from ctx.sync.git_sync import GitSync
 from ctx.utils.paths import STORE_DIR
 from ctx.mcp.server import (
+    _FALLBACK_INSTRUCTIONS,
+    _generate_instructions,
     mcp,
     set_store,
     context_search,
@@ -507,8 +509,8 @@ class TestMCPRegistration:
         }
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
-    def test_has_at_least_15_tools(self, store):
-        assert len(mcp._tool_manager._tools) >= 15
+    def test_has_exactly_17_tools(self, store):
+        assert len(mcp._tool_manager._tools) == 17
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())
@@ -519,3 +521,69 @@ class TestMCPRegistration:
             "context_resolve_conflicts",
         }
         assert expected.issubset(prompt_names), f"Missing prompts: {expected - prompt_names}"
+
+
+class TestDynamicInstructions:
+    """Tests for _generate_instructions()."""
+
+    def test_generate_instructions_with_store(self, store):
+        store.set_knowledge("arch", "Hexagonal architecture")
+        store.add_decision(title="Use PostgreSQL")
+        result = _generate_instructions()
+        assert "test-mcp-project" in result
+        assert "arch" in result
+        assert "1 recorded" in result
+        assert "context_onboarding" in result
+
+    def test_generate_instructions_includes_task(self, store):
+        state = store.read_active_state()
+        state.current_task = "Building MCP server"
+        state.blockers = ["Tests failing"]
+        store.write_active_state(state)
+        result = _generate_instructions()
+        assert "Building MCP server" in result
+        assert "Tests failing" in result
+
+    def test_generate_instructions_fallback(self):
+        """Without a store set, falls back to generic instructions."""
+        set_store(None)
+        result = _generate_instructions()
+        assert result == _FALLBACK_INSTRUCTIONS
+
+    def test_generate_instructions_empty_store(self, store):
+        """Initialized but empty store still includes project name."""
+        result = _generate_instructions()
+        assert "test-mcp-project" in result
+
+
+class TestLifespan:
+    """Tests for the MCP server lifespan context manager."""
+
+    @pytest.mark.anyio
+    async def test_lifespan_pushes_on_shutdown(self, git_store):
+        from unittest.mock import patch
+        from ctx.mcp.server import _server_lifespan
+
+        git_store.set_knowledge("push-test", "content for push")
+        mock_app = type("MockApp", (), {})()
+
+        with patch("ctx.mcp.server.GitSync") as mock_gs_cls:
+            mock_gs = mock_gs_cls.return_value
+            mock_gs._has_changes.return_value = True
+            async with _server_lifespan(mock_app):
+                pass
+            mock_gs.push.assert_called_once()
+
+    @pytest.mark.anyio
+    async def test_lifespan_skips_push_no_changes(self, git_store):
+        from unittest.mock import patch
+        from ctx.mcp.server import _server_lifespan
+
+        mock_app = type("MockApp", (), {})()
+
+        with patch("ctx.mcp.server.GitSync") as mock_gs_cls:
+            mock_gs = mock_gs_cls.return_value
+            mock_gs._has_changes.return_value = False
+            async with _server_lifespan(mock_app):
+                pass
+            mock_gs.push.assert_not_called()

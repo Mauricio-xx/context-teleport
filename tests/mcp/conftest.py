@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -14,15 +15,49 @@ from ctx.core.store import ContextStore
 from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
+_SRC_DIR = str(Path(__file__).resolve().parents[2] / "src")
+
 
 @asynccontextmanager
-async def spawn_mcp_session(cwd: Path):
+async def spawn_mcp_session(cwd: Path, extra_env: dict | None = None):
     """Spawn ctx-mcp as a subprocess and yield an initialized ClientSession."""
+    env = {**os.environ, "PYTHONPATH": _SRC_DIR}
+    if extra_env:
+        env.update(extra_env)
     server_params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "ctx.mcp.server"],
         cwd=str(cwd),
-        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[2] / "src")},
+        env=env,
+    )
+    async with stdio_client(server_params) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            yield session
+
+
+@asynccontextmanager
+async def spawn_mcp_from_config(cwd: Path, config_path: Path):
+    """Read an MCP JSON config, extract the server entry, and spawn from it.
+
+    This simulates what a real tool (Claude Code, Cursor, etc.) does:
+    read its mcp.json, find the server entry, and spawn the process.
+    """
+    config = json.loads(config_path.read_text())
+    entry = config["mcpServers"]["context-teleport"]
+
+    # Merge env from config into process env
+    env = {**os.environ, "PYTHONPATH": _SRC_DIR}
+    if "env" in entry:
+        env.update(entry["env"])
+
+    # Use sys.executable -m ctx.mcp.server instead of the entry command
+    # (the entry uses ctx-mcp which may not be on PATH during tests)
+    server_params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "ctx.mcp.server"],
+        cwd=str(cwd),
+        env=env,
     )
     async with stdio_client(server_params) as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:

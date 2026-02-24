@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from mcp.server.fastmcp import FastMCP
 
@@ -15,12 +18,80 @@ from ctx.core.store import ContextStore
 from ctx.sync.git_sync import GitSync, GitSyncError
 from ctx.utils.paths import find_project_root
 
+logger = logging.getLogger(__name__)
+
+_FALLBACK_INSTRUCTIONS = (
+    "Context Teleport provides portable, git-backed context for AI coding agents. "
+    "Use resources to read project context and tools to modify it."
+)
+
+
+def _generate_instructions() -> str:
+    """Build a concise instruction string from the current store state.
+
+    Returns a project-aware summary when a store is available,
+    falling back to generic instructions on any error.
+    """
+    try:
+        store = _get_store()
+        if not store.initialized:
+            return _FALLBACK_INSTRUCTIONS
+
+        manifest = store.read_manifest()
+        project_name = manifest.project.name
+        knowledge = store.list_knowledge()
+        decisions = store.list_decisions()
+        state = store.read_active_state()
+
+        lines = [
+            f"Context Teleport is active for project '{project_name}'.",
+            "",
+        ]
+
+        if knowledge:
+            keys = [e.key for e in knowledge]
+            lines.append(f"Knowledge base ({len(keys)} entries): {', '.join(keys)}.")
+
+        if decisions:
+            lines.append(f"Architectural decisions: {len(decisions)} recorded.")
+
+        if state.current_task:
+            lines.append(f"Current task: {state.current_task}")
+
+        if state.blockers:
+            lines.append(f"Blockers: {', '.join(state.blockers)}")
+
+        lines.extend([
+            "",
+            "Use context_onboarding prompt for full project context. "
+            "Use tools to read/write knowledge, decisions, and state. "
+            "Use context_sync_push/pull to sync changes via git.",
+        ])
+
+        return "\n".join(lines)
+    except Exception:
+        return _FALLBACK_INSTRUCTIONS
+
+
+@asynccontextmanager
+async def _server_lifespan(app: FastMCP) -> AsyncIterator[None]:
+    """MCP server lifespan: best-effort push on shutdown."""
+    try:
+        yield
+    finally:
+        try:
+            store = _get_store()
+            gs = GitSync(store.root)
+            if gs._has_changes():
+                gs.push()
+        except Exception:
+            logger.debug("Shutdown push skipped (no store or git)")
+
+
 mcp = FastMCP(
     "context-teleport",
-    instructions=(
-        "Context Teleport provides portable, git-backed context for AI coding agents. "
-        "Use resources to read project context and tools to modify it."
-    ),
+    instructions=_FALLBACK_INSTRUCTIONS,
+    lifespan=_server_lifespan,
 )
 
 _store: ContextStore | None = None
@@ -775,6 +846,7 @@ def context_resolve_conflicts() -> str:
 
 def main():
     """Run the MCP server on stdio."""
+    mcp._mcp_server.instructions = _generate_instructions()
     mcp.run(transport="stdio")
 
 

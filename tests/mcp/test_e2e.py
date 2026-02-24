@@ -33,10 +33,10 @@ class TestInitialization:
 class TestToolDiscovery:
     """Verify tool listing via the protocol."""
 
-    async def test_list_tools_returns_tools(self, e2e_store):
+    async def test_list_tools_returns_17(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
             result = await session.list_tools()
-            assert len(result.tools) >= 10
+            assert len(result.tools) == 17
 
     async def test_expected_tool_names_present(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
@@ -53,6 +53,8 @@ class TestToolDiscovery:
                 "context_sync_pull",
                 "context_get",
                 "context_set",
+                "context_get_scope",
+                "context_set_scope",
                 "context_merge_status",
                 "context_resolve_conflict",
                 "context_conflict_detail",
