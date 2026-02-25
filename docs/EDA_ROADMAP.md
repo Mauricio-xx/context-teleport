@@ -165,32 +165,41 @@ Natural SKILL.md candidates from observed workflows:
 
 **Effort**: Small-medium (deployment + content curation)
 
-### Phase 3: EDA project detector + artifact-aware import
+### Phase 3: EDA project detector + artifact-aware import -- DONE
 
 **Goal**: Teach Context Teleport to recognize EDA projects and extract knowledge from EDA-specific artifacts.
 
+**Implementation**: New `src/ctx/eda/` package (separate from `AdapterProtocol` -- import-only, no export/MCP config).
+
 **Deliverables**:
 
-**3a. Project detector** (`src/ctx/adapters/eda.py` or extension to existing detection):
-- Detect EDA projects by: `config.yaml` with DESIGN_NAME/PDK keys, `Makefile` with EDA targets, `libs.tech/` directory, `PDK_ROOT` in env
-- Auto-suggest relevant skills on `context-teleport init`
+**3a. Project detector** (`src/ctx/eda/detect.py`):
+- `detect_eda_project(root)` returns `EdaProjectInfo` with type, design name, PDK, markers, suggested skills
+- Detects: LibreLane (config.json), ORFS (config.mk), PDK (libs.tech/), analog (xschemrc, *.sch)
+- Auto-shows EDA info on `context-teleport init` and `context-teleport status`
 
-**3b. Config parsers** (new import sources):
-- Parse LibreLane `config.yaml` and extract design parameters as knowledge entries
-- Parse ORFS `config.mk` for the same purpose
-- Parse Magic `.tech` files for layer stack information
-- Parse KLayout `.lydrc` for DRC rule metadata
-- Parse Liberty `.lib` files for timing/cell library info
-- `context-teleport import librelane`, `context-teleport import orfs`, etc.
+**3b. EdaImporter protocol** (`src/ctx/eda/parsers/base.py`):
+- `ImportItem` dataclass (type, key, content, source)
+- `EdaImporter` protocol: `can_parse()`, `parse()`, `describe()`
+- Registry: `auto_detect_importer(path)`, `get_importer(name)`, `list_importers()`
 
-**3c. DRC/LVS report parser** (new import source):
-- Parse KLayout DRC output (XML/JSON format) into structured knowledge
-- Track which rules pass/fail, violation counts, trends across runs
-- `context-teleport import drc-report <path>`
+**3c. Six parsers** (`src/ctx/eda/parsers/`):
+- **librelane-config**: LibreLane config.json (design params, flow stages, PDN, PDK overrides)
+- **librelane-metrics**: state_in.json (synthesis, timing, DRC, LVS, routing, power metrics)
+- **magic-drc**: Magic DRC .rpt (streaming parser for multi-million-line reports, counts per rule)
+- **netgen-lvs**: Netgen LVS .rpt (cell equivalence, device counts, pin mismatches, final result)
+- **orfs-config**: ORFS config.mk (Makefile variable extraction, category grouping, line continuations)
+- **liberty**: Liberty .lib header (library name, PVT corner, units, defaults; directory mode for corner summary)
 
-**Why third**: Requires code changes but builds on the validated workflow from Phase 2. The parsers are straightforward (YAML, XML/JSON) and the adapter pattern is well-established.
+**3d. CLI integration** (`src/ctx/cli/adapter_cmd.py`):
+- `context-teleport import eda <path> [--type TYPE] [--dry-run] [--format json]`
+- Auto-detects importer via `can_parse()` cascade, or force with `--type`
+- Writes via `store.set_knowledge()` with author `import:eda-<name> (<user>)`
+- Re-import overwrites same key (latest run wins), history preserved in git
 
-**Effort**: Medium (new adapter + parsers, tests)
+**Tests**: 106 new tests (parsers, detector, CLI integration). Full suite: 565 tests.
+
+**Deferred to later**: Magic .tech parser, KLayout .lydrc parser (parsers for these formats can be added following the same EdaImporter pattern).
 
 ### Phase 4: Decision categories + structured templates
 
@@ -234,6 +243,8 @@ Natural SKILL.md candidates from observed workflows:
 
 **Effort**: Medium (GitHub API integration, parsing heuristics)
 
+### Phase 7:
+Auto mejora y auto-update
 ---
 
 ## 5. Competitive positioning

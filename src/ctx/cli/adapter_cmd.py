@@ -245,6 +245,95 @@ def import_bundle(
         success(f"Imported bundle from {path}: {result.get('imported', 0)} items")
 
 
+@adapter_app.command("eda")
+def import_eda(
+    path: str = typer.Argument(..., help="Path to EDA artifact (file or directory)"),
+    importer_type: Optional[str] = typer.Option(
+        None,
+        "--type",
+        "-t",
+        help="Force importer type (librelane-config, librelane-metrics, magic-drc, netgen-lvs, orfs-config, liberty)",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import knowledge from EDA artifacts (configs, reports, Liberty files)."""
+    from ctx.eda.parsers import auto_detect_importer, get_importer, list_importers
+    from ctx.utils.paths import get_author
+
+    target = Path(path)
+    if not target.exists():
+        error(f"Path not found: {path}")
+        raise typer.Exit(1)
+
+    # Resolve importer
+    if importer_type:
+        importer = get_importer(importer_type)
+        if importer is None:
+            error(f"Unknown importer type: {importer_type}")
+            info(f"Available: {', '.join(list_importers())}")
+            raise typer.Exit(1)
+        if not importer.can_parse(target):
+            error(f"Importer '{importer_type}' cannot parse: {path}")
+            raise typer.Exit(1)
+    else:
+        importer = auto_detect_importer(target)
+        if importer is None:
+            error(f"No importer recognized: {path}")
+            info(f"Try --type with one of: {', '.join(list_importers())}")
+            raise typer.Exit(1)
+
+    # Parse
+    items = importer.parse(target)
+    if not items:
+        info(f"No items extracted by {importer.name}")
+        if fmt == "json":
+            output({"items": [], "imported": 0, "dry_run": dry_run}, fmt="json")
+        return
+
+    if dry_run:
+        if fmt == "json":
+            output(
+                {
+                    "items": [{"type": i.type, "key": i.key, "source": i.source} for i in items],
+                    "imported": 0,
+                    "dry_run": True,
+                    "importer": importer.name,
+                },
+                fmt="json",
+            )
+        else:
+            info(f"Dry run ({importer.name}) -- the following would be imported:")
+            for item in items:
+                info(f"  {item.type}: {item.key} ({item.source})")
+        return
+
+    # Write to store
+    store = get_store()
+    author = f"import:eda-{importer.name} ({get_author()})"
+    imported = 0
+    for item in items:
+        store.set_knowledge(item.key, item.content, author=author)
+        imported += 1
+
+    if fmt == "json":
+        output(
+            {
+                "items": [{"type": i.type, "key": i.key, "source": i.source} for i in items],
+                "imported": imported,
+                "dry_run": False,
+                "importer": importer.name,
+            },
+            fmt="json",
+        )
+    else:
+        success(f"Imported {imported} item(s) via {importer.name}")
+        for item in items:
+            info(f"  {item.key} <- {item.source}")
+
+
+
+
 # -- Export commands (under `context-teleport export`) --
 
 

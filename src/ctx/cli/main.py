@@ -34,6 +34,7 @@ def init(
             output(manifest, fmt="json")
         else:
             success(f"Initialized context store for '{manifest.project.name}' at {store.store_dir}")
+            _show_eda_detection(root)
     except StoreError as e:
         error(str(e))
         raise typer.Exit(1)
@@ -79,9 +80,35 @@ def status(fmt: Optional[str] = FORMAT_OPTION) -> None:
                     status_str = "[green]enabled[/green]" if cfg.enabled else "[dim]disabled[/dim]"
                     console.print(f"    {adapter_name}: {status_str}")
 
+            _show_eda_detection(store.root)
+
     except StoreError as e:
         error(str(e))
         raise typer.Exit(1)
+
+
+def _show_eda_detection(root: Path) -> None:
+    """Show EDA project detection info if markers are present."""
+    try:
+        from ctx.eda.detect import detect_eda_project
+
+        eda = detect_eda_project(root)
+        if not eda.detected:
+            return
+
+        from ctx.utils.output import console
+
+        console.print(f"\n  [bold]EDA project detected:[/bold] {eda.project_type}")
+        if eda.design_name:
+            console.print(f"    Design: {eda.design_name}")
+        if eda.pdk:
+            console.print(f"    PDK: {eda.pdk}")
+        if eda.markers_found:
+            console.print(f"    Markers: {', '.join(eda.markers_found)}")
+        if eda.suggested_skills:
+            console.print(f"    Suggested skills: {', '.join(eda.suggested_skills)}")
+    except Exception:
+        pass  # Detection is informational, never block init/status
 
 
 # Register subcommand groups

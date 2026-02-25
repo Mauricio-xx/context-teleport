@@ -52,7 +52,7 @@ context-bundle/
 
 ## Project Phase
 
-Release-ready. 459 tests passing. Schema v0.3.0.
+Release-ready. 565 tests passing. Schema v0.3.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
@@ -74,17 +74,19 @@ Release-ready. 459 tests passing. Schema v0.3.0.
 - [x] Shutdown push in MCP server lifespan
 - [x] Registration E2E integration tests (register -> spawn -> call chain)
 - [x] Agent Skills (SKILL.md) as first-class content type with cross-tool import/export
+- [x] EDA project detection and artifact-aware import (6 parsers, CLI integration)
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (459 tests)
+- `pytest tests/ -v` to run full suite (565 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
 - `pip install -e ".[watch]"` to install watchdog for `context-teleport watch`
 - MCP server: `context-teleport` entry point (smart dispatch: TTY=CLI, non-TTY=MCP server)
 - Register with any tool: `context-teleport register [tool]` (auto-detects if no tool specified)
 - Import/export: `context-teleport import <tool>`, `context-teleport export <tool>` (claude-code, opencode, codex, gemini, cursor)
+- EDA import: `context-teleport import eda <path> [--type TYPE] [--dry-run]` (auto-detects artifact type)
 - Skills: `context-teleport skill list/get/add/rm/scope` for managing agent skills (SKILL.md)
 - Auto-sync: `context-teleport watch` monitors the store and auto-commits/pushes on changes
 - Config: `context-teleport config get/set/list` for global settings (default_strategy, default_scope)
