@@ -120,31 +120,48 @@ Natural SKILL.md candidates from observed workflows:
 
 ## 4. Roadmap: prioritized phases
 
-### Phase 1: EDA Skills Pack (standalone, no code changes to Context Teleport)
+### Phase 1: EDA Skills Pack (standalone, no code changes to Context Teleport) -- DONE
 
 **Goal**: Create a curated set of SKILL.md files for EDA workflows that can be added to any project via `context-teleport skill add`.
 
 **Deliverables**:
-- 6-10 SKILL.md files covering: DRC debugging, LVS debugging, timing analysis, PDN configuration, device characterization (gm/ID), LibreLane flow config, xschem-to-simulation workflow, PDK porting guide
+- 8 SKILL.md files in `eda-skills-pack/skills/`: debug-drc, debug-lvs, debug-timing, configure-pdn, configure-librelane, characterize-device, xschem-simulate, port-design
 - Each skill references IHP SG13G2 specifics but is structured to be adaptable to other PDKs
 - Skills stored in a shareable git repo (separate from Context Teleport)
 
-**Why first**: Zero code changes. Immediately testable. Validates whether skills are the right abstraction for EDA knowledge.
-
 **Effort**: Small (content authoring, not engineering)
 
-### Phase 2: EDA knowledge templates + pilot deployment
+### Phase 2: EDA knowledge templates + pilot deployment -- DONE
 
-**Goal**: Deploy Context Teleport in 1-2 real projects with pre-populated domain knowledge.
+**Goal**: Deploy Context Teleport in 2 real projects with pre-populated domain knowledge.
 
-**Deliverables**:
-- Initialize `.context-teleport/` in `ihp-sg13cmos5l` and/or `ihp-sg13g2-librelane-template`
-- Import existing CLAUDE.md knowledge via `context-teleport import claude-code`
-- Add PDK-specific knowledge entries: process specs, layer stack, voltage domains, known DRC gotchas
-- Add decision records from existing PR discussions and CLAUDE.md decision logs
-- Validate the full workflow: agent session -> add knowledge -> sync -> another agent reads it
+**Deployed projects**:
 
-**Why second**: Real-world validation. Exposes friction points that pure design won't reveal. Builds the knowledge base that later phases depend on.
+**1. IHP-Open-PDK** (`/home/montanares/git/slim-pdk/IHP-Open-PDK/`)
+- Branch: `feature/context-teleport` (from `dev`)
+- 12 knowledge entries (6 imported from CLAUDE.md/MEMORY.md + 6 manual: SG13CMOS5L layer reduction, device status, tech.json changes, DRM source of truth, manufacturing grid, no tap cells)
+- 6 decision records (JSON layer management, TopMetal commenting strategy, device symlinks, CMOS-compatible resistors, GuardRing not standalone, DRM PDFs as authority)
+- 8 EDA skills installed from pack
+- MCP registered (--local), exported to `.claude/` and CLAUDE.md managed section
+
+**2. LibreLane reference designs** (`/home/montanares/git/IHP-Open-DesignLib/LibreLane/`)
+- Branch: `feature/context-teleport` (from `dev/librelane-setup`)
+- Store at git root: `IHP-Open-DesignLib/.context-teleport/`
+- 7 knowledge entries (1 imported from CLAUDE.md + 6 manual: design runtimes, config.json gotchas, Magic vs KLayout DRC, density expectations, pin placement patterns, tool version policy)
+- 5 decision records (Nix reproducibility, IllegalOverlap nullify, absolute FP_SIZING, --no_density for reference, bus-only custom pins)
+- 8 EDA skills installed from pack
+- MCP registered (--local), exported to `.claude/` and CLAUDE.md managed section
+
+**Sync validation**: Bare remotes at `~/personal_exp/ctx-remotes/`, push verified, clone verified, content matches.
+
+**Lessons learned**:
+- `find_project_root()` resolves to git root, not necessarily the subdirectory you're in (relevant for monorepos like IHP-Open-DesignLib)
+- `.context-teleport/` must be gitignored at the git root level, not just in subdirectories
+- Context stores need manual `git init` + remote add for sync; `push` alone only commits locally if no git is initialized
+- DRM/layout rules PDFs (`libs.doc/doc/`) are the authoritative source of truth for both PDKs; any tooling references (layer_tracking/, editors) are secondary and may be outdated
+- Never refer to SG13CMOS5L as "slim PDK"
+- LibreLane and IHP PDK: always use `dev` branch, no pinned releases
+- nix-eda: always latest available, no pinned versions
 
 **Effort**: Small-medium (deployment + content curation)
 
