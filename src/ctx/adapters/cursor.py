@@ -2,67 +2,17 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from ctx.adapters._mcp_reg import register_mcp_json, unregister_mcp_json
+from ctx.core.frontmatter import build_frontmatter, parse_frontmatter
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import get_author
 
-
-def parse_mdc(text: str) -> tuple[dict, str]:
-    """Parse MDC format: YAML frontmatter + markdown body.
-
-    Returns (metadata_dict, body_content).
-    """
-    if not text.startswith("---"):
-        return {}, text
-
-    # Find closing ---
-    end_match = re.search(r"\n---\s*\n", text[3:])
-    if not end_match:
-        return {}, text
-
-    frontmatter_text = text[3 : 3 + end_match.start()]
-    body = text[3 + end_match.end() :]
-
-    # Simple YAML parsing (key: value lines)
-    metadata: dict = {}
-    for line in frontmatter_text.strip().split("\n"):
-        if ":" in line:
-            key, _, value = line.partition(":")
-            key = key.strip()
-            value = value.strip()
-            # Handle booleans
-            if value.lower() == "true":
-                value = True
-            elif value.lower() == "false":
-                value = False
-            # Handle arrays like ["**/*.py"]
-            elif value.startswith("[") and value.endswith("]"):
-                value = [v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()]
-            metadata[key] = value
-
-    return metadata, body.strip()
-
-
-def format_mdc(metadata: dict, content: str) -> str:
-    """Format as MDC: YAML frontmatter + markdown body."""
-    lines = ["---"]
-    for key, value in metadata.items():
-        if isinstance(value, bool):
-            lines.append(f"{key}: {'true' if value else 'false'}")
-        elif isinstance(value, list):
-            formatted = ", ".join(f'"{v}"' for v in value)
-            lines.append(f"{key}: [{formatted}]")
-        else:
-            lines.append(f"{key}: {value}")
-    lines.append("---")
-    lines.append("")
-    lines.append(content.strip())
-    lines.append("")
-    return "\n".join(lines)
+# Keep backwards-compatible aliases
+parse_mdc = parse_frontmatter
+format_mdc = build_frontmatter
 
 
 class CursorAdapter:
@@ -104,16 +54,34 @@ class CursorAdapter:
                 "content": cursorrules.read_text().strip(),
             })
 
+        # .cursor/skills/*/SKILL.md
+        skills_dir = self.store.root / ".cursor" / "skills"
+        if skills_dir.is_dir():
+            for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+                items.append({
+                    "type": "skill",
+                    "key": skill_md.parent.name,
+                    "source": f".cursor/skills/{skill_md.parent.name}/SKILL.md",
+                    "content": skill_md.read_text(),
+                })
+
         if dry_run:
             return {"items": items, "imported": 0, "dry_run": True}
 
         imported = 0
         for item in items:
-            self.store.set_knowledge(
-                item["key"],
-                item["content"],
-                author=f"import:cursor ({get_author()})",
-            )
+            if item["type"] == "skill":
+                self.store.set_skill(
+                    item["key"],
+                    item["content"],
+                    agent=f"import:cursor ({get_author()})",
+                )
+            else:
+                self.store.set_knowledge(
+                    item["key"],
+                    item["content"],
+                    author=f"import:cursor ({get_author()})",
+                )
             imported += 1
 
         return {"items": items, "imported": imported, "dry_run": False}
@@ -121,33 +89,52 @@ class CursorAdapter:
     def export_context(self, dry_run: bool = False) -> dict:
         items: list[dict] = []
         knowledge = self.store.list_knowledge(scope=Scope.public)
+        skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge:
+        if not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
-        items.append({
-            "target": ".cursor/rules/",
-            "description": f"Export {len(knowledge)} entries as Cursor MDC rules",
-        })
+        if knowledge:
+            items.append({
+                "target": ".cursor/rules/",
+                "description": f"Export {len(knowledge)} entries as Cursor MDC rules",
+            })
+
+        if skills:
+            items.append({
+                "target": ".cursor/skills/",
+                "description": f"Export {len(skills)} skills as SKILL.md files",
+            })
 
         if dry_run:
             return {"items": items, "exported": 0, "dry_run": True}
 
-        rules_dir = self.store.root / ".cursor" / "rules"
-        rules_dir.mkdir(parents=True, exist_ok=True)
-
         exported = 0
-        for entry in knowledge:
-            if entry.key == "project-instructions":
-                continue
-            metadata = {
-                "description": f"Team context: {entry.key}",
-                "alwaysApply": True,
-            }
-            mdc_content = format_mdc(metadata, entry.content)
-            rule_path = rules_dir / f"ctx-{entry.key}.mdc"
-            rule_path.write_text(mdc_content)
-            exported += 1
+
+        # Export knowledge as MDC rules
+        if knowledge:
+            rules_dir = self.store.root / ".cursor" / "rules"
+            rules_dir.mkdir(parents=True, exist_ok=True)
+            for entry in knowledge:
+                if entry.key == "project-instructions":
+                    continue
+                metadata = {
+                    "description": f"Team context: {entry.key}",
+                    "alwaysApply": True,
+                }
+                mdc_content = format_mdc(metadata, entry.content)
+                rule_path = rules_dir / f"ctx-{entry.key}.mdc"
+                rule_path.write_text(mdc_content)
+                exported += 1
+
+        # Export skills
+        if skills:
+            skills_dir = self.store.root / ".cursor" / "skills"
+            for skill in skills:
+                skill_out = skills_dir / skill.name
+                skill_out.mkdir(parents=True, exist_ok=True)
+                (skill_out / "SKILL.md").write_text(skill.content)
+                exported += 1
 
         return {"items": items, "exported": exported, "dry_run": False}
 

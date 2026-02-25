@@ -15,11 +15,12 @@ AI coding agents accumulate deep context over sessions -- architecture decisions
 
 ## What Context Teleport does
 
-- **Portable context bundle** -- structured store for knowledge, decisions, state, preferences, and session history
+- **Portable context bundle** -- structured store for knowledge, decisions, skills, state, preferences, and session history
 - **Git-backed sync** -- push/pull context to any git remote, works like code sync
 - **Section-level merge** -- 3-way merge at markdown section granularity, reduces false conflicts in multi-agent workflows
 - **Cross-tool adapters** -- import/export between Claude Code, OpenCode, Codex, Gemini, and Cursor
-- **MCP server** -- 17 tools, 8 resources, 4 prompts; works with any MCP-compatible agent
+- **Agent skills** -- share on-demand SKILL.md capabilities across tools via the cross-tool standard
+- **MCP server** -- 19 tools, 10 resources, 4 prompts; works with any MCP-compatible agent
 - **Context scoping** -- public (team), private (user-only), ephemeral (session-only) boundaries
 - **Agent attribution** -- tracks which agent wrote each entry
 - **LLM-based conflict resolution** -- agents can inspect and resolve merge conflicts via MCP tools
@@ -33,7 +34,7 @@ Context Teleport is an **MCP server**. After a one-time registration, your agent
                          |
 2. Agent connects   Tool starts a session -> spawns context-teleport over stdio
                          |
-3. Agent works      Reads dynamic onboarding -> uses 17 tools autonomously
+3. Agent works      Reads dynamic onboarding -> uses 19 tools autonomously
                          |
 4. Git sync         On shutdown, uncommitted changes are auto-pushed
 ```
@@ -42,7 +43,7 @@ The lifecycle in detail:
 
 1. **Register once** -- `context-teleport register <tool>` writes the MCP config for your agent tool (Claude Code, OpenCode, Cursor, Gemini). This is the only time you touch the terminal.
 2. **Agent spawns the server** -- when you open a session, the tool starts `context-teleport` automatically over stdio. The server detects the project, reads the store, and presents dynamic onboarding instructions.
-3. **Agent uses tools directly** -- the agent sees 17 tools (`context_add_knowledge`, `context_sync_push`, `context_record_decision`, etc.), 8 resources, and 4 prompts. It reads and writes context as part of normal conversation.
+3. **Agent uses tools directly** -- the agent sees 19 tools (`context_add_knowledge`, `context_add_skill`, `context_sync_push`, etc.), 10 resources, and 4 prompts. It reads and writes context as part of normal conversation.
 4. **Git sync happens through the agent** -- the agent pushes/pulls via MCP tools. On server shutdown, uncommitted changes are auto-pushed as a safety net.
 
 You never need to run `context-teleport` commands during normal usage. The CLI exists for setup and for operations outside of agent sessions.
@@ -283,6 +284,13 @@ The `MCP_CALLER` env var is used for agent attribution -- it tags knowledge entr
 | `context_get` | `dotpath` | Read any value by dotpath (e.g. `knowledge.architecture`, `decisions.1`, `manifest.project.name`). |
 | `context_set` | `dotpath`, `value` | Set a value by dotpath. |
 
+#### Skills
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `context_add_skill` | `name`, `description`, `instructions`, `scope?` | Add or update an agent skill (SKILL.md). Constructs frontmatter automatically. |
+| `context_remove_skill` | `name` | Remove a skill by name. |
+
 #### Decisions
 
 | Tool | Parameters | Description |
@@ -300,7 +308,7 @@ The `MCP_CALLER` env var is used for agent attribution -- it tags knowledge entr
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `context_get_scope` | `entry_type`, `key` | Get scope of a knowledge entry or decision. `entry_type`: `knowledge` or `decision`. |
+| `context_get_scope` | `entry_type`, `key` | Get scope. `entry_type`: `knowledge`, `decision`, or `skill`. |
 | `context_set_scope` | `entry_type`, `key`, `scope` | Change scope. Values: `public`, `private`, `ephemeral`. |
 
 #### Git sync
@@ -329,6 +337,8 @@ The `MCP_CALLER` env var is used for agent attribution -- it tags knowledge entr
 | `context://knowledge/{key}` | Single knowledge entry by key |
 | `context://decisions` | All decisions with status and scope |
 | `context://decisions/{id}` | Single decision by ID or title |
+| `context://skills` | All agent skills with names, descriptions, and scopes |
+| `context://skills/{name}` | Full SKILL.md content for a specific skill |
 | `context://state` | Current active session state |
 | `context://history` | Recent session history |
 | `context://summary` | High-level project context summary |
@@ -384,6 +394,16 @@ The CLI is available for setup and for operations outside of agent sessions. All
 | `decision get <id\|title>` | Read a decision by ID or title match |
 | `decision add <title>` | Create ADR (opens `$EDITOR`, or `--file`, or stdin) |
 
+### `context-teleport skill`
+
+| Command | Description |
+|---------|-------------|
+| `skill list` | List skills (`--scope public\|private\|ephemeral`) |
+| `skill get <name>` | Print full SKILL.md content |
+| `skill add <name>` | Create/update skill (`--file`, stdin, or auto template; `--description`, `--scope`) |
+| `skill rm <name>` | Remove a skill |
+| `skill scope <name> <scope>` | Change skill scope |
+
 ### `context-teleport state`
 
 | Command | Description |
@@ -435,6 +455,10 @@ All import/export commands support `--dry-run` to preview changes.
     decisions/
       0001-decision-title.md       # ADR-style decision records
       .scope.json
+  skills/
+    <name>/
+      SKILL.md                     # Agent skill (YAML frontmatter + markdown instructions)
+    .scope.json
   state/
     active.json                    # Current task, blockers, progress (gitignored)
     roadmap.json                   # Project roadmap
@@ -449,17 +473,17 @@ All import/export commands support `--dry-run` to preview changes.
 
 | Tool | Imports from | Exports to | MCP registration |
 |------|-------------|-----------|-----------------|
-| **Claude Code** | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md` | `CLAUDE.md` managed section, `MEMORY.md` | `.claude/mcp.json` |
-| **OpenCode** | `AGENTS.md`, `.opencode/opencode.db` (sessions) | `AGENTS.md` managed section | `opencode.json` |
-| **Codex** | `AGENTS.md`, `.codex/instructions.md` | `AGENTS.md` managed section | Not supported |
-| **Gemini** | `.gemini/rules/*.md`, `.gemini/STYLEGUIDE.md`, `GEMINI.md` | `.gemini/rules/ctx-*.md` | `.gemini/settings.json` |
-| **Cursor** | `.cursor/rules/*.mdc` (MDC format), `.cursorrules` | `.cursor/rules/ctx-*.mdc` | `.cursor/mcp.json` |
+| **Claude Code** | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.claude/skills/*/SKILL.md` | `CLAUDE.md` managed section, `MEMORY.md`, `.claude/skills/` | `.claude/mcp.json` |
+| **OpenCode** | `AGENTS.md`, `.opencode/opencode.db` (sessions), `.opencode/skills/*/SKILL.md` | `AGENTS.md` managed section, `.opencode/skills/` | `opencode.json` |
+| **Codex** | `AGENTS.md`, `.codex/instructions.md`, `.codex/skills/*/SKILL.md` | `AGENTS.md` managed section, `.codex/skills/` | Not supported |
+| **Gemini** | `.gemini/rules/*.md`, `.gemini/STYLEGUIDE.md`, `GEMINI.md`, `.gemini/skills/*/SKILL.md` | `.gemini/rules/ctx-*.md`, `.gemini/skills/` | `.gemini/settings.json` |
+| **Cursor** | `.cursor/rules/*.mdc` (MDC format), `.cursorrules`, `.cursor/skills/*/SKILL.md` | `.cursor/rules/ctx-*.mdc`, `.cursor/skills/` | `.cursor/mcp.json` |
 
-Export writes only public-scope entries. Import attributes each entry with `import:<tool>` as the author.
+Export writes only public-scope entries. Import attributes each entry with `import:<tool>` as the author. Skills are stored as-is (SKILL.md format is cross-tool standard).
 
 ## Context scoping
 
-Every knowledge entry and decision has a scope that controls visibility and sync behavior.
+Every knowledge entry, decision, and skill has a scope that controls visibility and sync behavior.
 
 | Scope | Synced via git | Visible to team | Exported | Use case |
 |-------|---------------|-----------------|----------|----------|

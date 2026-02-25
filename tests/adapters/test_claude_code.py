@@ -124,3 +124,65 @@ class TestImportExport:
         content = claude_md.read_text()
         assert "public-info" in content
         assert "scratch" not in content
+
+
+class TestSkillImportExport:
+    def _skill_content(self, name="deploy", desc="Deploy to staging"):
+        return f"---\nname: {name}\ndescription: {desc}\n---\n\nRun the deploy script.\n"
+
+    def test_import_skills(self, store):
+        skills_dir = store.root / ".claude" / "skills" / "deploy"
+        skills_dir.mkdir(parents=True)
+        (skills_dir / "SKILL.md").write_text(self._skill_content())
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.import_context(dry_run=False)
+        assert result["imported"] >= 1
+
+        skill_items = [i for i in result["items"] if i["type"] == "skill"]
+        assert len(skill_items) == 1
+        assert skill_items[0]["key"] == "deploy"
+
+        entry = store.get_skill("deploy")
+        assert entry is not None
+        assert entry.name == "deploy"
+
+    def test_import_skills_dry_run(self, store):
+        skills_dir = store.root / ".claude" / "skills" / "lint"
+        skills_dir.mkdir(parents=True)
+        (skills_dir / "SKILL.md").write_text(self._skill_content("lint", "Run linter"))
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.import_context(dry_run=True)
+        assert result["dry_run"] is True
+        assert result["imported"] == 0
+        skill_items = [i for i in result["items"] if i["type"] == "skill"]
+        assert len(skill_items) == 1
+
+        # Store should not have the skill
+        assert store.get_skill("lint") is None
+
+    def test_export_skills(self, store):
+        store.set_skill("deploy", self._skill_content())
+        claude_md = store.root / "CLAUDE.md"
+        claude_md.write_text("# Project\n")
+
+        adapter = ClaudeCodeAdapter(store)
+        result = adapter.export_context(dry_run=False)
+        assert result["exported"] >= 2  # CLAUDE.md + skill
+
+        skill_path = store.root / ".claude" / "skills" / "deploy" / "SKILL.md"
+        assert skill_path.is_file()
+        assert "Deploy to staging" in skill_path.read_text()
+
+    def test_export_skills_only_public(self, store):
+        store.set_skill("pub", self._skill_content("pub", "Public skill"))
+        store.set_skill("priv", self._skill_content("priv", "Private skill"), scope=Scope.private)
+        claude_md = store.root / "CLAUDE.md"
+        claude_md.write_text("# Project\n")
+
+        adapter = ClaudeCodeAdapter(store)
+        adapter.export_context(dry_run=False)
+
+        assert (store.root / ".claude" / "skills" / "pub" / "SKILL.md").is_file()
+        assert not (store.root / ".claude" / "skills" / "priv" / "SKILL.md").is_file()

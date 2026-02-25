@@ -71,6 +71,16 @@ class ClaudeCodeAdapter:
             result.append((f.stem, f.read_text()))
         return result
 
+    def _read_skills(self) -> list[tuple[str, str]]:
+        """Read .claude/skills/*/SKILL.md files."""
+        skills_dir = self.store.root / ".claude" / "skills"
+        if not skills_dir.is_dir():
+            return []
+        result = []
+        for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+            result.append((skill_md.parent.name, skill_md.read_text()))
+        return result
+
     def _parse_memory_into_knowledge(self, memory_text: str) -> list[tuple[str, str]]:
         """Parse MEMORY.md content into knowledge entries.
 
@@ -142,17 +152,34 @@ class ClaudeCodeAdapter:
                 "content": rule_content,
             })
 
+        # Import skills
+        skills = self._read_skills()
+        for skill_name, skill_content in skills:
+            items.append({
+                "type": "skill",
+                "key": skill_name,
+                "source": f".claude/skills/{skill_name}/SKILL.md",
+                "content": skill_content,
+            })
+
         if dry_run:
             return {"items": items, "imported": 0, "dry_run": True}
 
         # Write to store
         imported = 0
         for item in items:
-            self.store.set_knowledge(
-                item["key"],
-                item["content"],
-                author=f"import:claude-code ({get_author()})",
-            )
+            if item["type"] == "skill":
+                self.store.set_skill(
+                    item["key"],
+                    item["content"],
+                    agent=f"import:claude-code ({get_author()})",
+                )
+            else:
+                self.store.set_knowledge(
+                    item["key"],
+                    item["content"],
+                    author=f"import:claude-code ({get_author()})",
+                )
             imported += 1
 
         return {"items": items, "imported": imported, "dry_run": False}
@@ -162,8 +189,9 @@ class ClaudeCodeAdapter:
         items: list[dict] = []
         knowledge = self.store.list_knowledge(scope=Scope.public)
         decisions = self.store.list_decisions(scope=Scope.public)
+        skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge and not decisions:
+        if not knowledge and not decisions and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
         # Build the managed section for CLAUDE.md
@@ -208,6 +236,12 @@ class ClaudeCodeAdapter:
                 "description": "Updated MEMORY.md with store knowledge",
             })
 
+        if skills:
+            items.append({
+                "target": ".claude/skills/",
+                "description": f"Export {len(skills)} skills as SKILL.md files",
+            })
+
         if dry_run:
             return {"items": items, "exported": 0, "dry_run": True}
 
@@ -239,6 +273,15 @@ class ClaudeCodeAdapter:
             else:
                 memory_file.write_text(memory_content)
             exported += 1
+
+        # Write skills
+        if skills:
+            skills_dir = self.store.root / ".claude" / "skills"
+            for skill in skills:
+                skill_out = skills_dir / skill.name
+                skill_out.mkdir(parents=True, exist_ok=True)
+                (skill_out / "SKILL.md").write_text(skill.content)
+                exported += 1
 
         return {"items": items, "exported": exported, "dry_run": False}
 

@@ -228,6 +228,65 @@ class TestDecisionScope:
         assert data[0]["title"] == "Public Dec"
 
 
+class TestSkill:
+    def _skill_content(self, name="test", desc="A test skill"):
+        return f"---\nname: {name}\ndescription: {desc}\n---\n\nInstructions here.\n"
+
+    def test_add_and_get(self, initialized_project):
+        skill_file = initialized_project / "test-skill.md"
+        skill_file.write_text(self._skill_content("deploy", "Deploy app"))
+        result = runner.invoke(app, ["skill", "add", "deploy", "--file", str(skill_file)])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["skill", "get", "deploy", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["name"] == "deploy"
+        assert data["description"] == "Deploy app"
+
+    def test_list(self, initialized_project):
+        for name in ("deploy", "lint"):
+            f = initialized_project / f"{name}.md"
+            f.write_text(self._skill_content(name, f"{name} skill"))
+            runner.invoke(app, ["skill", "add", name, "--file", str(f)])
+
+        result = runner.invoke(app, ["skill", "list", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert len(data) == 2
+
+    def test_rm(self, initialized_project):
+        f = initialized_project / "temp.md"
+        f.write_text(self._skill_content("temp", "Temporary"))
+        runner.invoke(app, ["skill", "add", "temp", "--file", str(f)])
+        result = runner.invoke(app, ["skill", "rm", "temp"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["skill", "get", "temp"])
+        assert result.exit_code == 1
+
+    def test_scope(self, initialized_project):
+        f = initialized_project / "sec.md"
+        f.write_text(self._skill_content("sec", "Security"))
+        runner.invoke(app, ["skill", "add", "sec", "--file", str(f)])
+        result = runner.invoke(app, ["skill", "scope", "sec", "private"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["skill", "list", "--format", "json"])
+        data = json.loads(result.output)
+        sec = [s for s in data if s["name"] == "sec"][0]
+        assert sec["scope"] == "private"
+
+    def test_add_with_description_flag(self, initialized_project):
+        result = runner.invoke(app, ["skill", "add", "quick", "--description", "Quick skill"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["skill", "get", "quick", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["name"] == "quick"
+
+
 class TestSync:
     def test_push_no_changes(self, initialized_project):
         # First commit the store

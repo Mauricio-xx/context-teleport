@@ -64,6 +64,9 @@ def status(fmt: Optional[str] = FORMAT_OPTION) -> None:
             if summary_data["knowledge_keys"]:
                 console.print(f"    Keys: {', '.join(summary_data['knowledge_keys'])}")
             console.print(f"  Decisions: {summary_data['decision_count']}")
+            console.print(f"  Skills: {summary_data['skill_count']}")
+            if summary_data["skill_names"]:
+                console.print(f"    Names: {', '.join(summary_data['skill_names'])}")
             if summary_data["current_task"]:
                 console.print(f"  Current task: {summary_data['current_task']}")
             if summary_data["blockers"]:
@@ -88,6 +91,7 @@ from ctx.cli.state_cmd import state_app
 from ctx.cli.sync_cmd import sync_app, register_sync_shortcuts
 from ctx.cli.adapter_cmd import adapter_app, export_app, register_mcp_commands
 from ctx.cli.agent_cmd import register_agent_commands
+from ctx.cli.skill_cmd import skill_app
 from ctx.cli.config_cmd import config_app
 from ctx.cli.watch_cmd import watch_command
 
@@ -97,6 +101,7 @@ app.add_typer(state_app, name="state", help="Manage session state")
 app.add_typer(sync_app, name="sync", help="Git-backed sync commands")
 app.add_typer(adapter_app, name="import", help="Import from adapters/bundles")
 app.add_typer(export_app, name="export", help="Export to adapters/bundles")
+app.add_typer(skill_app, name="skill", help="Manage agent skills (SKILL.md)")
 app.add_typer(config_app, name="config", help="Manage global configuration")
 
 register_agent_commands(app)

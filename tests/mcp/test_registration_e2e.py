@@ -27,7 +27,7 @@ class TestClaudeCodeRegistrationE2E:
         config_path = store.root / ".claude" / "mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 17
+            assert len(result.tools) == 19
 
     async def test_register_sets_env(self, e2e_store):
         store = ContextStore(e2e_store)
@@ -104,7 +104,7 @@ class TestCursorRegistrationE2E:
         config_path = store.root / ".cursor" / "mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 17
+            assert len(result.tools) == 19
 
 
 class TestOpenCodeRegistrationE2E:
@@ -118,4 +118,4 @@ class TestOpenCodeRegistrationE2E:
         config_path = store.root / "opencode.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 17
+            assert len(result.tools) == 19

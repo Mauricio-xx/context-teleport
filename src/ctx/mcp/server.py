@@ -11,6 +11,7 @@ from mcp.server.fastmcp import FastMCP
 
 from ctx.core.conflicts import Strategy, resolve_single
 from ctx.core.dotpath import resolve_dotpath, set_dotpath
+from ctx.core.frontmatter import build_frontmatter
 from ctx.core.schema import SessionSummary
 from ctx.core.scope import Scope
 from ctx.core.search import search_files
@@ -41,6 +42,7 @@ def _generate_instructions() -> str:
         project_name = manifest.project.name
         knowledge = store.list_knowledge()
         decisions = store.list_decisions()
+        skills = store.list_skills()
         state = store.read_active_state()
 
         lines = [
@@ -54,6 +56,10 @@ def _generate_instructions() -> str:
 
         if decisions:
             lines.append(f"Architectural decisions: {len(decisions)} recorded.")
+
+        if skills:
+            names = [s.name for s in skills]
+            lines.append(f"Agent skills ({len(names)} available): {', '.join(names)}.")
 
         if state.current_task:
             lines.append(f"Current task: {state.current_task}")
@@ -230,6 +236,38 @@ def resource_summary() -> str:
     return json.dumps(store.summary(), indent=2, default=str)
 
 
+@mcp.resource("context://skills")
+def resource_skills() -> str:
+    """List all agent skills (name, description, scope)."""
+    store = _get_store()
+    skills = store.list_skills()
+    return json.dumps(
+        [
+            {
+                "name": s.name,
+                "description": s.description,
+                "scope": store.get_skill_scope(s.name).value,
+            }
+            for s in skills
+        ],
+        indent=2,
+        default=str,
+    )
+
+
+@mcp.resource("context://skills/{name}")
+def resource_skill_item(name: str) -> str:
+    """Read the full SKILL.md content for a specific skill."""
+    store = _get_store()
+    entry = store.get_skill(name)
+    if entry is None:
+        return json.dumps({"error": f"Skill '{name}' not found"})
+    return json.dumps(
+        {"name": entry.name, "description": entry.description, "content": entry.content},
+        default=str,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Tools (mutations + queries)
 # ---------------------------------------------------------------------------
@@ -286,6 +324,44 @@ def context_remove_knowledge(key: str) -> str:
     if removed:
         return json.dumps({"status": "removed", "key": key})
     return json.dumps({"status": "not_found", "key": key})
+
+
+@mcp.tool()
+def context_add_skill(name: str, description: str, instructions: str, scope: str = "") -> str:
+    """Add or update an agent skill (SKILL.md).
+
+    Skills are on-demand agent capabilities with structured metadata.
+    The SKILL.md file is constructed from the provided parts.
+
+    Args:
+        name: Skill name (used as directory name, e.g. 'deploy-staging')
+        description: Short description of what the skill does
+        instructions: Markdown instructions for the skill body
+        scope: Optional scope (public/private/ephemeral). Empty means no change.
+    """
+    store = _get_store()
+    scope_val = _parse_scope(scope)
+    agent = _get_agent_name()
+    content = build_frontmatter(
+        {"name": name, "description": description},
+        instructions,
+    )
+    entry = store.set_skill(name, content, agent=agent, scope=scope_val)
+    return json.dumps({"status": "ok", "name": entry.name}, default=str)
+
+
+@mcp.tool()
+def context_remove_skill(name: str) -> str:
+    """Remove an agent skill by name.
+
+    Args:
+        name: Name of the skill to remove
+    """
+    store = _get_store()
+    removed = store.rm_skill(name)
+    if removed:
+        return json.dumps({"status": "removed", "name": name})
+    return json.dumps({"status": "not_found", "name": name})
 
 
 @mcp.tool()
@@ -461,11 +537,11 @@ def context_resolve_conflict(file_path: str, content: str) -> str:
 
 @mcp.tool()
 def context_get_scope(entry_type: str, key: str) -> str:
-    """Get the current scope of a knowledge entry or decision.
+    """Get the current scope of a knowledge entry, decision, or skill.
 
     Args:
-        entry_type: Either 'knowledge' or 'decision'
-        key: The entry key (knowledge key or decision ID/title)
+        entry_type: Either 'knowledge', 'decision', or 'skill'
+        key: The entry key (knowledge key, decision ID/title, or skill name)
     """
     store = _get_store()
     if entry_type == "knowledge":
@@ -479,17 +555,23 @@ def context_get_scope(entry_type: str, key: str) -> str:
         if scope is None:
             return json.dumps({"error": f"Decision '{key}' not found"})
         return json.dumps({"key": key, "scope": scope.value})
+    elif entry_type == "skill":
+        entry = store.get_skill(key)
+        if entry is None:
+            return json.dumps({"error": f"Skill '{key}' not found"})
+        scope = store.get_skill_scope(key)
+        return json.dumps({"key": key, "scope": scope.value})
     else:
-        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge' or 'decision'."})
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', or 'skill'."})
 
 
 @mcp.tool()
 def context_set_scope(entry_type: str, key: str, scope: str) -> str:
-    """Change the scope of a knowledge entry or decision.
+    """Change the scope of a knowledge entry, decision, or skill.
 
     Args:
-        entry_type: Either 'knowledge' or 'decision'
-        key: The entry key (knowledge key or decision ID/title)
+        entry_type: Either 'knowledge', 'decision', or 'skill'
+        key: The entry key (knowledge key, decision ID/title, or skill name)
         scope: New scope (public/private/ephemeral)
     """
     store = _get_store()
@@ -505,8 +587,12 @@ def context_set_scope(entry_type: str, key: str, scope: str) -> str:
         if store.set_decision_scope(key, scope_val):
             return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
         return json.dumps({"error": f"Decision '{key}' not found"})
+    elif entry_type == "skill":
+        if store.set_skill_scope(key, scope_val):
+            return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
+        return json.dumps({"error": f"Skill '{key}' not found"})
     else:
-        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge' or 'decision'."})
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', or 'skill'."})
 
 
 @mcp.tool()
@@ -663,6 +749,7 @@ def context_onboarding() -> str:
     manifest = store.read_manifest()
     knowledge = store.list_knowledge(scope=Scope.public)
     decisions = store.list_decisions(scope=Scope.public)
+    skills = store.list_skills(scope=Scope.public)
     state = store.read_active_state()
     sessions = store.list_sessions(limit=5)
 
@@ -692,6 +779,13 @@ def context_onboarding() -> str:
             if d.consequences:
                 lines.append(f"**Consequences:** {d.consequences}")
             lines.append("")
+
+    if skills:
+        lines.append("## Agent Skills")
+        lines.append("")
+        for s in skills:
+            lines.append(f"- **{s.name}**: {s.description}")
+        lines.append("")
 
     if state.current_task:
         lines.append("## Current State")

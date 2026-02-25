@@ -44,6 +44,7 @@ Research completed. Key findings:
 context-bundle/
   manifest.json
   knowledge/        # architecture, decisions (ADR-style), known issues
+  skills/           # agent skills (SKILL.md with YAML frontmatter)
   state/            # session progress, roadmap
   preferences/      # interaction style, workflow config
   history/          # compressed session summaries (ndjson)
@@ -51,14 +52,14 @@ context-bundle/
 
 ## Project Phase
 
-Release-ready. 409 tests passing. Schema v0.3.0.
+Release-ready. 459 tests passing. Schema v0.3.0.
 
 - [x] Landscape survey of commercial and open-source tools
 - [x] Research on emerging memory/portability tools and standards
 - [x] Define prototype scope and target use cases
 - [x] Design minimal context bundle schema
 - [x] Build Claude Code adapter (import/export + MCP registration)
-- [x] Implement MCP server (17 tools, 8 resources, 4 prompts)
+- [x] Implement MCP server (19 tools, 10 resources, 4 prompts)
 - [x] Bundle versioning / migration framework
 - [x] Merge conflict detection and resolution UX
 - [x] Context scoping (public/private/ephemeral boundaries)
@@ -72,17 +73,19 @@ Release-ready. 409 tests passing. Schema v0.3.0.
 - [x] Auto-sync via `context-teleport watch` (watchdog + polling fallback)
 - [x] Shutdown push in MCP server lifespan
 - [x] Registration E2E integration tests (register -> spawn -> call chain)
+- [x] Agent Skills (SKILL.md) as first-class content type with cross-tool import/export
 
 ## Development Notes
 
 - Python 3.11+, venv, hatchling build system
-- `pytest tests/ -v` to run full suite (409 tests)
+- `pytest tests/ -v` to run full suite (459 tests)
 - `ruff check src/ tests/` for linting
 - `pip install -e ".[dev]"` to install with dev deps
 - `pip install -e ".[watch]"` to install watchdog for `context-teleport watch`
 - MCP server: `context-teleport` entry point (smart dispatch: TTY=CLI, non-TTY=MCP server)
 - Register with any tool: `context-teleport register [tool]` (auto-detects if no tool specified)
 - Import/export: `context-teleport import <tool>`, `context-teleport export <tool>` (claude-code, opencode, codex, gemini, cursor)
+- Skills: `context-teleport skill list/get/add/rm/scope` for managing agent skills (SKILL.md)
 - Auto-sync: `context-teleport watch` monitors the store and auto-commits/pushes on changes
 - Config: `context-teleport config get/set/list` for global settings (default_strategy, default_scope)
 - CI: GitHub Actions on push/PR to main (Python 3.11 + 3.12)

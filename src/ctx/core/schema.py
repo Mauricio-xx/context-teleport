@@ -61,6 +61,17 @@ class KnowledgeEntry(BaseModel):
     agent: str = ""
 
 
+# -- Skills --
+
+
+class SkillEntry(BaseModel):
+    name: str
+    description: str
+    content: str  # complete SKILL.md (frontmatter + body)
+    updated_at: datetime = Field(default_factory=_now)
+    agent: str = ""
+
+
 # -- Decisions (ADR) --
 
 

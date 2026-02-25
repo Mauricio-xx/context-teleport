@@ -56,12 +56,30 @@ class OpenCodeAdapter:
                     "content": session.get("summary", ""),
                 })
 
+        # 3. Skills
+        skills_dir = self.store.root / ".opencode" / "skills"
+        if skills_dir.is_dir():
+            for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+                items.append({
+                    "type": "skill",
+                    "key": skill_md.parent.name,
+                    "source": f".opencode/skills/{skill_md.parent.name}/SKILL.md",
+                    "content": skill_md.read_text(),
+                })
+
         if dry_run:
             return {"items": items, "imported": 0, "dry_run": True}
 
         imported = 0
         for item in items:
-            if item["type"] == "knowledge":
+            if item["type"] == "skill":
+                self.store.set_skill(
+                    item["key"],
+                    item["content"],
+                    agent=f"import:opencode ({get_author()})",
+                )
+                imported += 1
+            elif item["type"] == "knowledge":
                 self.store.set_knowledge(
                     item["key"],
                     item["content"],
@@ -88,29 +106,48 @@ class OpenCodeAdapter:
             return []
 
     def export_context(self, dry_run: bool = False) -> dict:
-        """Export store content to AGENTS.md managed section."""
+        """Export store content to AGENTS.md managed section and skills."""
         items: list[dict] = []
         knowledge = self.store.list_knowledge(scope=Scope.public)
+        skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge:
+        if not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
-        items.append({
-            "target": "AGENTS.md",
-            "description": f"Managed section with {len(knowledge)} knowledge entries",
-        })
+        if knowledge:
+            items.append({
+                "target": "AGENTS.md",
+                "description": f"Managed section with {len(knowledge)} knowledge entries",
+            })
+
+        if skills:
+            items.append({
+                "target": ".opencode/skills/",
+                "description": f"Export {len(skills)} skills as SKILL.md files",
+            })
 
         if dry_run:
             return {"items": items, "exported": 0, "dry_run": True}
 
-        agents_md_path = self.store.root / "AGENTS.md"
-        existing = agents_md_path.read_text() if agents_md_path.is_file() else ""
+        exported = 0
 
-        entries = [(e.key, e.content) for e in knowledge if e.key != "project-instructions"]
-        result = write_agents_md_section(existing, entries)
-        agents_md_path.write_text(result)
+        if knowledge:
+            agents_md_path = self.store.root / "AGENTS.md"
+            existing = agents_md_path.read_text() if agents_md_path.is_file() else ""
+            entries = [(e.key, e.content) for e in knowledge if e.key != "project-instructions"]
+            result = write_agents_md_section(existing, entries)
+            agents_md_path.write_text(result)
+            exported += 1
 
-        return {"items": items, "exported": 1, "dry_run": False}
+        if skills:
+            skills_dir = self.store.root / ".opencode" / "skills"
+            for skill in skills:
+                skill_out = skills_dir / skill.name
+                skill_out.mkdir(parents=True, exist_ok=True)
+                (skill_out / "SKILL.md").write_text(skill.content)
+                exported += 1
+
+        return {"items": items, "exported": exported, "dry_run": False}
 
     def mcp_config_path(self) -> Path:
         return self.store.root / "opencode.json"

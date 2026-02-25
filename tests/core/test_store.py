@@ -189,6 +189,88 @@ class TestScoping:
         assert (s.store_dir / "knowledge" / "decisions" / ".scope.json").is_file()
 
 
+class TestSkills:
+    def _sample_skill(self, name="deploy", desc="Deploy to staging"):
+        return f"---\nname: {name}\ndescription: {desc}\n---\n\nRun the deploy script.\n"
+
+    def test_set_and_get(self, store):
+        content = self._sample_skill()
+        store.set_skill("deploy", content)
+        entry = store.get_skill("deploy")
+        assert entry is not None
+        assert entry.name == "deploy"
+        assert entry.description == "Deploy to staging"
+        assert "deploy script" in entry.content
+
+    def test_get_nonexistent(self, store):
+        assert store.get_skill("nope") is None
+
+    def test_list(self, store):
+        store.set_skill("deploy", self._sample_skill("deploy", "Deploy"))
+        store.set_skill("lint", self._sample_skill("lint", "Run linter"))
+        entries = store.list_skills()
+        names = [e.name for e in entries]
+        assert "deploy" in names
+        assert "lint" in names
+
+    def test_rm(self, store):
+        store.set_skill("temp", self._sample_skill("temp", "Temporary"))
+        assert store.rm_skill("temp")
+        assert store.get_skill("temp") is None
+
+    def test_rm_nonexistent(self, store):
+        assert not store.rm_skill("nope")
+
+    def test_scope_default_public(self, store):
+        store.set_skill("deploy", self._sample_skill())
+        assert store.get_skill_scope("deploy") == Scope.public
+
+    def test_scope_set_and_get(self, store):
+        store.set_skill("deploy", self._sample_skill(), scope=Scope.private)
+        assert store.get_skill_scope("deploy") == Scope.private
+
+    def test_scope_change(self, store):
+        store.set_skill("deploy", self._sample_skill())
+        assert store.set_skill_scope("deploy", Scope.private)
+        assert store.get_skill_scope("deploy") == Scope.private
+
+    def test_scope_change_nonexistent(self, store):
+        assert not store.set_skill_scope("ghost", Scope.private)
+
+    def test_list_filter_by_scope(self, store):
+        store.set_skill("pub", self._sample_skill("pub", "Public"))
+        store.set_skill("priv", self._sample_skill("priv", "Private"), scope=Scope.private)
+        public = store.list_skills(scope=Scope.public)
+        assert [e.name for e in public] == ["pub"]
+        private = store.list_skills(scope=Scope.private)
+        assert [e.name for e in private] == ["priv"]
+
+    def test_rm_cleans_scope(self, store):
+        store.set_skill("temp", self._sample_skill("temp", "Temp"), scope=Scope.private)
+        assert store.get_skill_scope("temp") == Scope.private
+        store.rm_skill("temp")
+        assert store.get_skill_scope("temp") == Scope.public
+
+    def test_init_creates_skills_dir(self, tmp_git_repo):
+        s = ContextStore(tmp_git_repo)
+        s.init(project_name="skills-project")
+        assert (s.store_dir / "skills").is_dir()
+        assert (s.store_dir / "skills" / ".scope.json").is_file()
+
+    def test_name_from_frontmatter(self, store):
+        """Name comes from frontmatter, not directory name."""
+        content = "---\nname: My Fancy Skill\ndescription: Does things\n---\n\nBody.\n"
+        store.set_skill("my-fancy-skill", content)
+        entry = store.get_skill("my-fancy-skill")
+        assert entry.name == "My Fancy Skill"
+
+    def test_no_frontmatter_uses_dir_name(self, store):
+        store.set_skill("plain", "Just plain instructions, no frontmatter.")
+        entry = store.get_skill("plain")
+        assert entry.name == "plain"
+        assert entry.description == ""
+
+
 class TestSummary:
     def test_summary(self, populated_store):
         s = populated_store.summary()
@@ -196,3 +278,11 @@ class TestSummary:
         assert s["knowledge_count"] == 3
         assert s["decision_count"] == 2
         assert "architecture" in s["knowledge_keys"]
+        assert s["skill_count"] == 0
+        assert s["skill_names"] == []
+
+    def test_summary_with_skills(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy\n---\n\nBody.\n")
+        s = store.summary()
+        assert s["skill_count"] == 1
+        assert "deploy" in s["skill_names"]

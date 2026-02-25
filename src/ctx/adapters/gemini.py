@@ -57,16 +57,34 @@ class GeminiAdapter:
                 "content": gemini_md.read_text().strip(),
             })
 
+        # .gemini/skills/*/SKILL.md
+        skills_dir = self.store.root / ".gemini" / "skills"
+        if skills_dir.is_dir():
+            for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+                items.append({
+                    "type": "skill",
+                    "key": skill_md.parent.name,
+                    "source": f".gemini/skills/{skill_md.parent.name}/SKILL.md",
+                    "content": skill_md.read_text(),
+                })
+
         if dry_run:
             return {"items": items, "imported": 0, "dry_run": True}
 
         imported = 0
         for item in items:
-            self.store.set_knowledge(
-                item["key"],
-                item["content"],
-                author=f"import:gemini ({get_author()})",
-            )
+            if item["type"] == "skill":
+                self.store.set_skill(
+                    item["key"],
+                    item["content"],
+                    agent=f"import:gemini ({get_author()})",
+                )
+            else:
+                self.store.set_knowledge(
+                    item["key"],
+                    item["content"],
+                    author=f"import:gemini ({get_author()})",
+                )
             imported += 1
 
         return {"items": items, "imported": imported, "dry_run": False}
@@ -74,28 +92,45 @@ class GeminiAdapter:
     def export_context(self, dry_run: bool = False) -> dict:
         items: list[dict] = []
         knowledge = self.store.list_knowledge(scope=Scope.public)
+        skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge:
+        if not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
-        items.append({
-            "target": ".gemini/rules/",
-            "description": f"Export {len(knowledge)} entries as Gemini rule files",
-        })
+        if knowledge:
+            items.append({
+                "target": ".gemini/rules/",
+                "description": f"Export {len(knowledge)} entries as Gemini rule files",
+            })
+
+        if skills:
+            items.append({
+                "target": ".gemini/skills/",
+                "description": f"Export {len(skills)} skills as SKILL.md files",
+            })
 
         if dry_run:
             return {"items": items, "exported": 0, "dry_run": True}
 
-        rules_dir = self.store.root / ".gemini" / "rules"
-        rules_dir.mkdir(parents=True, exist_ok=True)
-
         exported = 0
-        for entry in knowledge:
-            if entry.key == "project-instructions":
-                continue
-            rule_path = rules_dir / f"ctx-{entry.key}.md"
-            rule_path.write_text(entry.content.strip() + "\n")
-            exported += 1
+
+        if knowledge:
+            rules_dir = self.store.root / ".gemini" / "rules"
+            rules_dir.mkdir(parents=True, exist_ok=True)
+            for entry in knowledge:
+                if entry.key == "project-instructions":
+                    continue
+                rule_path = rules_dir / f"ctx-{entry.key}.md"
+                rule_path.write_text(entry.content.strip() + "\n")
+                exported += 1
+
+        if skills:
+            skills_dir = self.store.root / ".gemini" / "skills"
+            for skill in skills:
+                skill_out = skills_dir / skill.name
+                skill_out.mkdir(parents=True, exist_ok=True)
+                (skill_out / "SKILL.md").write_text(skill.content)
+                exported += 1
 
         return {"items": items, "exported": exported, "dry_run": False}
 

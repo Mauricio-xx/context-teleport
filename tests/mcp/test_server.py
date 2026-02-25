@@ -20,6 +20,8 @@ from ctx.mcp.server import (
     context_search,
     context_add_knowledge,
     context_remove_knowledge,
+    context_add_skill,
+    context_remove_skill,
     context_record_decision,
     context_update_state,
     context_append_session,
@@ -42,6 +44,8 @@ from ctx.mcp.server import (
     resource_state,
     resource_history,
     resource_summary,
+    resource_skills,
+    resource_skill_item,
     context_onboarding,
     context_handoff,
     context_review_decisions,
@@ -139,6 +143,28 @@ class TestResources:
         assert result["project"] == "test-mcp-project"
         assert result["knowledge_count"] == 1
 
+    def test_skills_empty(self, store):
+        result = json.loads(resource_skills())
+        assert result == []
+
+    def test_skills_with_entries(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy to staging\n---\n\nRun deploy.\n")
+        store.set_skill("lint", "---\nname: lint\ndescription: Run linter\n---\n\nRun ruff.\n")
+        result = json.loads(resource_skills())
+        assert len(result) == 2
+        names = {e["name"] for e in result}
+        assert names == {"deploy", "lint"}
+
+    def test_skill_item_found(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy to staging\n---\n\nRun deploy.\n")
+        result = json.loads(resource_skill_item("deploy"))
+        assert result["name"] == "deploy"
+        assert "Deploy to staging" in result["description"]
+
+    def test_skill_item_not_found(self, store):
+        result = json.loads(resource_skill_item("nonexistent"))
+        assert "error" in result
+
 
 class TestTools:
     def test_search_empty(self, store):
@@ -167,6 +193,30 @@ class TestTools:
 
     def test_remove_knowledge_not_found(self, store):
         result = json.loads(context_remove_knowledge("ghost"))
+        assert result["status"] == "not_found"
+
+    def test_add_skill(self, store):
+        result = json.loads(context_add_skill("deploy", "Deploy to staging", "Run the deploy script."))
+        assert result["status"] == "ok"
+        assert result["name"] == "deploy"
+        entry = store.get_skill("deploy")
+        assert entry is not None
+        assert "Deploy to staging" in entry.description
+        assert "deploy script" in entry.content
+
+    def test_add_skill_with_scope(self, store):
+        result = json.loads(context_add_skill("priv-skill", "Private", "Secret instructions.", scope="private"))
+        assert result["status"] == "ok"
+        assert store.get_skill_scope("priv-skill") == Scope.private
+
+    def test_remove_skill(self, store):
+        store.set_skill("temp", "---\nname: temp\ndescription: Temp\n---\n\nBody.\n")
+        result = json.loads(context_remove_skill("temp"))
+        assert result["status"] == "removed"
+        assert store.get_skill("temp") is None
+
+    def test_remove_skill_not_found(self, store):
+        result = json.loads(context_remove_skill("ghost"))
         assert result["status"] == "not_found"
 
     def test_record_decision(self, store):
@@ -282,6 +332,12 @@ class TestPrompts:
         assert "Microservices" in result
         assert "Use Python" in result
 
+    def test_onboarding_with_skills(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy to staging\n---\n\nRun deploy.\n")
+        result = context_onboarding()
+        assert "deploy" in result
+        assert "Deploy to staging" in result
+
     def test_handoff(self, store):
         from ctx.core.schema import ActiveState
 
@@ -334,6 +390,17 @@ class TestScopeTools:
         result = json.loads(context_set_scope("knowledge", "arch", "ephemeral"))
         assert result["status"] == "ok"
         assert store.get_knowledge_scope("arch") == Scope.ephemeral
+
+    def test_get_scope_skill(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy\n---\n\nBody.\n", scope=Scope.private)
+        result = json.loads(context_get_scope("skill", "deploy"))
+        assert result["scope"] == "private"
+
+    def test_set_scope_skill(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy\n---\n\nBody.\n")
+        result = json.loads(context_set_scope("skill", "deploy", "ephemeral"))
+        assert result["status"] == "ok"
+        assert store.get_skill_scope("deploy") == Scope.ephemeral
 
     def test_knowledge_resource_includes_scope(self, store):
         store.set_knowledge("pub", "Public entry")
@@ -492,6 +559,8 @@ class TestMCPRegistration:
             "context_search",
             "context_add_knowledge",
             "context_remove_knowledge",
+            "context_add_skill",
+            "context_remove_skill",
             "context_record_decision",
             "context_update_state",
             "context_append_session",
@@ -509,8 +578,8 @@ class TestMCPRegistration:
         }
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
-    def test_has_exactly_17_tools(self, store):
-        assert len(mcp._tool_manager._tools) == 17
+    def test_has_exactly_19_tools(self, store):
+        assert len(mcp._tool_manager._tools) == 19
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())
@@ -534,6 +603,12 @@ class TestDynamicInstructions:
         assert "arch" in result
         assert "1 recorded" in result
         assert "context_onboarding" in result
+
+    def test_generate_instructions_with_skills(self, store):
+        store.set_skill("deploy", "---\nname: deploy\ndescription: Deploy\n---\n\nBody.\n")
+        result = _generate_instructions()
+        assert "deploy" in result
+        assert "1 available" in result
 
     def test_generate_instructions_includes_task(self, store):
         state = store.read_active_state()

@@ -14,6 +14,7 @@ from ctx.core.schema import (
     ProjectInfo,
     Roadmap,
     SessionSummary,
+    SkillEntry,
     TeamPreferences,
     UserPreferences,
 )
@@ -48,6 +49,7 @@ class ContextStore:
         # Create directory structure
         dirs = [
             self.store_dir / "knowledge" / "decisions",
+            self.store_dir / "skills",
             self.store_dir / "state",
             self.store_dir / "preferences",
             self.store_dir / "history",
@@ -64,6 +66,7 @@ class ContextStore:
         # Create scope sidecar files
         ScopeMap.ensure_exists(self.store_dir / "knowledge")
         ScopeMap.ensure_exists(self.store_dir / "knowledge" / "decisions")
+        ScopeMap.ensure_exists(self.store_dir / "skills")
 
         # Create .gitignore for private files
         self._rebuild_gitignore()
@@ -131,6 +134,8 @@ class ContextStore:
             lines.append(f"knowledge/{fname}")
         for fname in sorted(self._decisions_scope_map().non_public_files()):
             lines.append(f"knowledge/decisions/{fname}")
+        for fname in sorted(self._skills_scope_map().non_public_files()):
+            lines.append(f"skills/{fname}")
         gitignore = self.store_dir / ".gitignore"
         gitignore.write_text("\n".join(lines) + "\n")
 
@@ -330,6 +335,101 @@ class ContextStore:
             self._rebuild_gitignore()
         return dec
 
+    # -- Skills --
+
+    def skills_dir(self) -> Path:
+        return self.store_dir / "skills"
+
+    def _skills_scope_map(self) -> ScopeMap:
+        return ScopeMap(self.skills_dir())
+
+    def list_skills(self, scope: Scope | None = None) -> list[SkillEntry]:
+        self._require_init()
+        from ctx.core.frontmatter import parse_frontmatter
+
+        smap = self._skills_scope_map()
+        sdir = self.skills_dir()
+        entries = []
+        if not sdir.is_dir():
+            return entries
+        for skill_md in sorted(sdir.glob("*/SKILL.md")):
+            scope_key = f"{skill_md.parent.name}/SKILL.md"
+            if scope is not None and smap.get(scope_key) != scope:
+                continue
+            content = skill_md.read_text()
+            meta, _body = parse_frontmatter(content)
+            entries.append(
+                SkillEntry(
+                    name=meta.get("name", skill_md.parent.name),
+                    description=meta.get("description", ""),
+                    content=content,
+                    updated_at=_datetime_from_mtime(skill_md),
+                )
+            )
+        return entries
+
+    def get_skill(self, name: str) -> SkillEntry | None:
+        self._require_init()
+        from ctx.core.frontmatter import parse_frontmatter
+
+        path = self.skills_dir() / name / "SKILL.md"
+        if not path.is_file():
+            return None
+        content = path.read_text()
+        meta, _body = parse_frontmatter(content)
+        return SkillEntry(
+            name=meta.get("name", name),
+            description=meta.get("description", ""),
+            content=content,
+            updated_at=_datetime_from_mtime(path),
+        )
+
+    def set_skill(
+        self, name: str, content: str, agent: str = "", scope: Scope | None = None
+    ) -> SkillEntry:
+        self._require_init()
+        from ctx.core.frontmatter import parse_frontmatter
+
+        skill_dir = self.skills_dir() / name
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        path = skill_dir / "SKILL.md"
+        path.write_text(content)
+        meta, _body = parse_frontmatter(content)
+        if scope is not None:
+            self._skills_scope_map().set(f"{name}/SKILL.md", scope)
+            self._rebuild_gitignore()
+        return SkillEntry(
+            name=meta.get("name", name),
+            description=meta.get("description", ""),
+            content=content,
+            agent=agent,
+        )
+
+    def rm_skill(self, name: str) -> bool:
+        self._require_init()
+        import shutil as _shutil
+
+        skill_dir = self.skills_dir() / name
+        if skill_dir.is_dir():
+            _shutil.rmtree(skill_dir)
+            scope_key = f"{name}/SKILL.md"
+            self._skills_scope_map().remove(scope_key)
+            self._rebuild_gitignore()
+            return True
+        return False
+
+    def get_skill_scope(self, name: str) -> Scope:
+        return self._skills_scope_map().get(f"{name}/SKILL.md")
+
+    def set_skill_scope(self, name: str, scope: Scope) -> bool:
+        self._require_init()
+        path = self.skills_dir() / name / "SKILL.md"
+        if not path.is_file():
+            return False
+        self._skills_scope_map().set(f"{name}/SKILL.md", scope)
+        self._rebuild_gitignore()
+        return True
+
     # -- State --
 
     def read_active_state(self) -> ActiveState:
@@ -414,6 +514,7 @@ class ContextStore:
         manifest = self.read_manifest()
         knowledge = self.list_knowledge()
         decisions = self.list_decisions()
+        skills = self.list_skills()
         state = self.read_active_state()
         sessions = self.list_sessions(limit=5)
 
@@ -426,6 +527,8 @@ class ContextStore:
             "decisions": [
                 {"id": d.id, "title": d.title, "status": d.status.value} for d in decisions
             ],
+            "skill_count": len(skills),
+            "skill_names": [s.name for s in skills],
             "current_task": state.current_task,
             "blockers": state.blockers,
             "recent_sessions": len(sessions),
