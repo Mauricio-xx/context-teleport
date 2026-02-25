@@ -13,6 +13,9 @@ venv/
 SESSION_LOG.md
 .claude/
 
+# Local docs (plans, roadmaps, research -- not for public repo)
+.local-docs/
+
 # OS
 .DS_Store
 Thumbs.db
