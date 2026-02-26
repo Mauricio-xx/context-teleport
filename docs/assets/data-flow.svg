@@ -181,17 +181,17 @@
           <g
              id="g58">
             <path
-               d="M 0,-13.2541 V -48.56676"
-               style="fill:none;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 0,-12.25783 V -50.35226"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path60" />
             <g
                id="g62"
-               transform="rotate(-90,-22.95748,-22.95748)">
+               transform="rotate(-90,-23.97865,-23.97865)">
               <g
                  id="g64">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path66" />
               </g>
             </g>
@@ -412,17 +412,17 @@
           <g
              id="g116">
             <path
-               d="m -41.47836,-72.0106 h -116.62041 v -39.16723"
-               style="fill:none;stroke:#82c784;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m -40.48209,-72.0106 h -117.61668 v -40.95272"
+               style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path118" />
             <g
                id="g120"
-               transform="rotate(-90,-133.3124,24.78637)">
+               transform="rotate(-90,-134.33357,23.7652)">
               <g
                  id="g122">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#82c784;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#4caf50;fill-opacity:1;fill-rule:nonzero;stroke:#4caf50;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path124" />
               </g>
             </g>
@@ -430,15 +430,15 @@
                id="g126">
               <g
                  id="g128"
-                 transform="translate(-91.21,-68.241)">
+                 transform="translate(-91.36,-68.091)">
                 <g
                    id="g130">
                   <g
                      id="g132"
-                     transform="translate(-122.602,-204.227)">
+                     transform="translate(-122.452,-204.377)">
                     <g
                        aria-label="Yes"
-                       transform="matrix(1,0,0,-1,122.602,204.227)"
+                       transform="matrix(1,0,0,-1,122.452,204.377)"
                        id="text136"
                        style="font-weight:bold;font-size:6.9738px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#357b38">
                       <path
@@ -453,29 +453,29 @@
                     </g>
                     <g
                        id="g138"
-                       transform="translate(122.602,204.227)" />
+                       transform="translate(122.452,204.377)" />
                   </g>
                 </g>
                 <g
                    id="g140"
-                   transform="translate(91.21,68.241)" />
+                   transform="translate(91.36,68.091)" />
               </g>
             </g>
           </g>
           <g
              id="g142">
             <path
-               d="M -158.09877,-141.85873 V -165.8336"
-               style="fill:none;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m -158.09877,-140.86246 v -26.75665"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path144" />
             <g
                id="g146"
-               transform="rotate(-90,-160.64029,-2.54152)">
+               transform="rotate(-90,-161.66146,-3.56269)">
               <g
                  id="g148">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path150" />
               </g>
             </g>
@@ -578,15 +578,15 @@
             </g>
             <g
                id="g182"
-               transform="translate(130.968,-190.58)">
+               transform="translate(130.967,-190.58)">
               <g
                  id="g184">
                 <g
                    id="g186"
-                   transform="translate(-344.78,-81.888)">
+                   transform="translate(-344.779,-81.888)">
                   <g
                      aria-label="ContextStore"
-                     transform="matrix(1,0,0,-1,344.78,91.85)"
+                     transform="matrix(1,0,0,-1,344.779,91.85)"
                      id="text190"
                      style="font-weight:bold;font-size:8.9664px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold">
                     <path
@@ -673,28 +673,28 @@
                   </g>
                   <g
                      id="g196"
-                     transform="translate(344.78,81.888)" />
+                     transform="translate(344.779,81.888)" />
                 </g>
               </g>
               <g
                  id="g198"
-                 transform="translate(-130.968,190.58)" />
+                 transform="translate(-130.967,190.58)" />
             </g>
           </g>
           <g
              id="g200">
             <path
-               d="m 41.47836,-72.0106 h 116.62041 v -39.16723"
-               style="fill:none;stroke:#82c784;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 40.48209,-72.0106 h 117.61668 v -40.95272"
+               style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path202" />
             <g
                id="g204"
-               transform="rotate(-90,24.78637,-133.3124)">
+               transform="rotate(-90,23.7652,-134.33357)">
               <g
                  id="g206">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#82c784;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#4caf50;fill-opacity:1;fill-rule:nonzero;stroke:#4caf50;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path208" />
               </g>
             </g>
@@ -702,15 +702,15 @@
                id="g210">
               <g
                  id="g212"
-                 transform="translate(80.231,-68.241)">
+                 transform="translate(80.38,-68.091)">
                 <g
                    id="g214">
                   <g
                      id="g216"
-                     transform="translate(-294.043,-204.227)">
+                     transform="translate(-294.192,-204.377)">
                     <g
                        aria-label="No"
-                       transform="matrix(1,0,0,-1,294.043,204.227)"
+                       transform="matrix(1,0,0,-1,294.192,204.377)"
                        id="text220"
                        style="font-weight:bold;font-size:6.9738px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#357b38">
                       <path
@@ -722,29 +722,29 @@
                     </g>
                     <g
                        id="g222"
-                       transform="translate(294.043,204.227)" />
+                       transform="translate(294.192,204.377)" />
                   </g>
                 </g>
                 <g
                    id="g224"
-                   transform="translate(-80.231,68.241)" />
+                   transform="translate(-80.38,68.091)" />
               </g>
             </g>
           </g>
           <g
              id="g226">
             <path
-               d="M 158.09877,-141.85873 V -165.8336"
-               style="fill:none;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 158.09877,-140.86246 v -26.75665"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path228" />
             <g
                id="g230"
-               transform="rotate(-90,-2.54152,-160.64029)">
+               transform="rotate(-90,-3.56269,-161.66146)">
               <g
                  id="g232">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path234" />
               </g>
             </g>
@@ -1175,17 +1175,17 @@
           <g
              id="g308">
             <path
-               d="m -158.09877,-196.51451 v -14.1734 H -28.3468 v -21.14003"
-               style="fill:none;stroke:#9e9e9e;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m -158.09877,-195.51823 v -15.16968 H -28.3468 v -22.92554"
+               style="fill:none;stroke:#757575;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path310" />
             <g
                id="g312"
-               transform="rotate(-90,-128.76148,-100.41468)">
+               transform="rotate(-90,-129.78264,-101.43585)">
               <g
                  id="g314">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#9e9e9e;fill-opacity:1;fill-rule:nonzero;stroke:#9e9e9e;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#757575;fill-opacity:1;fill-rule:nonzero;stroke:#757575;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path316" />
               </g>
             </g>
@@ -1193,17 +1193,17 @@
           <g
              id="g318">
             <path
-               d="m 158.09877,-196.51451 v -14.1734 H 28.3468 v -21.14003"
-               style="fill:none;stroke:#9e9e9e;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 158.09877,-195.51823 v -15.16968 H 28.3468 v -22.92554"
+               style="fill:none;stroke:#757575;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path320" />
             <g
                id="g322"
-               transform="rotate(-90,-100.41468,-128.76148)">
+               transform="rotate(-90,-101.43585,-129.78264)">
               <g
                  id="g324">
                 <path
-                   d="M 5.7469,0 1.44785,1.62683 2.87593,0 1.44785,-1.62683 Z"
-                   style="fill:#9e9e9e;fill-opacity:1;fill-rule:nonzero;stroke:#9e9e9e;stroke-width:0.89664;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#757575;fill-opacity:1;fill-rule:nonzero;stroke:#757575;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path326" />
               </g>
             </g>

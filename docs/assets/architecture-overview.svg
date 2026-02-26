@@ -1221,17 +1221,17 @@ ConflictResolution"
           <g
              id="g338">
             <path
-               d="m 138.279,-154.66644 h 18.04395"
-               style="fill:none;stroke:#ba68c8;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 137.28273,-154.66644 h 21.08739"
+               style="fill:none;stroke:#9c27b0;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path340" />
             <g
                id="g342"
-               transform="translate(153.48447,-154.66644)">
+               transform="translate(155.97516,-154.66644)">
               <g
                  id="g344">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#ba68c8;fill-opacity:1;fill-rule:nonzero;stroke:#ba68c8;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#9c27b0;fill-opacity:1;fill-rule:nonzero;stroke:#9c27b0;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path346" />
               </g>
             </g>
@@ -1723,17 +1723,17 @@ GitHubSource
           <g
              id="g424">
             <path
-               d="M 0,-17.40654 V -28.74509 H 50.00543 V -46.78903"
-               style="fill:none;stroke:#82c784;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 0,-16.41026 V -28.74509 H 50.00543 V -48.8362"
+               style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path426" />
             <g
                id="g428"
-               transform="rotate(-90,3.02744,-46.97799)">
+               transform="rotate(-90,1.782095,-48.223335)">
               <g
                  id="g430">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#82c784;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#4caf50;fill-opacity:1;fill-rule:nonzero;stroke:#4caf50;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path432" />
               </g>
             </g>
@@ -1741,17 +1741,17 @@ GitHubSource
           <g
              id="g434">
             <path
-               d="M 185.05132,-17.40654 V -28.74509 H 135.04587 V -46.78903"
-               style="fill:none;stroke:#82c784;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 185.05132,-16.41026 V -28.74509 H 135.04587 V -48.8362"
+               style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path436" />
             <g
                id="g438"
-               transform="rotate(-90,45.54766,-89.49821)">
+               transform="rotate(-90,44.302315,-90.743555)">
               <g
                  id="g440">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#82c784;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#4caf50;fill-opacity:1;fill-rule:nonzero;stroke:#4caf50;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path442" />
               </g>
             </g>
@@ -1759,17 +1759,17 @@ GitHubSource
           <g
              id="g444">
             <path
-               d="M 7.48518,-86.23573 -2.74088,-115.8718"
-               style="fill:none;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 7.81017,-85.29398 -3.40865,-117.80693"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path446" />
             <g
                id="g448"
-               transform="matrix(-0.32619,-0.94528,0.94528,-0.32619,-1.815,-113.18861)">
+               transform="matrix(-0.32619,-0.94528,0.94528,-0.32619,-2.62743,-115.54303)">
               <g
                  id="g450">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path452" />
               </g>
             </g>
@@ -1777,17 +1777,17 @@ GitHubSource
           <g
              id="g454">
             <path
-               d="m 92.52565,-86.23573 v -29.38251"
-               style="fill:none;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 92.52565,-85.23946 V -117.6654"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path456" />
             <g
                id="g458"
-               transform="rotate(-90,-10.12705,-102.6527)">
+               transform="rotate(-90,-11.3724,-103.89805)">
               <g
                  id="g460">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path462" />
               </g>
             </g>
@@ -1795,17 +1795,17 @@ GitHubSource
           <g
              id="g464">
             <path
-               d="m 177.5661,-86.23573 10.22609,-29.63607"
-               style="fill:none;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 177.24113,-85.29398 11.21882,-32.51295"
+               style="fill:none;stroke:#3f51b5;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path466" />
             <g
                id="g468"
-               transform="matrix(0.32619,-0.94528,0.94528,0.32619,186.86632,-113.18861)">
+               transform="matrix(0.32619,-0.94528,0.94528,0.32619,187.67874,-115.54303)">
               <g
                  id="g470">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#7985cb;fill-opacity:1;fill-rule:nonzero;stroke:#7985cb;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#3f51b5;fill-opacity:1;fill-rule:nonzero;stroke:#3f51b5;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path472" />
               </g>
             </g>
@@ -1813,17 +1813,17 @@ GitHubSource
           <g
              id="g474">
             <path
-               d="m 35.83202,-223.09714 -36.55164,31.01808"
-               style="fill:none;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="M 36.59158,-223.74174 -2.28038,-190.7545"
+               style="fill:none;stroke:#757575;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path476" />
             <g
                id="g478"
-               transform="matrix(-0.7624,0.64702,-0.64702,-0.7624,1.44444,-193.9156)">
+               transform="matrix(-0.7624,0.64702,-0.64702,-0.7624,-0.45445,-192.3041)">
               <g
                  id="g480">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#9e9e9e;fill-opacity:1;fill-rule:nonzero;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#757575;fill-opacity:1;fill-rule:nonzero;stroke:#757575;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path482" />
               </g>
             </g>
@@ -1831,17 +1831,17 @@ GitHubSource
           <g
              id="g484">
             <path
-               d="m 92.52565,-223.09714 v 29.38251"
-               style="fill:none;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 92.52565,-224.09341 v 32.42593"
+               style="fill:none;stroke:#757575;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path486" />
             <g
                id="g488"
-               transform="rotate(90,144.53938,-52.013735)">
+               transform="rotate(90,143.29403,-50.768385)">
               <g
                  id="g490">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#9e9e9e;fill-opacity:1;fill-rule:nonzero;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#757575;fill-opacity:1;fill-rule:nonzero;stroke:#757575;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path492" />
               </g>
             </g>
@@ -1849,17 +1849,17 @@ GitHubSource
           <g
              id="g494">
             <path
-               d="m 149.21928,-223.09714 36.55166,31.01808"
-               style="fill:none;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+               d="m 148.45972,-223.74174 38.87198,32.98724"
+               style="fill:none;stroke:#757575;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path496" />
             <g
                id="g498"
-               transform="matrix(0.7624,0.64702,-0.64702,0.7624,183.60686,-193.9156)">
+               transform="matrix(0.7624,0.64702,-0.64702,0.7624,185.50577,-192.3041)">
               <g
                  id="g500">
                 <path
-                   d="M 6.05339,0 1.60873,1.68304 3.08754,0 1.60873,-1.68304 Z"
-                   style="fill:#9e9e9e;fill-opacity:1;fill-rule:nonzero;stroke:#9e9e9e;stroke-width:0.99628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+                   d="M 4.38272,0 1.76076,0.88887 2.64711,0 1.76076,-0.88887 Z"
+                   style="fill:#757575;fill-opacity:1;fill-rule:nonzero;stroke:#757575;stroke-width:1.00871;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                    id="path502" />
               </g>
             </g>

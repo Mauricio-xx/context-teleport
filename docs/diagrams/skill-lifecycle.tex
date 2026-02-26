@@ -32,8 +32,10 @@
         minimum width=2cm, minimum height=0.7cm,
         line width=0.6pt, font=\sffamily\scriptsize, align=center
     },
-    arr/.style={->, thick, line width=0.9pt, color=#1!70},
-    darr/.style={->, thick, line width=0.9pt, color=#1!70, dashed},
+    arr/.style={-{Stealth[length=6pt, width=4pt]}, line width=1.2pt, color=#1,
+        shorten >=-1pt, shorten <=-1pt},
+    darr/.style={-{Stealth[length=6pt, width=4pt]}, line width=1.2pt, color=#1,
+        shorten >=-1pt, shorten <=-1pt, dashed},
 ]
 
 % === Main pipeline (top row) ===
