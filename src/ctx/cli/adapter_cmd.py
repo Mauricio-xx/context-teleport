@@ -332,6 +332,155 @@ def import_eda(
             info(f"  {item.key} <- {item.source}")
 
 
+@adapter_app.command("github")
+def import_github(
+    repo: Optional[str] = typer.Option(
+        None,
+        "--repo",
+        "-r",
+        help="GitHub repository (owner/repo). Auto-detected from git remote if omitted.",
+    ),
+    labels: Optional[str] = typer.Option(
+        None,
+        "--labels",
+        "-l",
+        help="Comma-separated labels to filter by",
+    ),
+    state: str = typer.Option(
+        "all",
+        "--state",
+        "-s",
+        help="Issue state: open, closed, all",
+    ),
+    since: Optional[str] = typer.Option(
+        None,
+        "--since",
+        help="Only issues created after this date (ISO format, e.g. 2025-01-01)",
+    ),
+    issue_number: Optional[int] = typer.Option(
+        None,
+        "--issue",
+        "-i",
+        help="Import a single issue by number",
+    ),
+    limit: int = typer.Option(
+        50,
+        "--limit",
+        "-n",
+        help="Maximum number of issues to fetch",
+    ),
+    as_decisions: bool = typer.Option(
+        False,
+        "--as-decisions",
+        help="Also create decision records for closed issues",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import knowledge from GitHub issues via gh CLI."""
+    from ctx.sources.github import GitHubSource, GitHubSourceError
+
+    source = GitHubSource()
+
+    # Resolve repo
+    resolved_repo = repo
+    if resolved_repo is None:
+        resolved_repo = source.detect_repo()
+        if resolved_repo is None:
+            error("Cannot detect GitHub repository. Use --repo owner/repo")
+            raise typer.Exit(1)
+        info(f"Auto-detected repository: {resolved_repo}")
+
+    from ctx.sources.base import SourceConfig
+
+    config = SourceConfig(
+        repo=resolved_repo,
+        labels=[lb.strip() for lb in labels.split(",") if lb.strip()] if labels else [],
+        state=state,
+        since=since or "",
+        issue_number=issue_number,
+        limit=limit,
+        as_decisions=as_decisions,
+    )
+
+    try:
+        items = source.import_issues(config)
+    except GitHubSourceError as e:
+        error(str(e))
+        raise typer.Exit(1)
+
+    if not items:
+        if fmt == "json":
+            output({"items": [], "imported": 0, "dry_run": dry_run}, fmt="json")
+        else:
+            info("No issues found matching the criteria")
+        return
+
+    if dry_run:
+        if fmt == "json":
+            output(
+                {
+                    "items": [
+                        {"type": it.type, "key": it.key, "source": it.source}
+                        for it in items
+                    ],
+                    "imported": 0,
+                    "dry_run": True,
+                },
+                fmt="json",
+            )
+        else:
+            info("Dry run -- the following would be imported:")
+            for it in items:
+                info(f"  {it.type}: {it.key} ({it.source})")
+        return
+
+    # Write to store
+    from ctx.utils.paths import get_author
+
+    store = get_store()
+    author = f"import:github ({get_author()})"
+    imported_knowledge = 0
+    imported_decisions = 0
+
+    for it in items:
+        if it.type == "knowledge":
+            store.set_knowledge(it.key, it.content, author=author)
+            imported_knowledge += 1
+        elif it.type == "decision":
+            store.add_decision(
+                title=it.title,
+                context=it.context,
+                decision_text=it.decision_text,
+                consequences=it.consequences,
+                author=author,
+            )
+            imported_decisions += 1
+
+    total = imported_knowledge + imported_decisions
+    if fmt == "json":
+        output(
+            {
+                "items": [
+                    {"type": it.type, "key": it.key, "source": it.source}
+                    for it in items
+                ],
+                "imported": total,
+                "knowledge": imported_knowledge,
+                "decisions": imported_decisions,
+                "dry_run": False,
+            },
+            fmt="json",
+        )
+    else:
+        parts = []
+        if imported_knowledge:
+            parts.append(f"{imported_knowledge} knowledge")
+        if imported_decisions:
+            parts.append(f"{imported_decisions} decision(s)")
+        success(f"Imported {' + '.join(parts)} from GitHub issues")
+        for it in items:
+            info(f"  {it.type}: {it.key}")
 
 
 # -- Export commands (under `context-teleport export`) --
