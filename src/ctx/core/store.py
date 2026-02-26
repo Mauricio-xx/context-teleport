@@ -708,8 +708,8 @@ class ContextStore:
         if not path.is_file():
             return []
         lines = path.read_text().strip().split("\n")
-        lines = [l for l in lines if l.strip()]
-        sessions = [SessionSummary.model_validate_json(l) for l in lines[-limit:]]
+        lines = [line for line in lines if line.strip()]
+        sessions = [SessionSummary.model_validate_json(line) for line in lines[-limit:]]
         return sessions
 
     # -- Utilities --

@@ -18,7 +18,10 @@ def _try_push(gs: GitSync, no_push: bool) -> bool:
     try:
         if not gs._has_changes():
             return False
-        result = gs.push()
+        if no_push:
+            result = gs.commit()
+        else:
+            result = gs.push()
         status = result.get("status", "")
         if status in ("committed", "pushed"):
             if no_push:

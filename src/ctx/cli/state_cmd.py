@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 
 from ctx.cli._shared import FORMAT_OPTION, get_store
-from ctx.utils.output import error, output, success
+from ctx.utils.output import output, success
 
 state_app = typer.Typer(no_args_is_help=True)
 

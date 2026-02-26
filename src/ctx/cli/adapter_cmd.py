@@ -222,6 +222,7 @@ def import_cursor(
 @adapter_app.command("bundle")
 def import_bundle(
     path: str = typer.Argument(..., help="Path to .ctxbundle archive"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Import a portable context bundle archive."""
@@ -229,7 +230,7 @@ def import_bundle(
     from ctx.adapters.bundle import import_bundle as do_import
 
     try:
-        result = do_import(store, Path(path))
+        result = do_import(store, Path(path), dry_run=dry_run)
     except FileNotFoundError:
         error(f"Bundle not found: {path}")
         raise typer.Exit(1)
@@ -241,6 +242,10 @@ def import_bundle(
         raise typer.Exit(1)
     if fmt == "json":
         output(result, fmt="json")
+    elif dry_run:
+        info("Dry run -- the following would be imported:")
+        for item in result.get("items", []):
+            info(f"  {item.get('type', 'item')}: {item.get('key', '?')} ({item.get('source', '?')})")
     else:
         success(f"Imported bundle from {path}: {result.get('imported', 0)} items")
 
@@ -534,6 +539,7 @@ def export_cursor(
 @export_app.command("bundle")
 def export_bundle(
     path: str = typer.Argument(..., help="Output path for .ctxbundle archive"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be exported"),
     fmt: Optional[str] = FORMAT_OPTION,
 ) -> None:
     """Export store as a portable .ctxbundle archive."""
@@ -541,7 +547,7 @@ def export_bundle(
     from ctx.adapters.bundle import export_bundle as do_export
 
     try:
-        result = do_export(store, Path(path))
+        result = do_export(store, Path(path), dry_run=dry_run)
     except FileNotFoundError:
         error(f"Path not found: {path}")
         raise typer.Exit(1)
@@ -553,5 +559,9 @@ def export_bundle(
         raise typer.Exit(1)
     if fmt == "json":
         output(result, fmt="json")
+    elif dry_run:
+        info("Dry run -- the following would be bundled:")
+        for item in result.get("items", []):
+            info(f"  {item.get('target', '?')}")
     else:
         success(f"Bundle exported to {path}")

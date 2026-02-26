@@ -132,6 +132,38 @@ class TestGitSync:
         msg = gs._auto_message()
         assert "decision" in msg
 
+    def test_commit_does_not_push(self, two_repos):
+        """commit() should only create a local commit, never push."""
+        _upstream, clone_a, clone_b = two_repos
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("local-only", "should stay local")
+
+        gs = GitSync(clone_a)
+        result = gs.commit()
+        assert result["status"] == "committed"
+        assert "commit_message" in result
+
+        # Verify the commit exists locally
+        repo_a = git.Repo(clone_a)
+        assert "local-only" in repo_a.head.commit.message
+
+        # Verify it was NOT pushed (clone_b should not see it after fetch)
+        repo_b = git.Repo(clone_b)
+        repo_b.remotes.origin.fetch()
+        branch = repo_a.active_branch.name
+        log_b = repo_b.git.log("--oneline", f"origin/{branch}")
+        assert "local-only" not in log_b
+
+    def test_commit_nothing(self, store):
+        """commit() with no changes returns nothing_to_commit."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        gs = GitSync(store.root)
+        result = gs.commit()
+        assert result["status"] == "nothing_to_commit"
+
 
 class TestConflictPersistence:
     def test_save_and_load_report(self, store):

@@ -69,6 +69,34 @@ class TestTryPush:
             assert pushed is False
 
 
+class TestNoPushFlag:
+    def test_no_push_does_not_call_push(self, project_dir):
+        """When no_push=True, _try_push calls commit() instead of push()."""
+        gs = GitSync(project_dir)
+        store = ContextStore(project_dir)
+        store.set_knowledge("nopush-test", "content")
+
+        with patch.object(gs, "push") as mock_push, \
+             patch.object(gs, "commit", return_value={"status": "committed"}) as mock_commit:
+            result = _try_push(gs, no_push=True)
+            assert result is True
+            mock_push.assert_not_called()
+            mock_commit.assert_called_once()
+
+    def test_push_called_when_flag_false(self, project_dir):
+        """When no_push=False, _try_push calls push() as normal."""
+        gs = GitSync(project_dir)
+        store = ContextStore(project_dir)
+        store.set_knowledge("push-test", "content")
+
+        with patch.object(gs, "push", return_value={"status": "pushed"}) as mock_push, \
+             patch.object(gs, "commit") as mock_commit:
+            result = _try_push(gs, no_push=False)
+            assert result is True
+            mock_commit.assert_not_called()
+            mock_push.assert_called_once()
+
+
 class TestWatchRequiresInit:
     def test_watch_requires_init(self, tmp_path):
         """Watch should fail if no context store is initialized."""

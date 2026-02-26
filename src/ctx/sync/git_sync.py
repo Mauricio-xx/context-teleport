@@ -152,6 +152,19 @@ class GitSync:
 
         return stageable
 
+    def commit(self, message: str | None = None) -> dict:
+        """Stage .context-teleport/ changes and commit locally (never pushes)."""
+        if not self._has_changes():
+            return {"status": "nothing_to_commit"}
+
+        stageable = self._get_stageable_files()
+        if stageable:
+            self.repo.index.add(stageable)
+
+        commit_msg = message or self._auto_message()
+        self.repo.index.commit(commit_msg)
+        return {"status": "committed", "commit_message": commit_msg}
+
     def push(self, message: str | None = None) -> dict:
         """Stage .context-teleport/ changes, commit, and push."""
         if not self._has_changes():

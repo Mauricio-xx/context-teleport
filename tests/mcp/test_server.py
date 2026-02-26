@@ -619,9 +619,10 @@ class TestDynamicInstructions:
         assert "Building MCP server" in result
         assert "Tests failing" in result
 
-    def test_generate_instructions_fallback(self):
+    def test_generate_instructions_fallback(self, monkeypatch):
         """Without a store set, falls back to generic instructions."""
         set_store(None)
+        monkeypatch.setattr("ctx.mcp.server.find_project_root", lambda: None)
         result = _generate_instructions()
         assert result == _FALLBACK_INSTRUCTIONS
 

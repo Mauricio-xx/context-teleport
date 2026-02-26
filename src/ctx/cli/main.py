@@ -9,7 +9,7 @@ import typer
 
 from ctx.cli._shared import FORMAT_OPTION, get_store
 from ctx.core.store import ContextStore, StoreError
-from ctx.utils.output import error, info, output, success
+from ctx.utils.output import error, output, success
 from ctx.utils.paths import find_project_root
 
 app = typer.Typer(
