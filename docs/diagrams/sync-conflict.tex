@@ -1,4 +1,6 @@
 \documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds,shapes.geometric,shapes.symbols,calc}
 
 \definecolor{coreindigo}{HTML}{3F51B5}
@@ -54,10 +56,10 @@
 % ============================
 % PUSH COLUMN (left)
 % ============================
-\node[step=ifgreen, below=0.8cm of pushhead] (p1) {Scope filter\\[-1pt]\tiny exclude private/ephemeral};
+\node[step=ifgreen, below=0.8cm of pushhead] (p1) {Scope f{}ilter\\[-1pt]\tiny exclude private/ephemeral};
 \node[numlabel=ifgreen, left=0.2cm of p1.west] {1};
 
-\node[step=ifgreen, below=0.7cm of p1] (p2) {Stage files\\[-1pt]\tiny git add scoped entries};
+\node[step=ifgreen, below=0.7cm of p1] (p2) {Stage f{}iles\\[-1pt]\tiny git add scoped entries};
 \node[numlabel=ifgreen, left=0.2cm of p2.west] {2};
 
 \node[step=ifgreen, below=0.7cm of p2] (p3) {Commit\\[-1pt]\tiny local git commit};
@@ -89,7 +91,7 @@
 \draw[arr=syncpurple] (q1) -- (q2);
 
 % Conflict decision
-\node[decision=syncpurple, below=0.8cm of q2] (qconf) {Conflict?};
+\node[decision=syncpurple, below=0.8cm of q2] (qconf) {Conf{}lict?};
 \draw[arr=syncpurple] (q2) -- (qconf);
 
 % No conflict -> done
@@ -127,9 +129,9 @@
 \node[font=\sffamily\tiny, text=domteal!70!black, align=left, below=0.3cm of sagent.south, anchor=north]
     (agentflow) {
         1. persist state\\
-        2. \texttt{conflict\_detail()}\\
-        3. \texttt{resolve\_conflict()}\\
-        4. \texttt{merge\_finalize()}
+        2. \texttt{conf{}lict\_detail()}\\
+        3. \texttt{resolve\_conf{}lict()}\\
+        4. \texttt{merge\_f{}inalize()}
     };
 \draw[dotted, color=domteal!40, line width=0.5pt] (sagent.south) -- (agentflow.north);
 

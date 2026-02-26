@@ -1,4 +1,6 @@
 \documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds,shapes.geometric,calc}
 
 \definecolor{coreindigo}{HTML}{3F51B5}
@@ -32,7 +34,7 @@
 ]
 
 % Start node
-\node[start=coreindigo] (entry) {\texttt{context-teleport}};
+\node[start=coreindigo] (entry) {\texttt{\textmd{context-teleport}}};
 
 % Decision diamond
 \node[decision=ifgreen, below=1.4cm of entry] (decide) {TTY + args?};

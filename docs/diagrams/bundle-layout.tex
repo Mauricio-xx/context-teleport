@@ -1,4 +1,6 @@
 \documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
 
 \definecolor{coreindigo}{HTML}{3F51B5}
@@ -29,7 +31,7 @@
 
 % Root
 \node[treenode, font=\sffamily\small\bfseries, text=coreindigo] (root) at (0,0)
-    {\texttt{.context-teleport/}};
+    {\texttt{\textmd{.context-teleport/}}};
 \node[annot] at (\annotoff, 0) {project context bundle root};
 
 % --- Level 1 children ---
@@ -39,10 +41,10 @@
 
 % .gitignore
 \node[local] (gitign) at (\indent, -2*\vgap) {\texttt{.gitignore}};
-\node[annot] at (\annotoff, -2*\vgap) {excludes local-only files};
+\node[annot] at (\annotoff, -2*\vgap) {excludes local-only f{}iles};
 
 % knowledge/
-\node[synced, font=\sffamily\small\bfseries] (know) at (\indent, -3*\vgap) {\texttt{knowledge/}};
+\node[synced, font=\sffamily\small\bfseries] (know) at (\indent, -3*\vgap) {\texttt{\textmd{knowledge/}}};
 \node[annot] at (\annotoff, -3*\vgap) {shared project knowledge};
 
 % knowledge children
@@ -55,15 +57,15 @@
 \node[synced] (knowmeta) at (\dindent, -6*\vgap) {\texttt{.meta.json}};
 \node[annot] at (\annotoff, -6*\vgap) {entry metadata (agent, timestamps)};
 
-\node[synced, font=\sffamily\small\bfseries] (decisions) at (\dindent, -7*\vgap) {\texttt{decisions/}};
+\node[synced, font=\sffamily\small\bfseries] (decisions) at (\dindent, -7*\vgap) {\texttt{\textmd{decisions/}}};
 \node[annot] at (\annotoff, -7*\vgap) {architectural decision records};
 
 % skills/
-\node[synced, font=\sffamily\small\bfseries] (skills) at (\indent, -8.5*\vgap) {\texttt{skills/}};
+\node[synced, font=\sffamily\small\bfseries] (skills) at (\indent, -8.5*\vgap) {\texttt{\textmd{skills/}}};
 \node[annot] at (\annotoff, -8.5*\vgap) {reusable agent skills};
 
 % skills children
-\node[synced, font=\sffamily\small\bfseries] (skillname) at (\dindent, -9.5*\vgap) {\texttt{<name>/}};
+\node[synced, font=\sffamily\small\bfseries] (skillname) at (\dindent, -9.5*\vgap) {\texttt{\textmd{<name>/}}};
 \node[annot] at (\annotoff, -9.5*\vgap) {skill directory (one per skill)};
 
 \node[synced] (skillmd) at (\tindent, -10.5*\vgap) {\texttt{SKILL.md}};
@@ -75,11 +77,11 @@
 \node[synced] (skillfb) at (\tindent, -12.5*\vgap) {\texttt{.feedback.ndjson}};
 \node[annot] at (\annotoff, -12.5*\vgap) {ratings and comments (1--5)};
 
-\node[synced, font=\sffamily\small\bfseries] (proposals) at (\tindent, -13.5*\vgap) {\texttt{.proposals/}};
+\node[synced, font=\sffamily\small\bfseries] (proposals) at (\tindent, -13.5*\vgap) {\texttt{\textmd{.proposals/}}};
 \node[annot] at (\annotoff, -13.5*\vgap) {improvement proposals (JSON)};
 
 % state/
-\node[mixed, font=\sffamily\small\bfseries] (state) at (\indent, -15*\vgap) {\texttt{state/}};
+\node[mixed, font=\sffamily\small\bfseries] (state) at (\indent, -15*\vgap) {\texttt{\textmd{state/}}};
 \node[annot] at (\annotoff, -15*\vgap) {project state tracking};
 
 \node[local] (active) at (\dindent, -16*\vgap) {\texttt{active.json}};
@@ -89,8 +91,8 @@
 \node[annot] at (\annotoff, -17*\vgap) {project roadmap and milestones};
 
 % preferences/
-\node[mixed, font=\sffamily\small\bfseries] (prefs) at (\indent, -18.5*\vgap) {\texttt{preferences/}};
-\node[annot] at (\annotoff, -18.5*\vgap) {configuration preferences};
+\node[mixed, font=\sffamily\small\bfseries] (prefs) at (\indent, -18.5*\vgap) {\texttt{\textmd{preferences/}}};
+\node[annot] at (\annotoff, -18.5*\vgap) {conf{}iguration preferences};
 
 \node[synced] (team) at (\dindent, -19.5*\vgap) {\texttt{team.json}};
 \node[annot] at (\annotoff, -19.5*\vgap) {shared team preferences};
@@ -99,7 +101,7 @@
 \node[annot] at (\annotoff, -20.5*\vgap) {personal preferences (local only)};
 
 % history/
-\node[synced, font=\sffamily\small\bfseries] (hist) at (\indent, -22*\vgap) {\texttt{history/}};
+\node[synced, font=\sffamily\small\bfseries] (hist) at (\indent, -22*\vgap) {\texttt{\textmd{history/}}};
 \node[annot] at (\annotoff, -22*\vgap) {session audit trail};
 
 \node[synced] (sessions) at (\dindent, -23*\vgap) {\texttt{sessions.ndjson}};

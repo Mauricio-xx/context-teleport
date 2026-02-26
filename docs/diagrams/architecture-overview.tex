@@ -1,4 +1,6 @@
 \documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds,shapes.symbols,calc}
 
 \definecolor{coreindigo}{HTML}{3F51B5}
@@ -68,7 +70,7 @@
     below=1.2cm of coreframe.south] (gitsync) {};
 \node[label=syncpurple, above=0.05cm of gitsync.north west, anchor=south west] {\textbf{GIT SYNC}};
 \node[font=\sffamily\scriptsize, align=center, text=syncpurple!80!black] at ([yshift=0.2cm]gitsync.center) {
-    Push / Pull\\Section Merge\\Conflict Resolution
+    Push / Pull\\Section Merge\\Conf{}lict Resolution
 };
 
 % Git Remote cloud

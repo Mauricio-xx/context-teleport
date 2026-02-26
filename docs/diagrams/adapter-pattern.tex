@@ -1,4 +1,6 @@
 \documentclass[tikz,border=10pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
 
 \definecolor{coreindigo}{HTML}{3F51B5}
@@ -93,11 +95,11 @@
 
 % === Bottom: Shared Modules ===
 \node[modbox, minimum width=8cm, below=1.8cm of store.south] (shared)
-    {\textbf{Shared Modules:} \texttt{\_mcp\_reg.py} (JSON config) \quad \texttt{\_agents\_md.py} (AGENTS.md parse/write)};
+    {\textbf{Shared Modules:} \texttt{\_mcp\_reg.py} (JSON conf{}ig) \quad \texttt{\_agents\_md.py} (AGENTS.md parse/write)};
 
 % MCP config paths
 \node[modbox, minimum width=8cm, below=0.4cm of shared] (mcpconf)
-    {\textbf{MCP Config:} \texttt{.claude/mcp.json} \enspace \texttt{opencode.json} \enspace \texttt{.cursor/mcp.json} \enspace \texttt{.gemini/settings.json}};
+    {\textbf{MCP Conf{}ig:} \texttt{.claude/mcp.json} \enspace \texttt{opencode.json} \enspace \texttt{.cursor/mcp.json} \enspace \texttt{.gemini/settings.json}};
 
 % Arrows to shared
 \draw[dotted, thick, color=fsgray!50] (store.south) -- (shared.north);
