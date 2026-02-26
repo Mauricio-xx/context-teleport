@@ -62,12 +62,25 @@ def state_set(
 
 @state_app.command("clear")
 def state_clear(fmt: Optional[str] = FORMAT_OPTION) -> None:
-    """Clear ephemeral session state."""
+    """Clear ephemeral session state and remove ephemeral entries."""
     store = get_store()
     from ctx.core.schema import ActiveState
 
     store.write_active_state(ActiveState())
+    removed = store.clear_ephemeral()
+    total_removed = sum(removed.values())
     if fmt == "json":
-        output({"status": "cleared"}, fmt="json")
+        output({"status": "cleared", "ephemeral_removed": removed}, fmt="json")
     else:
         success("Session state cleared")
+        if total_removed > 0:
+            from ctx.utils.output import console
+
+            parts = []
+            if removed["knowledge"]:
+                parts.append(f"{removed['knowledge']} knowledge")
+            if removed["decisions"]:
+                parts.append(f"{removed['decisions']} decisions")
+            if removed["skills"]:
+                parts.append(f"{removed['skills']} skills")
+            console.print(f"  Removed ephemeral entries: {', '.join(parts)}")

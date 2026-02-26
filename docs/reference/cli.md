@@ -4,7 +4,7 @@ The entry point for all commands is `context-teleport`. It operates as a single 
 dispatch: when invoked in a TTY with arguments it runs the CLI, when invoked
 non-interactively with no arguments it starts the MCP server.
 
-All commands accept `--format json` (short: `-F json`) for machine-readable output.
+Most commands accept `--format json` (short: `-F json`) for machine-readable output. The `watch` command is an exception (foreground streaming process).
 
 ---
 

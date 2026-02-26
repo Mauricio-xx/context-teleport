@@ -43,7 +43,7 @@ GitSync.pull()
     1. Fetch from remote -- git fetch
     2. Attempt merge -- git merge
     |
-    +-- Clean merge? --> Done: {"status": "merged"}
+    +-- Clean merge? --> Done: {"status": "pulled"}
     |
     +-- Conflicts?
         |

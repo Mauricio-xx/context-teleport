@@ -223,14 +223,35 @@ class GitSync:
             return {"status": "up_to_date"}
 
         # Attempt merge
+        pre_merge = self.repo.head.commit.hexsha
         try:
             self.repo.git.merge(remote_ref)
+            # Validate: only store files should have been touched
+            non_store = self._merge_touched_non_store_files(pre_merge)
+            if non_store:
+                self.repo.git.reset("--hard", pre_merge)
+                return {
+                    "status": "error",
+                    "error": f"Pull rejected: remote changed non-store files: {', '.join(non_store)}",
+                }
             return {"status": "pulled", "commits": len(behind)}
         except git.GitCommandError:
             pass
 
         # Merge failed -- detect conflicts
         report = self._build_conflict_report()
+
+        # Check if conflicts include non-store files
+        non_store_conflicts = [
+            p for p in self.repo.index.unmerged_blobs()
+            if not p.startswith(STORE_DIR + "/")
+        ]
+        if non_store_conflicts:
+            self.repo.git.merge("--abort")
+            return {
+                "status": "error",
+                "error": f"Pull rejected: conflicts in non-store files: {', '.join(non_store_conflicts)}",
+            }
 
         # Try section-level auto-merge for markdown files
         self._try_section_merge(report)
@@ -347,6 +368,13 @@ class GitSync:
 
         return report
 
+    def _merge_touched_non_store_files(self, pre_merge_hex: str) -> list[str]:
+        """Return non-store files changed between pre_merge_hex and HEAD."""
+        diff_out = self.repo.git.diff("--name-only", pre_merge_hex, "HEAD")
+        if not diff_out.strip():
+            return []
+        return [f for f in diff_out.strip().split("\n") if not f.startswith(STORE_DIR + "/")]
+
     def apply_resolutions(self, resolutions: list[tuple[str, str]]) -> dict:
         """Re-merge and apply interactive resolutions.
 
@@ -408,13 +436,17 @@ class GitSync:
         }
 
     def merge_status(self) -> dict:
-        """Return the current conflict report, if any."""
+        """Return the current conflict report, if any (checks disk if not in memory)."""
+        if self._pending_report is None:
+            self._pending_report = self.load_pending_report()
         if self._pending_report is None:
             return {"status": "clean"}
         return {"status": "conflicts", "report": self._pending_report.to_dict()}
 
     def resolve(self, file_path: str, content: str) -> dict:
         """Resolve a single conflict by providing final content."""
+        if self._pending_report is None:
+            self._pending_report = self.load_pending_report()
         if self._pending_report is None:
             return {"status": "error", "error": "No pending conflicts"}
 

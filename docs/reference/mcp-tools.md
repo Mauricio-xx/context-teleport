@@ -408,7 +408,7 @@ Change the visibility scope of a knowledge entry, decision, or skill.
 
 !!! info "Scope behavior"
     - **public** (default): Included in sync, export, and onboarding.
-    - **private**: Synced via git but excluded from adapter export and onboarding prompts.
+    - **private**: Not synced (excluded from git staging). Excluded from adapter export and onboarding prompts.
     - **ephemeral**: Not synced. Local-only. Excluded from everything except direct reads.
 
 ---

@@ -348,6 +348,14 @@ class ContextStore:
     def _skills_scope_map(self) -> ScopeMap:
         return ScopeMap(self.skills_dir())
 
+    def _safe_skill_name(self, name: str) -> str:
+        """Sanitize a skill name and verify it resolves inside skills_dir."""
+        safe = sanitize_key(name)
+        resolved = (self.skills_dir() / safe).resolve()
+        if not str(resolved).startswith(str(self.skills_dir().resolve())):
+            raise StoreError(f"Invalid skill name: {name}")
+        return safe
+
     def list_skills(self, scope: Scope | None = None) -> list[SkillEntry]:
         self._require_init()
         from ctx.core.frontmatter import parse_frontmatter
@@ -377,6 +385,7 @@ class ContextStore:
         self._require_init()
         from ctx.core.frontmatter import parse_frontmatter
 
+        name = self._safe_skill_name(name)
         path = self.skills_dir() / name / "SKILL.md"
         if not path.is_file():
             return None
@@ -395,6 +404,7 @@ class ContextStore:
         self._require_init()
         from ctx.core.frontmatter import parse_frontmatter
 
+        name = self._safe_skill_name(name)
         skill_dir = self.skills_dir() / name
         skill_dir.mkdir(parents=True, exist_ok=True)
         path = skill_dir / "SKILL.md"
@@ -414,6 +424,7 @@ class ContextStore:
         self._require_init()
         import shutil as _shutil
 
+        name = self._safe_skill_name(name)
         skill_dir = self.skills_dir() / name
         if skill_dir.is_dir():
             _shutil.rmtree(skill_dir)
@@ -424,10 +435,12 @@ class ContextStore:
         return False
 
     def get_skill_scope(self, name: str) -> Scope:
+        name = self._safe_skill_name(name)
         return self._skills_scope_map().get(f"{name}/SKILL.md")
 
     def set_skill_scope(self, name: str, scope: Scope) -> bool:
         self._require_init()
+        name = self._safe_skill_name(name)
         path = self.skills_dir() / name / "SKILL.md"
         if not path.is_file():
             return False
@@ -438,12 +451,15 @@ class ContextStore:
     # -- Skill tracking (Phase 7a) --
 
     def _skill_usage_path(self, name: str) -> Path:
+        name = self._safe_skill_name(name)
         return self.skills_dir() / name / ".usage.ndjson"
 
     def _skill_feedback_path(self, name: str) -> Path:
+        name = self._safe_skill_name(name)
         return self.skills_dir() / name / ".feedback.ndjson"
 
     def _skill_proposals_dir(self, name: str) -> Path:
+        name = self._safe_skill_name(name)
         return self.skills_dir() / name / ".proposals"
 
     def record_skill_usage(
@@ -451,6 +467,7 @@ class ContextStore:
     ) -> SkillUsageEvent:
         """Append a usage event for a skill. Skill must exist."""
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         if not (self.skills_dir() / skill_name / "SKILL.md").is_file():
             raise StoreError(f"Skill '{skill_name}' not found")
         event = SkillUsageEvent(agent=agent, session_id=session_id)
@@ -464,6 +481,7 @@ class ContextStore:
     ) -> SkillFeedback:
         """Add feedback for a skill. Rating must be 1-5."""
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         if not (self.skills_dir() / skill_name / "SKILL.md").is_file():
             raise StoreError(f"Skill '{skill_name}' not found")
         if not 1 <= rating <= 5:
@@ -477,6 +495,7 @@ class ContextStore:
     def list_skill_feedback(self, skill_name: str) -> list[SkillFeedback]:
         """Return all feedback entries for a skill."""
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         path = self._skill_feedback_path(skill_name)
         if not path.is_file():
             return []
@@ -487,6 +506,7 @@ class ContextStore:
         return entries
 
     def _read_usage_events(self, skill_name: str) -> list[SkillUsageEvent]:
+        skill_name = self._safe_skill_name(skill_name)
         path = self._skill_usage_path(skill_name)
         if not path.is_file():
             return []
@@ -499,6 +519,7 @@ class ContextStore:
     def get_skill_stats(self, skill_name: str) -> SkillStats:
         """Compute aggregated stats for a skill from its sidecar files."""
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         usage = self._read_usage_events(skill_name)
         feedback = self.list_skill_feedback(skill_name)
 
@@ -542,6 +563,7 @@ class ContextStore:
         import difflib
 
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         skill = self.get_skill(skill_name)
         if skill is None:
             raise StoreError(f"Skill '{skill_name}' not found")
@@ -585,6 +607,8 @@ class ContextStore:
         if not sdir.is_dir():
             return proposals
 
+        if skill_name:
+            skill_name = self._safe_skill_name(skill_name)
         dirs = (
             [sdir / skill_name / ".proposals"]
             if skill_name
@@ -608,6 +632,7 @@ class ContextStore:
         self._require_init()
         import json
 
+        skill_name = self._safe_skill_name(skill_name)
         path = self._skill_proposals_dir(skill_name) / f"{proposal_id}.json"
         if not path.is_file():
             return None
@@ -626,6 +651,7 @@ class ContextStore:
         from ctx.core.schema import _now
 
         self._require_init()
+        skill_name = self._safe_skill_name(skill_name)
         proposal = self.get_skill_proposal(skill_name, proposal_id)
         if proposal is None:
             return None
@@ -642,6 +668,49 @@ class ContextStore:
             json.dumps(proposal.model_dump(), indent=2, default=str) + "\n"
         )
         return proposal
+
+    # -- Ephemeral cleanup --
+
+    def clear_ephemeral(self) -> dict[str, int]:
+        """Remove all entries with ephemeral scope. Returns counts of removed entries."""
+        import shutil as _shutil
+
+        self._require_init()
+        removed = {"knowledge": 0, "decisions": 0, "skills": 0}
+
+        # Knowledge
+        for fname in self._knowledge_scope_map().list_by_scope(Scope.ephemeral):
+            path = self.knowledge_dir() / fname
+            if path.is_file():
+                path.unlink()
+                self._knowledge_scope_map().remove(fname)
+                # Clean up metadata sidecar entry
+                meta = self._read_knowledge_meta()
+                if fname in meta:
+                    del meta[fname]
+                    self._write_knowledge_meta(meta)
+                removed["knowledge"] += 1
+
+        # Decisions
+        for fname in self._decisions_scope_map().list_by_scope(Scope.ephemeral):
+            path = self.decisions_dir() / fname
+            if path.is_file():
+                path.unlink()
+                self._decisions_scope_map().remove(fname)
+                removed["decisions"] += 1
+
+        # Skills
+        for fname in self._skills_scope_map().list_by_scope(Scope.ephemeral):
+            # fname is like "skill-name/SKILL.md"
+            skill_name = fname.split("/")[0]
+            skill_dir = self.skills_dir() / skill_name
+            if skill_dir.is_dir():
+                _shutil.rmtree(skill_dir)
+                self._skills_scope_map().remove(fname)
+                removed["skills"] += 1
+
+        self._rebuild_gitignore()
+        return removed
 
     # -- State --
 

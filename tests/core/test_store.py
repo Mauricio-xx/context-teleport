@@ -189,6 +189,55 @@ class TestScoping:
         assert (s.store_dir / "knowledge" / "decisions" / ".scope.json").is_file()
 
 
+class TestClearEphemeral:
+    def test_removes_ephemeral_knowledge(self, store):
+        store.set_knowledge("keep-pub", "Public", scope=Scope.public)
+        store.set_knowledge("keep-priv", "Private", scope=Scope.private)
+        store.set_knowledge("remove-eph", "Ephemeral", scope=Scope.ephemeral)
+
+        removed = store.clear_ephemeral()
+        assert removed["knowledge"] == 1
+        assert store.get_knowledge("keep-pub") is not None
+        assert store.get_knowledge("keep-priv") is not None
+        assert store.get_knowledge("remove-eph") is None
+
+    def test_removes_ephemeral_decisions(self, store):
+        store.add_decision(title="Keep Public")
+        store.add_decision(title="Remove Eph", scope=Scope.ephemeral)
+
+        removed = store.clear_ephemeral()
+        assert removed["decisions"] == 1
+        decs = store.list_decisions()
+        assert len(decs) == 1
+        assert decs[0].title == "Keep Public"
+
+    def test_removes_ephemeral_skills(self, store):
+        content = "---\nname: keep\ndescription: Keep\n---\n\nBody.\n"
+        eph_content = "---\nname: remove\ndescription: Remove\n---\n\nBody.\n"
+        store.set_skill("keep", content, scope=Scope.public)
+        store.set_skill("remove", eph_content, scope=Scope.ephemeral)
+
+        removed = store.clear_ephemeral()
+        assert removed["skills"] == 1
+        assert store.get_skill("keep") is not None
+        assert store.get_skill("remove") is None
+        # Skill directory should be gone
+        assert not (store.skills_dir() / "remove").exists()
+
+    def test_preserves_non_ephemeral(self, store):
+        store.set_knowledge("pub", "Public")
+        store.set_knowledge("priv", "Private", scope=Scope.private)
+
+        removed = store.clear_ephemeral()
+        assert removed == {"knowledge": 0, "decisions": 0, "skills": 0}
+        assert store.get_knowledge("pub") is not None
+        assert store.get_knowledge("priv") is not None
+
+    def test_empty_store(self, store):
+        removed = store.clear_ephemeral()
+        assert removed == {"knowledge": 0, "decisions": 0, "skills": 0}
+
+
 class TestSkills:
     def _sample_skill(self, name="deploy", desc="Deploy to staging"):
         return f"---\nname: {name}\ndescription: {desc}\n---\n\nRun the deploy script.\n"
@@ -286,3 +335,66 @@ class TestSummary:
         s = store.summary()
         assert s["skill_count"] == 1
         assert "deploy" in s["skill_names"]
+
+
+class TestSkillNameSanitization:
+    """Verify skill names are sanitized to prevent path traversal."""
+
+    _SKILL_CONTENT = "---\nname: test\ndescription: Test\n---\n\nBody.\n"
+
+    def test_path_traversal_sanitized_set(self, store):
+        """Path traversal chars get stripped by sanitize_key; file lands inside skills/."""
+        store.set_skill("../../etc/passwd", self._SKILL_CONTENT)
+        # The dots and slashes get replaced, skill is stored as "etc-passwd"
+        assert store.get_skill("etc-passwd") is not None
+        # No file outside the skills dir
+        assert not (store.root / "etc").exists()
+
+    def test_path_traversal_sanitized_get(self, store):
+        store.set_skill("../../etc/passwd", self._SKILL_CONTENT)
+        entry = store.get_skill("../../etc/passwd")
+        assert entry is not None
+        assert entry.name == "test"
+
+    def test_path_traversal_sanitized_rm(self, store):
+        store.set_skill("../../../tmp/evil", self._SKILL_CONTENT)
+        assert store.rm_skill("../../../tmp/evil")
+        assert not (store.root / "tmp").exists()
+
+    def test_path_traversal_sanitized_usage(self, store):
+        store.set_skill("../../etc/passwd", self._SKILL_CONTENT)
+        # Should record usage for the sanitized name, not traverse
+        event = store.record_skill_usage("../../etc/passwd")
+        assert event is not None
+
+    def test_path_traversal_sanitized_feedback(self, store):
+        store.set_skill("../../etc/passwd", self._SKILL_CONTENT)
+        fb = store.add_skill_feedback("../../etc/passwd", 5)
+        assert fb is not None
+
+    def test_empty_name_rejected(self, store):
+        """Empty or whitespace-only names are rejected."""
+        with pytest.raises((StoreError, ValueError)):
+            store.set_skill("   ", self._SKILL_CONTENT)
+
+    def test_name_normalization(self, store):
+        """Special chars get sanitized, not rejected."""
+        store.set_skill("My Skill!", self._SKILL_CONTENT)
+        entry = store.get_skill("my-skill")
+        assert entry is not None
+
+    def test_normalized_name_roundtrip(self, store):
+        """Setting with unclean name, getting with clean name works."""
+        store.set_skill("Deploy Script!", self._SKILL_CONTENT)
+        assert store.get_skill("deploy-script") is not None
+        assert store.rm_skill("deploy-script")
+
+    def test_skill_stored_in_skills_dir_only(self, store):
+        """Regardless of input name, files only appear under skills_dir."""
+        store.set_skill("../../outside", self._SKILL_CONTENT)
+        # Verify the skill directory is inside skills_dir
+        skills_dir = store.skills_dir()
+        skill_dirs = [d.name for d in skills_dir.iterdir() if d.is_dir()]
+        assert "outside" in skill_dirs  # sanitized to "outside"
+        # Nothing escaped
+        assert not (store.root / "outside").exists()

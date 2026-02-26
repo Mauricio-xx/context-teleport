@@ -218,6 +218,57 @@ class TestConflictPersistence:
         gs._pending_path().write_text("not json at all {{{")
         assert gs.load_pending_report() is None
 
+    def test_merge_status_loads_from_disk(self, store):
+        """A fresh GitSync instance finds persisted conflicts via merge_status()."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        from ctx.core.conflicts import ConflictEntry, ConflictReport
+
+        # Persist a conflict report using one instance
+        gs1 = GitSync(store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs", "base"),
+        ])
+        gs1.save_pending_report(report)
+
+        # Fresh instance should find it via merge_status()
+        gs2 = GitSync(store.root)
+        assert gs2._pending_report is None  # not loaded yet
+        status = gs2.merge_status()
+        assert status["status"] == "conflicts"
+        assert len(status["report"]["conflicts"]) == 1
+
+    def test_resolve_loads_from_disk(self, store):
+        """A fresh GitSync instance can resolve() a persisted conflict."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        from ctx.core.conflicts import ConflictEntry, ConflictReport
+
+        gs1 = GitSync(store.root)
+        report = ConflictReport(conflicts=[
+            ConflictEntry("knowledge/arch.md", "ours", "theirs", "base"),
+        ])
+        gs1.save_pending_report(report)
+
+        # Fresh instance resolves from disk
+        gs2 = GitSync(store.root)
+        result = gs2.resolve("knowledge/arch.md", "merged content")
+        assert result["status"] == "resolved"
+        assert result["remaining"] == 0
+
+    def test_merge_status_clean_when_no_disk(self, store):
+        """Without persisted conflicts, merge_status returns clean."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        gs = GitSync(store.root)
+        assert gs.merge_status() == {"status": "clean"}
+
     def test_pull_agent_strategy_persists_report(self, two_repos):
         _, clone_a, clone_b = two_repos
 
@@ -553,3 +604,70 @@ class TestSectionMerge:
         assert "FastAPI" in merged.content
         assert "React" in merged.content or "Frontend" in merged.content
         assert "Docker" in merged.content
+
+
+class TestPullScopeValidation:
+    def test_pull_rejects_non_store_changes(self, two_repos):
+        """Pull rejects remote changes outside .context-teleport/."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify a non-store file and push
+        repo_a = git.Repo(clone_a)
+        (clone_a / "README.md").write_text("# Modified by A\n")
+        repo_a.index.add(["README.md"])
+        repo_a.index.commit("A: modify README")
+        repo_a.remotes.origin.push()
+
+        # Clone B: pull should reject
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "error"
+        assert "non-store files" in result["error"]
+        assert "README.md" in result["error"]
+
+        # HEAD should be unchanged (reset happened)
+        repo_b = git.Repo(clone_b)
+        readme = (clone_b / "README.md").read_text()
+        assert readme == "# Test\n"
+
+    def test_pull_allows_store_only_changes(self, two_repos):
+        """Pull allows changes that only touch .context-teleport/."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify only store files and push
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("new-entry", "New knowledge from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: add knowledge")
+        repo_a.remotes.origin.push()
+
+        # Clone B: pull should succeed
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "pulled"
+
+        # Verify the knowledge arrived
+        store_b = ContextStore(clone_b)
+        entry = store_b.get_knowledge("new-entry")
+        assert entry is not None
+        assert "New knowledge from A" in entry.content
+
+    def test_pull_rejects_mixed_changes(self, two_repos):
+        """Pull rejects when remote has both store and non-store changes."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: modify both store and non-store files
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("from-a", "Knowledge from A")
+        repo_a = git.Repo(clone_a)
+        (clone_a / "README.md").write_text("# Changed\n")
+        repo_a.index.add([STORE_DIR, "README.md"])
+        repo_a.index.commit("A: mixed changes")
+        repo_a.remotes.origin.push()
+
+        # Clone B: pull should reject
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "error"
+        assert "non-store files" in result["error"]
