@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 from ctx.core.conflicts import Strategy, resolve_single
 from ctx.core.dotpath import resolve_dotpath, set_dotpath
 from ctx.core.frontmatter import build_frontmatter
-from ctx.core.schema import SessionSummary
+from ctx.core.schema import ProposalStatus, SessionSummary
 from ctx.core.scope import Scope
 from ctx.core.search import search_files
 from ctx.core.store import ContextStore
@@ -60,6 +60,15 @@ def _generate_instructions() -> str:
         if skills:
             names = [s.name for s in skills]
             lines.append(f"Agent skills ({len(names)} available): {', '.join(names)}.")
+
+            # Flag skills needing review
+            try:
+                all_stats = store.list_skill_stats()
+                attention = [s.skill_name for s in all_stats if s.needs_attention]
+                if attention:
+                    lines.append(f"Skills needing review: {', '.join(attention)}.")
+            except Exception:
+                pass
 
         if state.current_task:
             lines.append(f"Current task: {state.current_task}")
@@ -268,6 +277,36 @@ def resource_skill_item(name: str) -> str:
     )
 
 
+@mcp.resource("context://skills/stats")
+def resource_skills_stats() -> str:
+    """Aggregated usage and feedback stats for all skills."""
+    store = _get_store()
+    stats = store.list_skill_stats()
+    return json.dumps([s.model_dump() for s in stats], indent=2, default=str)
+
+
+@mcp.resource("context://skills/{name}/feedback")
+def resource_skill_feedback(name: str) -> str:
+    """All feedback entries for a specific skill."""
+    store = _get_store()
+    entry = store.get_skill(name)
+    if entry is None:
+        return json.dumps({"error": f"Skill '{name}' not found"})
+    feedback = store.list_skill_feedback(name)
+    return json.dumps([f.model_dump() for f in feedback], indent=2, default=str)
+
+
+@mcp.resource("context://skills/{name}/proposals")
+def resource_skill_proposals(name: str) -> str:
+    """All improvement proposals for a specific skill."""
+    store = _get_store()
+    entry = store.get_skill(name)
+    if entry is None:
+        return json.dumps({"error": f"Skill '{name}' not found"})
+    proposals = store.list_skill_proposals(skill_name=name)
+    return json.dumps([p.model_dump() for p in proposals], indent=2, default=str)
+
+
 # ---------------------------------------------------------------------------
 # Tools (mutations + queries)
 # ---------------------------------------------------------------------------
@@ -362,6 +401,115 @@ def context_remove_skill(name: str) -> str:
     if removed:
         return json.dumps({"status": "removed", "name": name})
     return json.dumps({"status": "not_found", "name": name})
+
+
+@mcp.tool()
+def context_report_skill_usage(skill_name: str) -> str:
+    """Record that a skill was used in the current session.
+
+    Appends a usage event for tracking adoption and frequency.
+
+    Args:
+        skill_name: Name of the skill that was used
+    """
+    store = _get_store()
+    agent = _get_agent_name()
+    try:
+        event = store.record_skill_usage(skill_name, agent=agent)
+        return json.dumps({"status": "ok", "event_id": event.id}, default=str)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_rate_skill(skill_name: str, rating: int, comment: str = "") -> str:
+    """Rate a skill and optionally leave feedback.
+
+    Helps track skill quality over time. Skills with avg rating < 3.0
+    and 2+ ratings are flagged for review.
+
+    Args:
+        skill_name: Name of the skill to rate
+        rating: Rating from 1 (poor) to 5 (excellent)
+        comment: Optional feedback comment
+    """
+    store = _get_store()
+    agent = _get_agent_name()
+    try:
+        fb = store.add_skill_feedback(skill_name, rating, comment=comment, agent=agent)
+        return json.dumps({"status": "ok", "feedback_id": fb.id}, default=str)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_propose_skill_improvement(
+    skill_name: str, proposed_content: str, rationale: str = ""
+) -> str:
+    """Propose an improvement to an existing skill.
+
+    Creates a proposal with the full new SKILL.md content. The proposal
+    can be reviewed, accepted, or rejected via CLI or MCP tools.
+
+    Args:
+        skill_name: Name of the skill to improve
+        proposed_content: Full new SKILL.md content (frontmatter + body)
+        rationale: Why this improvement is needed
+    """
+    store = _get_store()
+    agent = _get_agent_name()
+    try:
+        proposal = store.create_skill_proposal(
+            skill_name, proposed_content, rationale=rationale, agent=agent
+        )
+        return json.dumps(
+            {
+                "status": "ok",
+                "proposal_id": proposal.id,
+                "diff_summary": proposal.diff_summary,
+            },
+            default=str,
+        )
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def context_list_skill_proposals(
+    skill_name: str = "", status: str = ""
+) -> str:
+    """List skill improvement proposals with optional filters.
+
+    Args:
+        skill_name: Filter by skill name (empty for all skills)
+        status: Filter by status (pending/accepted/rejected/upstream, empty for all)
+    """
+    store = _get_store()
+    status_filter = None
+    if status:
+        try:
+            status_filter = ProposalStatus(status.lower())
+        except ValueError:
+            return json.dumps({"status": "error", "error": f"Invalid status '{status}'"})
+    proposals = store.list_skill_proposals(
+        skill_name=skill_name or None, status=status_filter
+    )
+    return json.dumps(
+        [
+            {
+                "id": p.id,
+                "skill_name": p.skill_name,
+                "agent": p.agent,
+                "status": p.status.value,
+                "diff_summary": p.diff_summary,
+                "rationale": p.rationale[:100],
+                "created_at": str(p.created_at),
+            }
+            for p in proposals
+        ],
+        indent=2,
+        default=str,
+    )
 
 
 @mcp.tool()

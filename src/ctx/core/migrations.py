@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any, Callable
 
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.4.0"
 
 MigrationFn = Callable[[dict[str, Any]], dict[str, Any]]
 
@@ -113,6 +113,16 @@ def migrate_020_to_030(bundle_data: dict[str, Any]) -> dict[str, Any]:
     Adds optional 'agent' field to knowledge entries (backward compatible,
     defaults to empty string). Adds adapter entries for new tools.
     No destructive changes.
+    """
+    return bundle_data
+
+
+@register_migration("0.3.0", "0.4.0")
+def migrate_030_to_040(bundle_data: dict[str, Any]) -> dict[str, Any]:
+    """Migrate 0.3.0 -> 0.4.0: skill auto-improvement.
+
+    No-op: new fields have defaults, sidecar files (.usage.ndjson,
+    .feedback.ndjson, .proposals/) are created lazily.
     """
     return bundle_data
 

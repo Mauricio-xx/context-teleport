@@ -85,7 +85,7 @@ class TestResources:
     def test_manifest(self, store):
         result = json.loads(resource_manifest())
         assert result["project"]["name"] == "test-mcp-project"
-        assert result["schema_version"] == "0.3.0"
+        assert result["schema_version"] == "0.4.0"
 
     def test_knowledge_empty(self, store):
         result = json.loads(resource_knowledge())
@@ -579,7 +579,7 @@ class TestMCPRegistration:
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
     def test_has_exactly_19_tools(self, store):
-        assert len(mcp._tool_manager._tools) == 19
+        assert len(mcp._tool_manager._tools) == 23
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())

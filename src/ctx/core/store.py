@@ -12,9 +12,14 @@ from ctx.core.schema import (
     KnowledgeEntry,
     Manifest,
     ProjectInfo,
+    ProposalStatus,
     Roadmap,
     SessionSummary,
     SkillEntry,
+    SkillFeedback,
+    SkillProposal,
+    SkillStats,
+    SkillUsageEvent,
     TeamPreferences,
     UserPreferences,
 )
@@ -429,6 +434,214 @@ class ContextStore:
         self._skills_scope_map().set(f"{name}/SKILL.md", scope)
         self._rebuild_gitignore()
         return True
+
+    # -- Skill tracking (Phase 7a) --
+
+    def _skill_usage_path(self, name: str) -> Path:
+        return self.skills_dir() / name / ".usage.ndjson"
+
+    def _skill_feedback_path(self, name: str) -> Path:
+        return self.skills_dir() / name / ".feedback.ndjson"
+
+    def _skill_proposals_dir(self, name: str) -> Path:
+        return self.skills_dir() / name / ".proposals"
+
+    def record_skill_usage(
+        self, skill_name: str, agent: str = "", session_id: str = ""
+    ) -> SkillUsageEvent:
+        """Append a usage event for a skill. Skill must exist."""
+        self._require_init()
+        if not (self.skills_dir() / skill_name / "SKILL.md").is_file():
+            raise StoreError(f"Skill '{skill_name}' not found")
+        event = SkillUsageEvent(agent=agent, session_id=session_id)
+        path = self._skill_usage_path(skill_name)
+        with open(path, "a") as f:
+            f.write(event.model_dump_json() + "\n")
+        return event
+
+    def add_skill_feedback(
+        self, skill_name: str, rating: int, comment: str = "", agent: str = ""
+    ) -> SkillFeedback:
+        """Add feedback for a skill. Rating must be 1-5."""
+        self._require_init()
+        if not (self.skills_dir() / skill_name / "SKILL.md").is_file():
+            raise StoreError(f"Skill '{skill_name}' not found")
+        if not 1 <= rating <= 5:
+            raise StoreError(f"Rating must be 1-5, got {rating}")
+        fb = SkillFeedback(agent=agent, rating=rating, comment=comment)
+        path = self._skill_feedback_path(skill_name)
+        with open(path, "a") as f:
+            f.write(fb.model_dump_json() + "\n")
+        return fb
+
+    def list_skill_feedback(self, skill_name: str) -> list[SkillFeedback]:
+        """Return all feedback entries for a skill."""
+        self._require_init()
+        path = self._skill_feedback_path(skill_name)
+        if not path.is_file():
+            return []
+        entries = []
+        for line in path.read_text().strip().split("\n"):
+            if line.strip():
+                entries.append(SkillFeedback.model_validate_json(line))
+        return entries
+
+    def _read_usage_events(self, skill_name: str) -> list[SkillUsageEvent]:
+        path = self._skill_usage_path(skill_name)
+        if not path.is_file():
+            return []
+        events = []
+        for line in path.read_text().strip().split("\n"):
+            if line.strip():
+                events.append(SkillUsageEvent.model_validate_json(line))
+        return events
+
+    def get_skill_stats(self, skill_name: str) -> SkillStats:
+        """Compute aggregated stats for a skill from its sidecar files."""
+        self._require_init()
+        usage = self._read_usage_events(skill_name)
+        feedback = self.list_skill_feedback(skill_name)
+
+        last_used = max((e.timestamp for e in usage), default=None) if usage else None
+        avg = 0.0
+        if feedback:
+            avg = sum(f.rating for f in feedback) / len(feedback)
+        needs_attention = avg < 3.0 and len(feedback) >= 2
+
+        return SkillStats(
+            skill_name=skill_name,
+            usage_count=len(usage),
+            avg_rating=round(avg, 2),
+            rating_count=len(feedback),
+            last_used=last_used,
+            needs_attention=needs_attention,
+        )
+
+    def list_skill_stats(self) -> list[SkillStats]:
+        """Return stats for all skills."""
+        self._require_init()
+        result = []
+        sdir = self.skills_dir()
+        if not sdir.is_dir():
+            return result
+        for skill_md in sorted(sdir.glob("*/SKILL.md")):
+            name = skill_md.parent.name
+            result.append(self.get_skill_stats(name))
+        return result
+
+    # -- Skill proposals (Phase 7b) --
+
+    def create_skill_proposal(
+        self,
+        skill_name: str,
+        proposed_content: str,
+        rationale: str = "",
+        agent: str = "",
+    ) -> SkillProposal:
+        """Create a proposal to improve a skill. Skill must exist."""
+        import difflib
+
+        self._require_init()
+        skill = self.get_skill(skill_name)
+        if skill is None:
+            raise StoreError(f"Skill '{skill_name}' not found")
+
+        # Compute diff summary
+        old_lines = skill.content.splitlines()
+        new_lines = proposed_content.splitlines()
+        diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=""))
+        added = sum(1 for line in diff if line.startswith("+") and not line.startswith("+++"))
+        removed = sum(1 for line in diff if line.startswith("-") and not line.startswith("---"))
+        diff_summary = f"+{added}/-{removed} lines"
+
+        proposal = SkillProposal(
+            skill_name=skill_name,
+            agent=agent,
+            rationale=rationale,
+            proposed_content=proposed_content,
+            diff_summary=diff_summary,
+        )
+
+        pdir = self._skill_proposals_dir(skill_name)
+        pdir.mkdir(parents=True, exist_ok=True)
+        import json
+
+        (pdir / f"{proposal.id}.json").write_text(
+            json.dumps(proposal.model_dump(), indent=2, default=str) + "\n"
+        )
+        return proposal
+
+    def list_skill_proposals(
+        self,
+        skill_name: str | None = None,
+        status: ProposalStatus | None = None,
+    ) -> list[SkillProposal]:
+        """List proposals, optionally filtered by skill and/or status."""
+        self._require_init()
+        import json
+
+        proposals: list[SkillProposal] = []
+        sdir = self.skills_dir()
+        if not sdir.is_dir():
+            return proposals
+
+        dirs = (
+            [sdir / skill_name / ".proposals"]
+            if skill_name
+            else list(sdir.glob("*/.proposals"))
+        )
+        for pdir in dirs:
+            if not pdir.is_dir():
+                continue
+            for f in sorted(pdir.glob("*.json")):
+                data = json.loads(f.read_text())
+                p = SkillProposal.model_validate(data)
+                if status is not None and p.status != status:
+                    continue
+                proposals.append(p)
+        return proposals
+
+    def get_skill_proposal(
+        self, skill_name: str, proposal_id: str
+    ) -> SkillProposal | None:
+        """Get a specific proposal by skill name and proposal ID."""
+        self._require_init()
+        import json
+
+        path = self._skill_proposals_dir(skill_name) / f"{proposal_id}.json"
+        if not path.is_file():
+            return None
+        data = json.loads(path.read_text())
+        return SkillProposal.model_validate(data)
+
+    def resolve_skill_proposal(
+        self,
+        skill_name: str,
+        proposal_id: str,
+        accept: bool,
+        resolved_by: str = "",
+    ) -> SkillProposal | None:
+        """Accept or reject a proposal. If accepted, applies the content."""
+        import json
+        from ctx.core.schema import _now
+
+        self._require_init()
+        proposal = self.get_skill_proposal(skill_name, proposal_id)
+        if proposal is None:
+            return None
+
+        proposal.status = ProposalStatus.accepted if accept else ProposalStatus.rejected
+        proposal.resolved_at = _now()
+        proposal.resolved_by = resolved_by
+
+        if accept:
+            self.set_skill(skill_name, proposal.proposed_content)
+
+        path = self._skill_proposals_dir(skill_name) / f"{proposal_id}.json"
+        path.write_text(
+            json.dumps(proposal.model_dump(), indent=2, default=str) + "\n"
+        )
+        return proposal
 
     # -- State --
 

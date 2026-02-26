@@ -226,3 +226,56 @@ class SessionSummary(BaseModel):
     summary: str = ""
     knowledge_added: list[str] = Field(default_factory=list)
     decisions_added: list[str] = Field(default_factory=list)
+    skills_used: list[str] = Field(default_factory=list)
+
+
+# -- Skill tracking (Phase 7a) --
+
+
+class SkillUsageEvent(BaseModel):
+    id: str = Field(default_factory=_uuid)
+    session_id: str = ""
+    agent: str = ""
+    timestamp: datetime = Field(default_factory=_now)
+
+
+class SkillFeedback(BaseModel):
+    id: str = Field(default_factory=_uuid)
+    agent: str = ""
+    rating: int = 3
+    comment: str = ""
+    timestamp: datetime = Field(default_factory=_now)
+
+
+class SkillStats(BaseModel):
+    """Read-only aggregated view, computed from ndjson files."""
+
+    skill_name: str
+    usage_count: int = 0
+    avg_rating: float = 0.0
+    rating_count: int = 0
+    last_used: datetime | None = None
+    needs_attention: bool = False
+
+
+# -- Skill proposals (Phase 7b) --
+
+
+class ProposalStatus(str, Enum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
+    upstream = "upstream"
+
+
+class SkillProposal(BaseModel):
+    id: str = Field(default_factory=_uuid)
+    skill_name: str
+    agent: str = ""
+    rationale: str = ""
+    proposed_content: str = ""
+    diff_summary: str = ""
+    status: ProposalStatus = ProposalStatus.pending
+    created_at: datetime = Field(default_factory=_now)
+    resolved_at: datetime | None = None
+    resolved_by: str = ""

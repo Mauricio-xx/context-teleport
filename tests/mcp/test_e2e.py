@@ -36,7 +36,7 @@ class TestToolDiscovery:
     async def test_list_tools_returns_17(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 19
+            assert len(result.tools) == 23
 
     async def test_expected_tool_names_present(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
@@ -119,7 +119,7 @@ class TestResourceReads:
             content = _extract_text(result)
             data = json.loads(content)
             assert data["project"]["name"] == "e2e-test-project"
-            assert data["schema_version"] == "0.3.0"
+            assert data["schema_version"] == "0.4.0"
 
     async def test_read_knowledge_empty(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:

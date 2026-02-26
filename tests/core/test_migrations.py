@@ -136,7 +136,7 @@ class TestCheckVersionCompatible:
 
 class TestScopeMigration:
     def test_current_version_is_030(self):
-        assert SCHEMA_VERSION == "0.3.0"
+        assert SCHEMA_VERSION == "0.4.0"
 
     def test_010_to_020_migration_exists(self):
         path = get_migration_path("0.1.0", "0.2.0")
@@ -167,11 +167,11 @@ class TestMultiAgentMigration:
         assert result["knowledge"]["arch"] == "Architecture notes"
 
     def test_full_migration_chain(self):
-        """0.1.0 -> 0.2.0 -> 0.3.0 in one call."""
+        """0.1.0 -> 0.2.0 -> 0.3.0 -> 0.4.0 in one call."""
         data = {
             "manifest": {"schema_version": "0.1.0"},
             "knowledge": {"stack": "Python"},
         }
         result = migrate_bundle(data)
-        assert result["manifest"]["schema_version"] == "0.3.0"
+        assert result["manifest"]["schema_version"] == "0.4.0"
         assert result["knowledge"]["stack"] == "Python"
