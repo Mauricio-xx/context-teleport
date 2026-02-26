@@ -32,6 +32,9 @@ htmlcov/
 .coverage
 .coverage.*
 
+# MkDocs build output
+site/
+
 # IDE
 .idea/
 

@@ -1,0 +1,101 @@
+site_name: Context Teleport
+site_description: Portable, git-backed context store for AI coding agents
+site_url: https://mauricio-xx.github.io/context-teleport/
+repo_url: https://github.com/Mauricio-xx/context-teleport
+repo_name: Mauricio-xx/context-teleport
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - First Project: getting-started/first-project.md
+  - Guides:
+    - guides/index.md
+    - Team Setup: guides/team-setup.md
+    - Multi-Agent Workflows: guides/multi-agent.md
+    - Adapter Workflows: guides/adapter-workflows.md
+    - Conflict Resolution: guides/conflict-resolution.md
+    - Skill Management: guides/skill-management.md
+    - Context Scoping: guides/context-scoping.md
+    - EDA Workflows: guides/eda-workflows.md
+    - GitHub Issues: guides/github-issues.md
+    - Watch & Automation: guides/watch-and-automation.md
+  - Reference:
+    - reference/index.md
+    - CLI: reference/cli.md
+    - MCP Tools: reference/mcp-tools.md
+    - MCP Resources: reference/mcp-resources.md
+    - MCP Prompts: reference/mcp-prompts.md
+    - Schema: reference/schema.md
+    - Bundle Format: reference/bundle-format.md
+    - Adapter Protocol: reference/adapter-protocol.md
+    - EDA Parsers: reference/eda-parsers.md
+    - Source Importers: reference/source-importers.md
+    - Configuration: reference/configuration.md
+  - Architecture:
+    - architecture/index.md
+    - Data Flow: architecture/data-flow.md
+    - Adapter Pattern: architecture/adapter-pattern.md
+    - Skill Lifecycle: architecture/skill-lifecycle.md
+    - Sync Engine: architecture/sync-engine.md
+    - Bundle Layout: architecture/bundle-layout.md
+  - Examples:
+    - examples/index.md
+    - Solo Developer: examples/solo-developer.md
+    - Multi-Agent Team: examples/multi-agent-team.md
+    - EDA Project: examples/eda-project.md
+  - Contributing:
+    - contributing/index.md
+    - Testing: contributing/testing.md
+    - Adding Adapters: contributing/adding-adapters.md
+    - Adding EDA Parsers: contributing/adding-eda-parsers.md

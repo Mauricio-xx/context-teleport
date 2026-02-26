@@ -2,6 +2,8 @@
 
 Thanks for considering contributing. Here is what you need to know.
 
+For the full contributing guide, including testing architecture and how to add adapters or parsers, see the [documentation site](https://mauricio-xx.github.io/context-teleport/contributing/).
+
 ## Development setup
 
 ```bash
