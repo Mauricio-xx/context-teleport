@@ -42,7 +42,7 @@
     at (store.center) {Context Store};
 
 % === Left: Import sources ===
-\node[font=\sffamily\small\bfseries, text=adaptorange!80!black, above left=4.2cm and 4.5cm of store.center]
+\node[font=\sffamily\small\bfseries, text=adaptorange!80!black, above left=2.1cm and 4.5cm of store.center]
     (importlabel) {Import Sources};
 
 \node[filebox, below=0.15cm of importlabel] (im1) {\texttt{MEMORY.md} / \texttt{CLAUDE.md}};
@@ -68,7 +68,7 @@
     above=0.1cm of im1.north east, anchor=south] {IMPORT};
 
 % === Right: Export targets ===
-\node[font=\sffamily\small\bfseries, text=ifgreen!80!black, above right=4.2cm and 4.5cm of store.center]
+\node[font=\sffamily\small\bfseries, text=ifgreen!80!black, above right=2.1cm and 4.5cm of store.center]
     (exportlabel) {Export Targets};
 
 \node[outbox, below=0.15cm of exportlabel] (ex1) {\texttt{CLAUDE.md} / \texttt{MEMORY.md}};

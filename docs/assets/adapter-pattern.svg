@@ -5,8 +5,8 @@
    version="1.1"
    id="svg2"
    width="684.28668"
-   height="449.33466"
-   viewBox="0 0 684.28668 449.33466"
+   height="377.47198"
+   viewBox="0 0 684.28668 377.47198"
    sodipodi:docname="adapter-pattern.pdf"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -27,7 +27,7 @@
      id="g8"
      inkscape:groupmode="layer"
      inkscape:label="adapter-pattern"
-     transform="matrix(1.3333333,0,0,-1.3333333,0,449.33467)">
+     transform="matrix(1.3333333,0,0,-1.3333333,0,377.472)">
     <g
        id="g10"
        transform="translate(257.003,193.173)">
@@ -118,15 +118,15 @@
              id="g44">
             <g
                id="g46"
-               transform="translate(-193.552,124.318)">
+               transform="translate(-193.552,64.791)">
               <g
                  id="g48">
                 <g
                    id="g50"
-                   transform="translate(-63.451,-317.491)">
+                   transform="translate(-63.451,-257.964)">
                   <g
                      aria-label="ImportSources"
-                     transform="matrix(1,0,0,-1,63.451,317.491)"
+                     transform="matrix(1,0,0,-1,63.451,257.964)"
                      id="text54"
                      style="font-weight:bold;font-size:8.9664px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#cc7a00">
                     <path
@@ -171,12 +171,12 @@
                   </g>
                   <g
                      id="g56"
-                     transform="translate(63.451,317.491)" />
+                     transform="translate(63.451,257.964)" />
                 </g>
               </g>
               <g
                  id="g58"
-                 transform="translate(193.552,-124.318)" />
+                 transform="translate(193.552,-64.791)" />
             </g>
           </g>
           <g
@@ -184,21 +184,21 @@
             <g
                id="g62">
               <path
-                 d="m -116.12051,114.55563 h -92.39389 c -1.10047,0 -1.99256,-0.89207 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89209,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10048 -0.89209,1.99255 -1.99255,1.99255 z"
+                 d="m -116.12051,55.02757 h -92.39389 c -1.10047,0 -1.99256,-0.89209 -1.99256,-1.99255 V 41.4293 c 0,-1.10047 0.89209,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99255 v 11.60572 c 0,1.10046 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#fff7eb;fill-opacity:1;fill-rule:nonzero;stroke:#ffb74c;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path64" />
             </g>
             <g
                id="g66"
-               transform="translate(-199.982,105.015)">
+               transform="translate(-199.982,45.488)">
               <g
                  id="g68">
                 <g
                    id="g70"
-                   transform="translate(-57.021,-298.188)">
+                   transform="translate(-57.021,-238.661)">
                   <g
                      aria-label="MEMORY.md"
-                     transform="matrix(1,0,0,-1,57.021,298.188)"
+                     transform="matrix(1,0,0,-1,57.021,238.661)"
                      id="text74"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -231,7 +231,7 @@
                   </g>
                   <g
                      aria-label="/"
-                     transform="matrix(1,0,0,-1,92.835,298.188)"
+                     transform="matrix(1,0,0,-1,92.835,238.661)"
                      id="text78"
                      style="font-size:6.9738px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Regular">
                     <path
@@ -240,7 +240,7 @@
                   </g>
                   <g
                      aria-label="CLAUDE.md"
-                     transform="matrix(1,0,0,-1,99.01,298.188)"
+                     transform="matrix(1,0,0,-1,99.01,238.661)"
                      id="text82"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -273,12 +273,12 @@
                   </g>
                   <g
                      id="g84"
-                     transform="translate(57.021,298.188)" />
+                     transform="translate(57.021,238.661)" />
                 </g>
               </g>
               <g
                  id="g86"
-                 transform="translate(199.982,-105.015)" />
+                 transform="translate(199.982,-45.488)" />
             </g>
           </g>
           <g
@@ -286,21 +286,21 @@
             <g
                id="g90">
               <path
-                 d="m -116.12051,92.79741 h -92.39389 c -1.10047,0 -1.99256,-0.89208 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89209,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99256 v 11.6057 c 0,1.10047 -0.89209,1.99255 -1.99255,1.99255 z"
+                 d="m -116.12051,33.26933 h -92.39389 c -1.10047,0 -1.99256,-0.89207 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89209,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10048 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#fff7eb;fill-opacity:1;fill-rule:nonzero;stroke:#ffb74c;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path92" />
             </g>
             <g
                id="g94"
-               transform="translate(-178.987,82.907)">
+               transform="translate(-178.987,23.38)">
               <g
                  id="g96">
                 <g
                    id="g98"
-                   transform="translate(-78.016,-276.08)">
+                   transform="translate(-78.016,-216.553)">
                   <g
                      aria-label="AGENTS.md"
-                     transform="matrix(1,0,0,-1,78.016,276.08)"
+                     transform="matrix(1,0,0,-1,78.016,216.553)"
                      id="text102"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -333,12 +333,12 @@
                   </g>
                   <g
                      id="g104"
-                     transform="translate(78.016,276.08)" />
+                     transform="translate(78.016,216.553)" />
                 </g>
               </g>
               <g
                  id="g106"
-                 transform="translate(178.987,-82.907)" />
+                 transform="translate(178.987,-23.38)" />
             </g>
           </g>
           <g
@@ -346,21 +346,21 @@
             <g
                id="g110">
               <path
-                 d="m -108.50327,71.03918 h -107.62838 c -1.10048,0 -1.99255,-0.89207 -1.99255,-1.99255 v -11.6057 c 0,-1.10048 0.89207,-1.99255 1.99255,-1.99255 h 107.62838 c 1.10048,0 1.99256,0.89207 1.99256,1.99255 v 11.6057 c 0,1.10048 -0.89208,1.99255 -1.99256,1.99255 z"
+                 d="m -108.50327,11.51111 h -107.62838 c -1.10048,0 -1.99255,-0.89208 -1.99255,-1.99256 V -2.08713 c 0,-1.10047 0.89207,-1.99255 1.99255,-1.99255 h 107.62838 c 1.10048,0 1.99256,0.89208 1.99256,1.99255 V 9.51855 c 0,1.10048 -0.89208,1.99256 -1.99256,1.99256 z"
                  style="fill:#fff7eb;fill-opacity:1;fill-rule:nonzero;stroke:#ffb74c;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path112" />
             </g>
             <g
                id="g114"
-               transform="translate(-214.801,61.5)">
+               transform="translate(-214.801,1.972)">
               <g
                  id="g116">
                 <g
                    id="g118"
-                   transform="translate(-42.202,-254.673)">
+                   transform="translate(-42.202,-195.145)">
                   <g
                      aria-label=".cursorrules"
-                     transform="matrix(1,0,0,-1,42.202,254.673)"
+                     transform="matrix(1,0,0,-1,42.202,195.145)"
                      id="text122"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -402,7 +402,7 @@
                   </g>
                   <g
                      aria-label="/"
-                     transform="matrix(1,0,0,-1,89.13,254.673)"
+                     transform="matrix(1,0,0,-1,89.13,195.145)"
                      id="text126"
                      style="font-size:6.9738px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Regular">
                     <path
@@ -411,7 +411,7 @@
                   </g>
                   <g
                      aria-label=".cursor/rules/"
-                     transform="matrix(1,0,0,-1,95.305,254.673)"
+                     transform="matrix(1,0,0,-1,95.305,195.145)"
                      id="text130"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -459,12 +459,12 @@
                   </g>
                   <g
                      id="g132"
-                     transform="translate(42.202,254.673)" />
+                     transform="translate(42.202,195.145)" />
                 </g>
               </g>
               <g
                  id="g134"
-                 transform="translate(214.801,-61.5)" />
+                 transform="translate(214.801,-1.972)" />
             </g>
           </g>
           <g
@@ -472,21 +472,21 @@
             <g
                id="g138">
               <path
-                 d="m -116.12051,49.28096 h -92.39389 c -1.10047,0 -1.99256,-0.89209 -1.99256,-1.99256 V 35.6827 c 0,-1.10047 0.89209,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89209 1.99255,1.99256 v 11.6057 c 0,1.10047 -0.89209,1.99256 -1.99255,1.99256 z"
+                 d="m -116.12051,-10.2471 h -92.39389 c -1.10047,0 -1.99256,-0.89208 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89209,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10047 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#fff7eb;fill-opacity:1;fill-rule:nonzero;stroke:#ffb74c;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path140" />
             </g>
             <g
                id="g142"
-               transform="translate(-195.659,39.872)">
+               transform="translate(-195.659,-19.655)">
               <g
                  id="g144">
                 <g
                    id="g146"
-                   transform="translate(-61.344,-233.045)">
+                   transform="translate(-61.344,-173.518)">
                   <g
                      aria-label=".gemini/rules/*.md"
-                     transform="matrix(1,0,0,-1,61.344,233.045)"
+                     transform="matrix(1,0,0,-1,61.344,173.518)"
                      id="text150"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -546,12 +546,12 @@
                   </g>
                   <g
                      id="g152"
-                     transform="translate(61.344,233.045)" />
+                     transform="translate(61.344,173.518)" />
                 </g>
               </g>
               <g
                  id="g154"
-                 transform="translate(195.659,-39.872)" />
+                 transform="translate(195.659,19.655)" />
             </g>
           </g>
           <g
@@ -559,21 +559,21 @@
             <g
                id="g158">
               <path
-                 d="m -116.12051,27.52274 h -92.39389 c -1.10047,0 -1.99256,-0.89209 -1.99256,-1.99256 V 13.92447 c 0,-1.10047 0.89209,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99255 v 11.60571 c 0,1.10047 -0.89209,1.99256 -1.99255,1.99256 z"
+                 d="m -116.12051,-32.00533 h -92.39389 c -1.10047,0 -1.99256,-0.89209 -1.99256,-1.99255 v -11.60571 c 0,-1.10047 0.89209,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89209 1.99255,1.99256 v 11.60571 c 0,1.10046 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#fff7eb;fill-opacity:1;fill-rule:nonzero;stroke:#ffb74c;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path160" />
             </g>
             <g
                id="g162"
-               transform="translate(-203.069,17.629)">
+               transform="translate(-203.069,-41.898)">
               <g
                  id="g164">
                 <g
                    id="g166"
-                   transform="translate(-53.934,-210.802)">
+                   transform="translate(-53.934,-151.275)">
                   <g
                      aria-label=".codex/instructions.md"
-                     transform="matrix(1,0,0,-1,53.934,210.802)"
+                     transform="matrix(1,0,0,-1,53.934,151.275)"
                      id="text170"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -645,27 +645,27 @@
                   </g>
                   <g
                      id="g172"
-                     transform="translate(53.934,210.802)" />
+                     transform="translate(53.934,151.275)" />
                 </g>
               </g>
               <g
                  id="g174"
-                 transform="translate(203.069,-17.629)" />
+                 transform="translate(203.069,41.898)" />
             </g>
           </g>
           <g
              id="g176">
             <g
                id="g178"
-               transform="translate(-243.72,105.029)">
+               transform="translate(-243.72,45.502)">
               <g
                  id="g180">
                 <g
                    id="g182"
-                   transform="translate(-13.283,-298.202)">
+                   transform="translate(-13.283,-238.675)">
                   <g
                      aria-label="ClaudeCode"
-                     transform="matrix(1,0,0,-1,13.283,298.202)"
+                     transform="matrix(1,0,0,-1,13.283,238.675)"
                      id="text186"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -701,27 +701,27 @@
                   </g>
                   <g
                      id="g188"
-                     transform="translate(13.283,298.202)" />
+                     transform="translate(13.283,238.675)" />
                 </g>
               </g>
               <g
                  id="g190"
-                 transform="translate(243.72,-105.029)" />
+                 transform="translate(243.72,-45.502)" />
             </g>
           </g>
           <g
              id="g192">
             <g
                id="g194"
-               transform="translate(-238.825,83.756)">
+               transform="translate(-238.825,24.228)">
               <g
                  id="g196">
                 <g
                    id="g198"
-                   transform="translate(-18.178,-276.929)">
+                   transform="translate(-18.178,-217.401)">
                   <g
                      aria-label="OpenCode"
-                     transform="matrix(1,0,0,-1,18.178,276.929)"
+                     transform="matrix(1,0,0,-1,18.178,217.401)"
                      id="text202"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -751,27 +751,27 @@
                   </g>
                   <g
                      id="g204"
-                     transform="translate(18.178,276.929)" />
+                     transform="translate(18.178,217.401)" />
                 </g>
               </g>
               <g
                  id="g206"
-                 transform="translate(238.825,-83.756)" />
+                 transform="translate(238.825,-24.228)" />
             </g>
           </g>
           <g
              id="g208">
             <g
                id="g210"
-               transform="translate(-237.565,61.513)">
+               transform="translate(-237.565,1.986)">
               <g
                  id="g212">
                 <g
                    id="g214"
-                   transform="translate(-19.438,-254.686)">
+                   transform="translate(-19.438,-195.159)">
                   <g
                      aria-label="Cursor"
-                     transform="matrix(1,0,0,-1,19.438,254.686)"
+                     transform="matrix(1,0,0,-1,19.438,195.159)"
                      id="text218"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -795,27 +795,27 @@
                   </g>
                   <g
                      id="g220"
-                     transform="translate(19.438,254.686)" />
+                     transform="translate(19.438,195.159)" />
                 </g>
               </g>
               <g
                  id="g222"
-                 transform="translate(237.565,-61.513)" />
+                 transform="translate(237.565,-1.986)" />
             </g>
           </g>
           <g
              id="g224">
             <g
                id="g226"
-               transform="translate(-231.033,39.755)">
+               transform="translate(-231.033,-19.772)">
               <g
                  id="g228">
                 <g
                    id="g230"
-                   transform="translate(-25.97,-232.928)">
+                   transform="translate(-25.97,-173.401)">
                   <g
                      aria-label="Gemini"
-                     transform="matrix(1,0,0,-1,25.97,232.928)"
+                     transform="matrix(1,0,0,-1,25.97,173.401)"
                      id="text234"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -839,27 +839,27 @@
                   </g>
                   <g
                      id="g236"
-                     transform="translate(25.97,232.928)" />
+                     transform="translate(25.97,173.401)" />
                 </g>
               </g>
               <g
                  id="g238"
-                 transform="translate(231.033,-39.755)" />
+                 transform="translate(231.033,19.772)" />
             </g>
           </g>
           <g
              id="g240">
             <g
                id="g242"
-               transform="translate(-229.39,17.997)">
+               transform="translate(-229.39,-41.53)">
               <g
                  id="g244">
                 <g
                    id="g246"
-                   transform="translate(-27.613,-211.17)">
+                   transform="translate(-27.613,-151.643)">
                   <g
                      aria-label="Codex"
-                     transform="matrix(1,0,0,-1,27.613,211.17)"
+                     transform="matrix(1,0,0,-1,27.613,151.643)"
                      id="text250"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -880,23 +880,23 @@
                   </g>
                   <g
                      id="g252"
-                     transform="translate(27.613,211.17)" />
+                     transform="translate(27.613,151.643)" />
                 </g>
               </g>
               <g
                  id="g254"
-                 transform="translate(229.39,-17.997)" />
+                 transform="translate(229.39,41.53)" />
             </g>
           </g>
           <g
              id="g256">
             <path
-               d="M -114.87517,106.76024 H -45.7044"
+               d="M -114.87517,47.23216 H -45.7044"
                style="fill:none;stroke:#ff9800;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path258" />
             <g
                id="g260"
-               transform="translate(-48.09935,106.76024)">
+               transform="translate(-48.09935,47.23216)">
               <g
                  id="g262">
                 <path
@@ -909,12 +909,12 @@
           <g
              id="g266">
             <path
-               d="M -114.87517,85.00201 H -45.7044"
+               d="M -114.87517,25.47394 H -45.7044"
                style="fill:none;stroke:#ff9800;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path268" />
             <g
                id="g270"
-               transform="translate(-48.09935,85.00201)">
+               transform="translate(-48.09935,25.47394)">
               <g
                  id="g272">
                 <path
@@ -927,12 +927,12 @@
           <g
              id="g276">
             <path
-               d="M -107.25792,63.24377 H -45.7044"
+               d="M -107.25792,3.7157 H -45.7044"
                style="fill:none;stroke:#ff9800;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path278" />
             <g
                id="g280"
-               transform="translate(-48.09935,63.24377)">
+               transform="translate(-48.09935,3.7157)">
               <g
                  id="g282">
                 <path
@@ -945,12 +945,12 @@
           <g
              id="g286">
             <path
-               d="M -114.87517,41.48555 H -45.7044"
+               d="M -114.87517,-18.04251 H -45.7044"
                style="fill:none;stroke:#ff9800;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path288" />
             <g
                id="g290"
-               transform="translate(-48.09935,41.48555)">
+               transform="translate(-48.09935,-18.04251)">
               <g
                  id="g292">
                 <path
@@ -963,12 +963,12 @@
           <g
              id="g296">
             <path
-               d="M -114.87517,19.72733 H -45.7044"
+               d="M -114.87517,-39.80074 H -45.7044"
                style="fill:none;stroke:#ff9800;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path298" />
             <g
                id="g300"
-               transform="translate(-48.09935,19.72733)">
+               transform="translate(-48.09935,-39.80074)">
               <g
                  id="g302">
                 <path
@@ -982,15 +982,15 @@
              id="g306">
             <g
                id="g308"
-               transform="translate(-128.668,121.158)">
+               transform="translate(-128.668,61.631)">
               <g
                  id="g310">
                 <g
                    id="g312"
-                   transform="translate(-128.335,-314.331)">
+                   transform="translate(-128.335,-254.804)">
                   <g
                      aria-label="IMPORT"
-                     transform="matrix(1,0,0,-1,128.335,314.331)"
+                     transform="matrix(1,0,0,-1,128.335,254.804)"
                      id="text316"
                      style="font-weight:bold;font-size:6.9738px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#b36a00">
                     <path
@@ -1014,27 +1014,27 @@
                   </g>
                   <g
                      id="g318"
-                     transform="translate(128.335,314.331)" />
+                     transform="translate(128.335,254.804)" />
                 </g>
               </g>
               <g
                  id="g320"
-                 transform="translate(128.668,-121.158)" />
+                 transform="translate(128.668,-61.631)" />
             </g>
           </g>
           <g
              id="g322">
             <g
                id="g324"
-               transform="translate(131.079,124.318)">
+               transform="translate(131.079,64.791)">
               <g
                  id="g326">
                 <g
                    id="g328"
-                   transform="translate(-388.082,-317.491)">
+                   transform="translate(-388.082,-257.964)">
                   <g
                      aria-label="ExportTargets"
-                     transform="matrix(1,0,0,-1,388.082,317.491)"
+                     transform="matrix(1,0,0,-1,388.082,257.964)"
                      id="text332"
                      style="font-weight:bold;font-size:8.9664px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#3d8c40">
                     <path
@@ -1079,12 +1079,12 @@
                   </g>
                   <g
                      id="g334"
-                     transform="translate(388.082,317.491)" />
+                     transform="translate(388.082,257.964)" />
                 </g>
               </g>
               <g
                  id="g336"
-                 transform="translate(-131.079,-124.318)" />
+                 transform="translate(-131.079,-64.791)" />
             </g>
           </g>
           <g
@@ -1092,21 +1092,21 @@
             <g
                id="g340">
               <path
-                 d="m 207.72353,114.55563 h -92.39389 c -1.10048,0 -1.99256,-0.89207 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10048 -0.89209,1.99255 -1.99255,1.99255 z"
+                 d="m 207.72353,55.02757 h -92.39389 c -1.10048,0 -1.99256,-0.89209 -1.99256,-1.99255 V 41.4293 c 0,-1.10047 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99255 v 11.60572 c 0,1.10046 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#f1f9f1;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path342" />
             </g>
             <g
                id="g344"
-               transform="translate(123.858,105.015)">
+               transform="translate(123.858,45.488)">
               <g
                  id="g346">
                 <g
                    id="g348"
-                   transform="translate(-380.861,-298.188)">
+                   transform="translate(-380.861,-238.661)">
                   <g
                      aria-label="CLAUDE.md"
-                     transform="matrix(1,0,0,-1,380.861,298.188)"
+                     transform="matrix(1,0,0,-1,380.861,238.661)"
                      id="text352"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1139,7 +1139,7 @@
                   </g>
                   <g
                      aria-label="/"
-                     transform="matrix(1,0,0,-1,416.675,298.188)"
+                     transform="matrix(1,0,0,-1,416.675,238.661)"
                      id="text356"
                      style="font-size:6.9738px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Regular">
                     <path
@@ -1148,7 +1148,7 @@
                   </g>
                   <g
                      aria-label="MEMORY.md"
-                     transform="matrix(1,0,0,-1,422.85,298.188)"
+                     transform="matrix(1,0,0,-1,422.85,238.661)"
                      id="text360"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1181,12 +1181,12 @@
                   </g>
                   <g
                      id="g362"
-                     transform="translate(380.861,298.188)" />
+                     transform="translate(380.861,238.661)" />
                 </g>
               </g>
               <g
                  id="g364"
-                 transform="translate(-123.858,-105.015)" />
+                 transform="translate(-123.858,-45.488)" />
             </g>
           </g>
           <g
@@ -1194,21 +1194,21 @@
             <g
                id="g368">
               <path
-                 d="m 207.72353,92.79741 h -92.39389 c -1.10048,0 -1.99256,-0.89208 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89208,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99256 v 11.6057 c 0,1.10047 -0.89209,1.99255 -1.99255,1.99255 z"
+                 d="m 207.72353,33.26933 h -92.39389 c -1.10048,0 -1.99256,-0.89207 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10048 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#f1f9f1;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path370" />
             </g>
             <g
                id="g372"
-               transform="translate(144.852,82.907)">
+               transform="translate(144.852,23.38)">
               <g
                  id="g374">
                 <g
                    id="g376"
-                   transform="translate(-401.855,-276.08)">
+                   transform="translate(-401.855,-216.553)">
                   <g
                      aria-label="AGENTS.md"
-                     transform="matrix(1,0,0,-1,401.855,276.08)"
+                     transform="matrix(1,0,0,-1,401.855,216.553)"
                      id="text380"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1241,12 +1241,12 @@
                   </g>
                   <g
                      id="g382"
-                     transform="translate(401.855,276.08)" />
+                     transform="translate(401.855,216.553)" />
                 </g>
               </g>
               <g
                  id="g384"
-                 transform="translate(-144.852,-82.907)" />
+                 transform="translate(-144.852,-23.38)" />
             </g>
           </g>
           <g
@@ -1254,21 +1254,21 @@
             <g
                id="g388">
               <path
-                 d="m 207.72353,71.03918 h -92.39389 c -1.10048,0 -1.99256,-0.89207 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10048 -0.89209,1.99255 -1.99255,1.99255 z"
+                 d="m 207.72353,11.51111 h -92.39389 c -1.10048,0 -1.99256,-0.89208 -1.99256,-1.99256 V -2.08713 c 0,-1.10047 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99255 V 9.51855 c 0,1.10048 -0.89209,1.99256 -1.99255,1.99256 z"
                  style="fill:#f1f9f1;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path390" />
             </g>
             <g
                id="g392"
-               transform="translate(126.328,61.145)">
+               transform="translate(126.328,1.618)">
               <g
                  id="g394">
                 <g
                    id="g396"
-                   transform="translate(-383.331,-254.318)">
+                   transform="translate(-383.331,-194.791)">
                   <g
                      aria-label=".cursor/rules/*.mdc"
-                     transform="matrix(1,0,0,-1,383.331,254.318)"
+                     transform="matrix(1,0,0,-1,383.331,194.791)"
                      id="text400"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1331,12 +1331,12 @@
                   </g>
                   <g
                      id="g402"
-                     transform="translate(383.331,254.318)" />
+                     transform="translate(383.331,194.791)" />
                 </g>
               </g>
               <g
                  id="g404"
-                 transform="translate(-126.328,-61.145)" />
+                 transform="translate(-126.328,-1.618)" />
             </g>
           </g>
           <g
@@ -1344,21 +1344,21 @@
             <g
                id="g408">
               <path
-                 d="m 207.72353,49.28096 h -92.39389 c -1.10048,0 -1.99256,-0.89209 -1.99256,-1.99256 V 35.6827 c 0,-1.10047 0.89208,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89209 1.99255,1.99256 v 11.6057 c 0,1.10047 -0.89209,1.99256 -1.99255,1.99256 z"
+                 d="m 207.72353,-10.2471 h -92.39389 c -1.10048,0 -1.99256,-0.89208 -1.99256,-1.99255 v -11.6057 c 0,-1.10048 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89207 1.99255,1.99255 v 11.6057 c 0,1.10047 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#f1f9f1;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path410" />
             </g>
             <g
                id="g412"
-               transform="translate(128.181,39.872)">
+               transform="translate(128.181,-19.655)">
               <g
                  id="g414">
                 <g
                    id="g416"
-                   transform="translate(-385.184,-233.045)">
+                   transform="translate(-385.184,-173.518)">
                   <g
                      aria-label=".gemini/rules/*.md"
-                     transform="matrix(1,0,0,-1,385.184,233.045)"
+                     transform="matrix(1,0,0,-1,385.184,173.518)"
                      id="text420"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1418,12 +1418,12 @@
                   </g>
                   <g
                      id="g422"
-                     transform="translate(385.184,233.045)" />
+                     transform="translate(385.184,173.518)" />
                 </g>
               </g>
               <g
                  id="g424"
-                 transform="translate(-128.181,-39.872)" />
+                 transform="translate(-128.181,19.655)" />
             </g>
           </g>
           <g
@@ -1431,21 +1431,21 @@
             <g
                id="g428">
               <path
-                 d="m 207.72353,27.52274 h -92.39389 c -1.10048,0 -1.99256,-0.89209 -1.99256,-1.99256 V 13.92447 c 0,-1.10047 0.89208,-1.99255 1.99256,-1.99255 h 92.39389 c 1.10046,0 1.99255,0.89208 1.99255,1.99255 v 11.60571 c 0,1.10047 -0.89209,1.99256 -1.99255,1.99256 z"
+                 d="m 207.72353,-32.00533 h -92.39389 c -1.10048,0 -1.99256,-0.89209 -1.99256,-1.99255 v -11.60571 c 0,-1.10047 0.89208,-1.99256 1.99256,-1.99256 h 92.39389 c 1.10046,0 1.99255,0.89209 1.99255,1.99256 v 11.60571 c 0,1.10046 -0.89209,1.99255 -1.99255,1.99255 z"
                  style="fill:#f1f9f1;fill-opacity:1;fill-rule:nonzero;stroke:#82c784;stroke-width:0.49814;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                  id="path430" />
             </g>
             <g
                id="g432"
-               transform="translate(120.771,17.629)">
+               transform="translate(120.771,-41.898)">
               <g
                  id="g434">
                 <g
                    id="g436"
-                   transform="translate(-377.774,-210.802)">
+                   transform="translate(-377.774,-151.275)">
                   <g
                      aria-label=".codex/instructions.md"
-                     transform="matrix(1,0,0,-1,377.774,210.802)"
+                     transform="matrix(1,0,0,-1,377.774,151.275)"
                      id="text440"
                      style="font-size:6.9738px;font-family:LMMono8;-inkscape-font-specification:LMMono8-Regular">
                     <path
@@ -1517,27 +1517,27 @@
                   </g>
                   <g
                      id="g442"
-                     transform="translate(377.774,210.802)" />
+                     transform="translate(377.774,151.275)" />
                 </g>
               </g>
               <g
                  id="g444"
-                 transform="translate(-120.771,-17.629)" />
+                 transform="translate(-120.771,41.898)" />
             </g>
           </g>
           <g
              id="g446">
             <g
                id="g448"
-               transform="translate(214.899,105.029)">
+               transform="translate(214.899,45.502)">
               <g
                  id="g450">
                 <g
                    id="g452"
-                   transform="translate(-471.902,-298.202)">
+                   transform="translate(-471.902,-238.675)">
                   <g
                      aria-label="ClaudeCode"
-                     transform="matrix(1,0,0,-1,471.902,298.202)"
+                     transform="matrix(1,0,0,-1,471.902,238.675)"
                      id="text456"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -1573,27 +1573,27 @@
                   </g>
                   <g
                      id="g458"
-                     transform="translate(471.902,298.202)" />
+                     transform="translate(471.902,238.675)" />
                 </g>
               </g>
               <g
                  id="g460"
-                 transform="translate(-214.899,-105.029)" />
+                 transform="translate(-214.899,-45.502)" />
             </g>
           </g>
           <g
              id="g462">
             <g
                id="g464"
-               transform="translate(214.899,83.756)">
+               transform="translate(214.899,24.228)">
               <g
                  id="g466">
                 <g
                    id="g468"
-                   transform="translate(-471.902,-276.929)">
+                   transform="translate(-471.902,-217.401)">
                   <g
                      aria-label="OpenCode"
-                     transform="matrix(1,0,0,-1,471.902,276.929)"
+                     transform="matrix(1,0,0,-1,471.902,217.401)"
                      id="text472"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -1623,27 +1623,27 @@
                   </g>
                   <g
                      id="g474"
-                     transform="translate(471.902,276.929)" />
+                     transform="translate(471.902,217.401)" />
                 </g>
               </g>
               <g
                  id="g476"
-                 transform="translate(-214.899,-83.756)" />
+                 transform="translate(-214.899,-24.228)" />
             </g>
           </g>
           <g
              id="g478">
             <g
                id="g480"
-               transform="translate(214.899,61.513)">
+               transform="translate(214.899,1.986)">
               <g
                  id="g482">
                 <g
                    id="g484"
-                   transform="translate(-471.902,-254.686)">
+                   transform="translate(-471.902,-195.159)">
                   <g
                      aria-label="Cursor"
-                     transform="matrix(1,0,0,-1,471.902,254.686)"
+                     transform="matrix(1,0,0,-1,471.902,195.159)"
                      id="text488"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -1667,27 +1667,27 @@
                   </g>
                   <g
                      id="g490"
-                     transform="translate(471.902,254.686)" />
+                     transform="translate(471.902,195.159)" />
                 </g>
               </g>
               <g
                  id="g492"
-                 transform="translate(-214.899,-61.513)" />
+                 transform="translate(-214.899,-1.986)" />
             </g>
           </g>
           <g
              id="g494">
             <g
                id="g496"
-               transform="translate(214.899,39.755)">
+               transform="translate(214.899,-19.772)">
               <g
                  id="g498">
                 <g
                    id="g500"
-                   transform="translate(-471.902,-232.928)">
+                   transform="translate(-471.902,-173.401)">
                   <g
                      aria-label="Gemini"
-                     transform="matrix(1,0,0,-1,471.902,232.928)"
+                     transform="matrix(1,0,0,-1,471.902,173.401)"
                      id="text504"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -1711,27 +1711,27 @@
                   </g>
                   <g
                      id="g506"
-                     transform="translate(471.902,232.928)" />
+                     transform="translate(471.902,173.401)" />
                 </g>
               </g>
               <g
                  id="g508"
-                 transform="translate(-214.899,-39.755)" />
+                 transform="translate(-214.899,19.772)" />
             </g>
           </g>
           <g
              id="g510">
             <g
                id="g512"
-               transform="translate(214.899,17.997)">
+               transform="translate(214.899,-41.53)">
               <g
                  id="g514">
                 <g
                    id="g516"
-                   transform="translate(-471.902,-211.17)">
+                   transform="translate(-471.902,-151.643)">
                   <g
                      aria-label="Codex"
-                     transform="matrix(1,0,0,-1,471.902,211.17)"
+                     transform="matrix(1,0,0,-1,471.902,151.643)"
                      id="text520"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -1752,23 +1752,23 @@
                   </g>
                   <g
                      id="g522"
-                     transform="translate(471.902,211.17)" />
+                     transform="translate(471.902,151.643)" />
                 </g>
               </g>
               <g
                  id="g524"
-                 transform="translate(-214.899,-17.997)" />
+                 transform="translate(-214.899,41.53)" />
             </g>
           </g>
           <g
              id="g526">
             <path
-               d="m 42.12169,106.76024 h 68.37988"
+               d="m 42.12169,47.23216 h 68.37988"
                style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path528" />
             <g
                id="g530"
-               transform="translate(108.10663,106.76024)">
+               transform="translate(108.10663,47.23216)">
               <g
                  id="g532">
                 <path
@@ -1781,12 +1781,12 @@
           <g
              id="g536">
             <path
-               d="m 42.12169,85.00201 h 68.37988"
+               d="m 42.12169,25.47394 h 68.37988"
                style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path538" />
             <g
                id="g540"
-               transform="translate(108.10663,85.00201)">
+               transform="translate(108.10663,25.47394)">
               <g
                  id="g542">
                 <path
@@ -1799,12 +1799,12 @@
           <g
              id="g546">
             <path
-               d="m 42.12169,63.24377 h 68.37988"
+               d="m 42.12169,3.7157 h 68.37988"
                style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path548" />
             <g
                id="g550"
-               transform="translate(108.10663,63.24377)">
+               transform="translate(108.10663,3.7157)">
               <g
                  id="g552">
                 <path
@@ -1817,12 +1817,12 @@
           <g
              id="g556">
             <path
-               d="m 42.12169,41.48555 h 68.37988"
+               d="m 42.12169,-18.04251 h 68.37988"
                style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path558" />
             <g
                id="g560"
-               transform="translate(108.10663,41.48555)">
+               transform="translate(108.10663,-18.04251)">
               <g
                  id="g562">
                 <path
@@ -1835,12 +1835,12 @@
           <g
              id="g566">
             <path
-               d="m 42.12169,19.72733 h 68.37988"
+               d="m 42.12169,-39.80074 h 68.37988"
                style="fill:none;stroke:#4caf50;stroke-width:1.19553;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
                id="path568" />
             <g
                id="g570"
-               transform="translate(108.10663,19.72733)">
+               transform="translate(108.10663,-39.80074)">
               <g
                  id="g572">
                 <path
@@ -1854,15 +1854,15 @@
              id="g576">
             <g
                id="g578"
-               transform="translate(98.064,121.158)">
+               transform="translate(98.064,61.631)">
               <g
                  id="g580">
                 <g
                    id="g582"
-                   transform="translate(-355.067,-314.331)">
+                   transform="translate(-355.067,-254.804)">
                   <g
                      aria-label="EXPORT"
-                     transform="matrix(1,0,0,-1,355.067,314.331)"
+                     transform="matrix(1,0,0,-1,355.067,254.804)"
                      id="text586"
                      style="font-weight:bold;font-size:6.9738px;font-family:LMSans10;-inkscape-font-specification:LMSans10-Bold;fill:#357b38">
                     <path
@@ -1886,12 +1886,12 @@
                   </g>
                   <g
                      id="g588"
-                     transform="translate(355.067,314.331)" />
+                     transform="translate(355.067,254.804)" />
                 </g>
               </g>
               <g
                  id="g590"
-                 transform="translate(-98.064,-121.158)" />
+                 transform="translate(-98.064,-61.631)" />
             </g>
           </g>
           <g
@@ -2445,15 +2445,15 @@
              id="g656">
             <g
                id="g658"
-               transform="translate(-196.638,-4.109)">
+               transform="translate(-196.638,-63.636)">
               <g
                  id="g660">
                 <g
                    id="g662"
-                   transform="translate(-60.365,-189.064)">
+                   transform="translate(-60.365,-129.537)">
                   <g
                      aria-label="+"
-                     transform="matrix(1,0,0,-1,60.365,195.042)"
+                     transform="matrix(1,0,0,-1,60.365,135.515)"
                      id="text666"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -2462,7 +2462,7 @@
                   </g>
                   <g
                      aria-label="&lt;tool&gt;/skills/*/SKILL.md"
-                     transform="matrix(1,0,0,-1,66.246,195.042)"
+                     transform="matrix(1,0,0,-1,66.246,135.515)"
                      id="text670"
                      style="font-style:italic;font-size:4.9813px;font-family:LMMono10;-inkscape-font-specification:LMMono10-Italic;fill:#757575">
                     <path
@@ -2540,7 +2540,7 @@
                   </g>
                   <g
                      aria-label="foralladapters"
-                     transform="matrix(1,0,0,-1,78.102,189.064)"
+                     transform="matrix(1,0,0,-1,78.102,129.537)"
                      id="text674"
                      style="font-style:oblique;font-size:4.9813px;font-family:LMSans8;-inkscape-font-specification:LMSans8-Oblique;fill:#757575">
                     <path
@@ -2588,12 +2588,12 @@
                   </g>
                   <g
                      id="g676"
-                     transform="translate(60.365,189.064)" />
+                     transform="translate(60.365,129.537)" />
                 </g>
               </g>
               <g
                  id="g678"
-                 transform="translate(196.638,4.109)" />
+                 transform="translate(196.638,63.636)" />
             </g>
           </g>
         </g>
