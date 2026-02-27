@@ -173,11 +173,14 @@ class GitSync:
             return {"status": "nothing_to_commit"}
 
         stageable = self._get_stageable_files()
-        if stageable:
-            self.repo.index.add(stageable)
+        if not stageable:
+            return {"status": "nothing_to_commit"}
 
         commit_msg = message or self._auto_message()
-        self.repo.index.commit(commit_msg)
+        # add() makes untracked files known to git; --only ensures the
+        # commit contains ONLY our files, leaving user-staged files intact.
+        self.repo.index.add(stageable)
+        self.repo.git.commit("-m", commit_msg, "--only", "--", *stageable)
         return {"status": "committed", "commit_message": commit_msg}
 
     def push(self, message: str | None = None) -> dict:
@@ -187,11 +190,14 @@ class GitSync:
 
         # Stage only public files (excludes private/ephemeral)
         stageable = self._get_stageable_files()
-        if stageable:
-            self.repo.index.add(stageable)
+        if not stageable:
+            return {"status": "nothing_to_push"}
 
         commit_msg = message or self._auto_message()
-        self.repo.index.commit(commit_msg)
+        # add() makes untracked files known to git; --only ensures the
+        # commit contains ONLY our files, leaving user-staged files intact.
+        self.repo.index.add(stageable)
+        self.repo.git.commit("-m", commit_msg, "--only", "--", *stageable)
 
         # Push if remote exists
         if not self.repo.remotes:

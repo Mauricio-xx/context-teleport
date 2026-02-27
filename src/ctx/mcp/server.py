@@ -1126,13 +1126,17 @@ def context_onboarding() -> str:
     ]
 
     if activity:
-        lines.append("## Team Activity")
-        lines.append("")
-        for a in activity:
-            stale_tag = " (stale)" if store.is_stale(a) else ""
-            ref = f" [{a.issue_ref}]" if a.issue_ref else ""
-            lines.append(f"- **{a.member}**{stale_tag}: {a.task}{ref} (via {a.agent})")
-        lines.append("")
+        active_entries = [a for a in activity if not store.is_stale(a)]
+        stale_count = len(activity) - len(active_entries)
+        if active_entries or stale_count:
+            lines.append("## Team Activity")
+            lines.append("")
+            for a in active_entries:
+                ref = f" [{a.issue_ref}]" if a.issue_ref else ""
+                lines.append(f"- **{a.member}**: {a.task}{ref} (via {a.agent})")
+            if stale_count:
+                lines.append(f"*({stale_count} stale entries omitted -- see `context://activity` for full list)*")
+            lines.append("")
 
     if conventions:
         lines.append("## Team Conventions")

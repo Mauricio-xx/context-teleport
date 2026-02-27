@@ -165,6 +165,69 @@ class TestGitSync:
         assert result["status"] == "nothing_to_commit"
 
 
+class TestStagingIsolation:
+    """Verify that commit() and push() do not commit user-staged files."""
+
+    def test_push_does_not_commit_user_staged_files(self, store):
+        """User-staged files outside .context-teleport/ must not be committed by push()."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        # Create and stage a user file (simulating `git add somefile.py`)
+        user_file = store.root / "app.py"
+        user_file.write_text("print('hello')\n")
+        repo.index.add(["app.py"])
+
+        # Also create a context change so push() has something to commit
+        store.set_knowledge("new-entry", "Some knowledge")
+
+        gs = GitSync(store.root)
+        result = gs.push()
+        assert result["status"] == "committed"
+
+        # The context commit should NOT include app.py
+        committed_files = [
+            item.a_path
+            for item in repo.head.commit.diff(repo.head.commit.parents[0])
+        ]
+        assert "app.py" not in committed_files
+        assert any(STORE_DIR in f for f in committed_files)
+
+        # app.py should still be staged (in the index)
+        staged = [d.a_path for d in repo.index.diff("HEAD")]
+        assert "app.py" in staged
+
+    def test_commit_does_not_commit_user_staged_files(self, store):
+        """User-staged files outside .context-teleport/ must not be committed by commit()."""
+        repo = git.Repo(store.root)
+        repo.index.add([".context-teleport"])
+        repo.index.commit("init store")
+
+        # Create and stage a user file
+        user_file = store.root / "main.py"
+        user_file.write_text("import sys\n")
+        repo.index.add(["main.py"])
+
+        # Create a context change
+        store.set_knowledge("another", "Another entry")
+
+        gs = GitSync(store.root)
+        result = gs.commit()
+        assert result["status"] == "committed"
+
+        # main.py should NOT be in the commit
+        committed_files = [
+            item.a_path
+            for item in repo.head.commit.diff(repo.head.commit.parents[0])
+        ]
+        assert "main.py" not in committed_files
+
+        # main.py should still be staged
+        staged = [d.a_path for d in repo.index.diff("HEAD")]
+        assert "main.py" in staged
+
+
 class TestConflictPersistence:
     def test_save_and_load_report(self, store):
         repo = git.Repo(store.root)

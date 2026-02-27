@@ -120,6 +120,7 @@ class TestActivityInOnboarding:
         assert "Team Activity" not in text
 
     def test_onboarding_stale_marker(self, store):
+        """Stale entries should be omitted from full listing, with a summary note."""
         adir = store.activity_dir()
         adir.mkdir(parents=True, exist_ok=True)
         old_time = datetime.now(timezone.utc) - timedelta(hours=ACTIVITY_STALE_HOURS + 1)
@@ -127,5 +128,28 @@ class TestActivityInOnboarding:
         store._write_json(adir / "stale-user.json", entry)
 
         text = context_onboarding()
-        assert "(stale)" in text
-        assert "stale-user" in text
+        # Stale entry should NOT appear as a full entry
+        assert "**stale-user**" not in text
+        # But the section and summary note should be present
+        assert "## Team Activity" in text
+        assert "stale entries omitted" in text
+
+    def test_onboarding_filters_stale_keeps_active(self, store):
+        """Only active entries shown in full; stale entries counted in summary."""
+        # Active entry
+        store.check_in(task="Active work", member="alice", agent="claude-code")
+
+        # Stale entry
+        adir = store.activity_dir()
+        old_time = datetime.now(timezone.utc) - timedelta(hours=ACTIVITY_STALE_HOURS + 1)
+        stale = ActivityEntry(member="bob", task="Old work", agent="test", updated_at=old_time)
+        store._write_json(adir / "bob.json", stale)
+
+        text = context_onboarding()
+        assert "## Team Activity" in text
+        # Active entry shows in full
+        assert "**alice**" in text
+        assert "Active work" in text
+        # Stale entry omitted from full listing
+        assert "**bob**" not in text
+        assert "1 stale entries omitted" in text
