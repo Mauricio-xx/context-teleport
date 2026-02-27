@@ -47,10 +47,20 @@ def _generate_instructions() -> str:
 
         conventions = store.list_conventions()
 
+        activity = store.list_activity()
+
         lines = [
             f"Context Teleport is active for project '{project_name}'.",
             "",
         ]
+
+        if activity:
+            active = [a for a in activity if not store.is_stale(a)]
+            if active:
+                lines.append(f"Team activity: {len(active)} member(s) active.")
+                for a in active:
+                    ref = f" [{a.issue_ref}]" if a.issue_ref else ""
+                    lines.append(f"  - {a.member} [{a.agent}]: {a.task}{ref}")
 
         if conventions:
             keys = [e.key for e in conventions]
@@ -102,6 +112,10 @@ async def _server_lifespan(app: FastMCP) -> AsyncIterator[None]:
     finally:
         try:
             store = _get_store()
+            try:
+                store.check_out()
+            except Exception:
+                logger.debug("Shutdown check-out skipped")
             gs = GitSync(store.root)
             if gs._has_changes():
                 gs.push()
@@ -323,6 +337,30 @@ def resource_skills_stats() -> str:
     store = _get_store()
     stats = store.list_skill_stats()
     return json.dumps([s.model_dump() for s in stats], indent=2, default=str)
+
+
+@mcp.resource("context://activity")
+def resource_activity() -> str:
+    """List all team activity entries with stale indicators."""
+    store = _get_store()
+    activity = store.list_activity()
+    return json.dumps(
+        [
+            {
+                "member": a.member,
+                "agent": a.agent,
+                "machine": a.machine,
+                "task": a.task,
+                "issue_ref": a.issue_ref,
+                "status": a.status,
+                "updated_at": str(a.updated_at),
+                "stale": store.is_stale(a),
+            }
+            for a in activity
+        ],
+        indent=2,
+        default=str,
+    )
 
 
 @mcp.resource("context://skills/{name}/feedback")
@@ -612,6 +650,40 @@ def context_list_skill_proposals(
         indent=2,
         default=str,
     )
+
+
+@mcp.tool()
+def context_check_in(task: str, issue_ref: str = "") -> str:
+    """Check in to the team activity board.
+
+    Records what you are currently working on so other team members
+    can see your activity via onboarding or the activity resource.
+
+    Args:
+        task: Description of what you are working on
+        issue_ref: Optional issue reference (e.g. '#42')
+    """
+    store = _get_store()
+    agent = _get_agent_name()
+    entry = store.check_in(task=task, issue_ref=issue_ref, agent=agent)
+    return json.dumps(
+        {"status": "ok", "member": entry.member, "task": entry.task},
+        default=str,
+    )
+
+
+@mcp.tool()
+def context_check_out() -> str:
+    """Check out from the team activity board.
+
+    Removes your activity entry so other team members know you
+    are no longer actively working.
+    """
+    store = _get_store()
+    removed = store.check_out()
+    if removed:
+        return json.dumps({"status": "checked_out"})
+    return json.dumps({"status": "not_found"})
 
 
 @mcp.tool()
@@ -1007,6 +1079,7 @@ def context_onboarding() -> str:
     """
     store = _get_store()
     manifest = store.read_manifest()
+    activity = store.list_activity()
     conventions = store.list_conventions(scope=Scope.public)
     knowledge = store.list_knowledge(scope=Scope.public)
     decisions = store.list_decisions(scope=Scope.public)
@@ -1019,6 +1092,15 @@ def context_onboarding() -> str:
         f"Schema version: {manifest.schema_version}",
         "",
     ]
+
+    if activity:
+        lines.append("## Team Activity")
+        lines.append("")
+        for a in activity:
+            stale_tag = " (stale)" if store.is_stale(a) else ""
+            ref = f" [{a.issue_ref}]" if a.issue_ref else ""
+            lines.append(f"- **{a.member}**{stale_tag}: {a.task}{ref} (via {a.agent})")
+        lines.append("")
 
     if conventions:
         lines.append("## Team Conventions")

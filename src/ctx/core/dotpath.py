@@ -89,6 +89,16 @@ def resolve_dotpath(store: ContextStore, dotpath: str):
                 return None
         return obj
 
+    elif section == "activity":
+        activity = store.list_activity()
+        if not rest:
+            return [a.model_dump() for a in activity]
+        member = rest[0]
+        entry = store.get_activity(member)
+        if entry is None:
+            return None
+        return entry.model_dump()
+
     elif section == "history":
         sessions = store.list_sessions()
         return [s.model_dump() for s in sessions]

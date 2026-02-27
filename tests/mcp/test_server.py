@@ -632,7 +632,7 @@ class TestMCPRegistration:
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
     def test_has_exactly_19_tools(self, store):
-        assert len(mcp._tool_manager._tools) == 27
+        assert len(mcp._tool_manager._tools) == 29
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())

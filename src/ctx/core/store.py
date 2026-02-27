@@ -6,7 +6,9 @@ import re
 from pathlib import Path
 
 from ctx.core.schema import (
+    ACTIVITY_STALE_HOURS,
     ActiveState,
+    ActivityEntry,
     ConventionEntry,
     Decision,
     DecisionStatus,
@@ -25,7 +27,7 @@ from ctx.core.schema import (
     UserPreferences,
 )
 from ctx.core.scope import Scope, ScopeMap
-from ctx.utils.paths import STORE_DIR, get_author, sanitize_key
+from ctx.utils.paths import STORE_DIR, get_author, get_machine_name, get_username, sanitize_key
 
 
 class StoreError(Exception):
@@ -878,6 +880,78 @@ class ContextStore:
         self._require_init()
         self._write_json(self.store_dir / "state" / "roadmap.json", roadmap)
 
+    # -- Team Activity --
+
+    def activity_dir(self) -> Path:
+        return self.store_dir / "activity"
+
+    def check_in(
+        self,
+        task: str,
+        issue_ref: str = "",
+        agent: str = "",
+        member: str = "",
+        machine: str = "",
+    ) -> ActivityEntry:
+        """Record that a team member is actively working on something."""
+        self._require_init()
+        resolved_member = member or get_username()
+        resolved_machine = machine or get_machine_name()
+        adir = self.activity_dir()
+        adir.mkdir(parents=True, exist_ok=True)
+        entry = ActivityEntry(
+            member=resolved_member,
+            agent=agent,
+            machine=resolved_machine,
+            task=task,
+            issue_ref=issue_ref,
+        )
+        self._write_json(adir / f"{resolved_member}.json", entry)
+        return entry
+
+    def check_out(self, member: str = "") -> bool:
+        """Remove a team member's activity entry. Returns False if not found."""
+        self._require_init()
+        resolved_member = member or get_username()
+        path = self.activity_dir() / f"{resolved_member}.json"
+        if path.is_file():
+            path.unlink()
+            return True
+        return False
+
+    def list_activity(self) -> list[ActivityEntry]:
+        """Return all activity entries."""
+        self._require_init()
+        adir = self.activity_dir()
+        if not adir.is_dir():
+            return []
+        entries = []
+        for f in sorted(adir.glob("*.json")):
+            try:
+                entries.append(ActivityEntry.model_validate_json(f.read_text()))
+            except Exception:
+                continue
+        return entries
+
+    def get_activity(self, member: str) -> ActivityEntry | None:
+        """Return activity for a specific member, or None."""
+        self._require_init()
+        path = self.activity_dir() / f"{member}.json"
+        if not path.is_file():
+            return None
+        try:
+            return ActivityEntry.model_validate_json(path.read_text())
+        except Exception:
+            return None
+
+    def is_stale(self, entry: ActivityEntry) -> bool:
+        """Check if an activity entry is stale (older than ACTIVITY_STALE_HOURS)."""
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc)
+        age_hours = (now - entry.updated_at).total_seconds() / 3600
+        return age_hours > ACTIVITY_STALE_HOURS
+
     # -- Preferences --
 
     def read_team_preferences(self) -> TeamPreferences:
@@ -940,6 +1014,8 @@ class ContextStore:
         state = self.read_active_state()
         sessions = self.list_sessions(limit=5)
 
+        activity = self.list_activity()
+
         return {
             "project": manifest.project.name,
             "schema_version": manifest.schema_version,
@@ -956,6 +1032,8 @@ class ContextStore:
             "current_task": state.current_task,
             "blockers": state.blockers,
             "recent_sessions": len(sessions),
+            "active_members": len(activity),
+            "active_member_names": [a.member for a in activity],
         }
 
 

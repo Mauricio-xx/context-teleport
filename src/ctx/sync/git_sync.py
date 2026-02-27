@@ -110,6 +110,8 @@ class GitSync:
                 fname = rel.split("/")[-1]
                 if fname.endswith(".md"):
                     changed_conventions.add(fname.replace(".md", ""))
+            elif rel.startswith("activity/"):
+                other_changes.add("activity")
             else:
                 other_changes.add(rel.split("/")[0])
 

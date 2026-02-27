@@ -75,6 +75,10 @@ def status(fmt: Optional[str] = FORMAT_OPTION) -> None:
                 console.print(f"  Current task: {summary_data['current_task']}")
             if summary_data["blockers"]:
                 console.print(f"  Blockers: {', '.join(summary_data['blockers'])}")
+            if summary_data.get("active_members"):
+                console.print(f"  Active members: {summary_data['active_members']}")
+                if summary_data.get("active_member_names"):
+                    console.print(f"    Members: {', '.join(summary_data['active_member_names'])}")
 
             adapters = manifest.adapters
             if adapters:
@@ -125,6 +129,7 @@ from ctx.cli.convention_cmd import convention_app
 from ctx.cli.skill_cmd import skill_app
 from ctx.cli.config_cmd import config_app
 from ctx.cli.watch_cmd import watch_command
+from ctx.cli.activity_cmd import activity_app
 
 app.add_typer(knowledge_app, name="knowledge", help="Manage knowledge entries")
 app.add_typer(decision_app, name="decision", help="Manage decision records (ADR)")
@@ -135,6 +140,7 @@ app.add_typer(export_app, name="export", help="Export to adapters/bundles")
 app.add_typer(convention_app, name="convention", help="Manage team conventions")
 app.add_typer(skill_app, name="skill", help="Manage agent skills (SKILL.md)")
 app.add_typer(config_app, name="config", help="Manage global configuration")
+app.add_typer(activity_app, name="activity", help="Team activity board")
 
 register_agent_commands(app)
 register_sync_shortcuts(app)

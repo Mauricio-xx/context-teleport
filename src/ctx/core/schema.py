@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 
 from ctx.core.migrations import SCHEMA_VERSION
 
+ACTIVITY_STALE_HOURS = 48
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -190,6 +192,16 @@ class Decision(BaseModel):
 
 
 # -- Session state --
+
+
+class ActivityEntry(BaseModel):
+    member: str
+    agent: str = ""
+    machine: str = ""
+    task: str = ""
+    issue_ref: str = ""
+    status: str = "active"  # "active" or "idle"
+    updated_at: datetime = Field(default_factory=_now)
 
 
 class ActiveState(BaseModel):
