@@ -119,13 +119,22 @@ _store: ContextStore | None = None
 
 
 def _get_store() -> ContextStore:
-    """Return the module-level store, initializing from project root if needed."""
+    """Return the module-level store, auto-initializing if needed.
+
+    If a git repo is found but no .context-teleport/ exists yet,
+    automatically initializes the store using the directory name as
+    project name.  This allows the MCP server to work out-of-the-box
+    in any git repository without requiring an explicit ``init`` step.
+    """
     global _store
     if _store is None:
         root = find_project_root()
         if root is None:
             raise RuntimeError("Not inside a project with a context store or git repo")
         _store = ContextStore(root)
+        if not _store.initialized:
+            logger.info("Auto-initializing context store in %s", root)
+            _store.init(project_name=root.name)
     return _store
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 import git
 import pytest
@@ -79,6 +80,58 @@ def git_store(tmp_path):
     set_store(s)
     yield s
     set_store(None)
+
+
+class TestAutoInit:
+    """Auto-init when MCP server starts in a git repo without .context-teleport/."""
+
+    def test_auto_init_creates_store(self, tmp_path):
+        """_get_store() should auto-init when .context-teleport/ is missing."""
+        from ctx.mcp.server import _get_store, set_store, _store
+        import ctx.mcp.server as srv
+
+        # Create a bare git repo (no .context-teleport/)
+        repo = git.Repo.init(tmp_path)
+        (tmp_path / "README.md").write_text("# Test\n")
+        repo.index.add(["README.md"])
+        repo.index.commit("initial")
+
+        # Reset module state and point to our tmp dir
+        old_store = srv._store
+        srv._store = None
+        old_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            store = _get_store()
+            assert store.initialized
+            assert (tmp_path / ".context-teleport" / "manifest.json").is_file()
+            manifest = store.read_manifest()
+            assert manifest.project.name == tmp_path.name
+        finally:
+            os.chdir(old_cwd)
+            srv._store = old_store
+
+    def test_auto_init_uses_directory_name(self, tmp_path):
+        """Auto-init should use the directory name as project name."""
+        from ctx.mcp.server import _get_store
+        import ctx.mcp.server as srv
+
+        repo = git.Repo.init(tmp_path)
+        (tmp_path / "README.md").write_text("# Test\n")
+        repo.index.add(["README.md"])
+        repo.index.commit("initial")
+
+        old_store = srv._store
+        srv._store = None
+        old_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            store = _get_store()
+            manifest = store.read_manifest()
+            assert manifest.project.name == tmp_path.name
+        finally:
+            os.chdir(old_cwd)
+            srv._store = old_store
 
 
 class TestResources:
