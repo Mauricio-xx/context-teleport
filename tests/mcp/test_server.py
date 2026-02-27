@@ -87,7 +87,7 @@ class TestAutoInit:
 
     def test_auto_init_creates_store(self, tmp_path):
         """_get_store() should auto-init when .context-teleport/ is missing."""
-        from ctx.mcp.server import _get_store, set_store, _store
+        from ctx.mcp.server import _get_store
         import ctx.mcp.server as srv
 
         # Create a bare git repo (no .context-teleport/)
@@ -132,6 +132,35 @@ class TestAutoInit:
         finally:
             os.chdir(old_cwd)
             srv._store = old_store
+
+
+    def test_auto_init_blocked_by_env(self, tmp_path):
+        """CTX_NO_AUTO_INIT=1 should prevent auto-init and raise RuntimeError."""
+        from ctx.mcp.server import _get_store
+        import ctx.mcp.server as srv
+
+        repo = git.Repo.init(tmp_path)
+        (tmp_path / "README.md").write_text("# Test\n")
+        repo.index.add(["README.md"])
+        repo.index.commit("initial")
+
+        old_store = srv._store
+        srv._store = None
+        old_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        old_env = os.environ.get("CTX_NO_AUTO_INIT")
+        os.environ["CTX_NO_AUTO_INIT"] = "1"
+        try:
+            with pytest.raises(RuntimeError, match="CTX_NO_AUTO_INIT"):
+                _get_store()
+            assert not (tmp_path / ".context-teleport").exists()
+        finally:
+            os.chdir(old_cwd)
+            srv._store = old_store
+            if old_env is None:
+                os.environ.pop("CTX_NO_AUTO_INIT", None)
+            else:
+                os.environ["CTX_NO_AUTO_INIT"] = old_env
 
 
 class TestResources:
@@ -391,6 +420,32 @@ class TestPrompts:
         assert "deploy" in result
         assert "Deploy to staging" in result
 
+    def test_onboarding_truncates_knowledge(self, store):
+        """Onboarding should truncate knowledge when exceeding MAX_ONBOARDING_KNOWLEDGE."""
+        from ctx.mcp.server import MAX_ONBOARDING_KNOWLEDGE
+
+        for i in range(MAX_ONBOARDING_KNOWLEDGE + 5):
+            store.set_knowledge(f"entry-{i:03d}", f"Content for entry {i}")
+
+        result = context_onboarding()
+        assert "... and 5 more" in result
+        assert "context://knowledge" in result
+        # First entries should be present
+        assert "entry-000" in result
+        # Entries beyond the limit should not have content in onboarding
+        assert f"Content for entry {MAX_ONBOARDING_KNOWLEDGE + 4}" not in result
+
+    def test_onboarding_truncates_decisions(self, store):
+        """Onboarding should truncate decisions when exceeding MAX_ONBOARDING_DECISIONS."""
+        from ctx.mcp.server import MAX_ONBOARDING_DECISIONS
+
+        for i in range(MAX_ONBOARDING_DECISIONS + 3):
+            store.add_decision(title=f"Decision {i:03d}")
+
+        result = context_onboarding()
+        assert "... and 3 more" in result
+        assert "context://decisions" in result
+
     def test_handoff(self, store):
         from ctx.core.schema import ActiveState
 
@@ -631,8 +686,10 @@ class TestMCPRegistration:
         }
         assert expected.issubset(tool_names), f"Missing tools: {expected - tool_names}"
 
-    def test_has_exactly_19_tools(self, store):
-        assert len(mcp._tool_manager._tools) == 29
+    def test_tool_count(self, store):
+        from tests.mcp.conftest import EXPECTED_TOOL_COUNT
+
+        assert len(mcp._tool_manager._tools) == EXPECTED_TOOL_COUNT
 
     def test_prompts_registered(self, store):
         prompt_names = set(mcp._prompt_manager._prompts.keys())
@@ -683,6 +740,16 @@ class TestDynamicInstructions:
         """Initialized but empty store still includes project name."""
         result = _generate_instructions()
         assert "test-mcp-project" in result
+
+    def test_generate_instructions_truncates_keys(self, store):
+        """Instructions truncate key lists when exceeding MAX_INSTRUCTION_KEYS."""
+        from ctx.mcp.server import MAX_INSTRUCTION_KEYS
+
+        for i in range(MAX_INSTRUCTION_KEYS + 5):
+            store.set_knowledge(f"k-{i:03d}", f"Content {i}")
+        result = _generate_instructions()
+        assert "... and 5 more" in result
+        assert f"{MAX_INSTRUCTION_KEYS + 5} entries" in result
 
 
 class TestLifespan:

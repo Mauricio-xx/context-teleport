@@ -118,31 +118,35 @@ def _show_eda_detection(root: Path) -> None:
         pass  # Detection is informational, never block init/status
 
 
-# Register subcommand groups
-from ctx.cli.knowledge_cmd import knowledge_app
-from ctx.cli.decision_cmd import decision_app
-from ctx.cli.state_cmd import state_app
-from ctx.cli.sync_cmd import sync_app, register_sync_shortcuts
-from ctx.cli.adapter_cmd import adapter_app, export_app, register_mcp_commands
-from ctx.cli.agent_cmd import register_agent_commands
-from ctx.cli.convention_cmd import convention_app
-from ctx.cli.skill_cmd import skill_app
-from ctx.cli.config_cmd import config_app
-from ctx.cli.watch_cmd import watch_command
-from ctx.cli.activity_cmd import activity_app
+def _register_subcommands() -> None:
+    """Register all subcommand groups (imports inside function to avoid E402)."""
+    from ctx.cli.knowledge_cmd import knowledge_app
+    from ctx.cli.decision_cmd import decision_app
+    from ctx.cli.state_cmd import state_app
+    from ctx.cli.sync_cmd import sync_app, register_sync_shortcuts
+    from ctx.cli.adapter_cmd import adapter_app, export_app, register_mcp_commands
+    from ctx.cli.agent_cmd import register_agent_commands
+    from ctx.cli.convention_cmd import convention_app
+    from ctx.cli.skill_cmd import skill_app
+    from ctx.cli.config_cmd import config_app
+    from ctx.cli.watch_cmd import watch_command
+    from ctx.cli.activity_cmd import activity_app
 
-app.add_typer(knowledge_app, name="knowledge", help="Manage knowledge entries")
-app.add_typer(decision_app, name="decision", help="Manage decision records (ADR)")
-app.add_typer(state_app, name="state", help="Manage session state")
-app.add_typer(sync_app, name="sync", help="Git-backed sync commands")
-app.add_typer(adapter_app, name="import", help="Import from adapters/bundles")
-app.add_typer(export_app, name="export", help="Export to adapters/bundles")
-app.add_typer(convention_app, name="convention", help="Manage team conventions")
-app.add_typer(skill_app, name="skill", help="Manage agent skills (SKILL.md)")
-app.add_typer(config_app, name="config", help="Manage global configuration")
-app.add_typer(activity_app, name="activity", help="Team activity board")
+    app.add_typer(knowledge_app, name="knowledge", help="Manage knowledge entries")
+    app.add_typer(decision_app, name="decision", help="Manage decision records (ADR)")
+    app.add_typer(state_app, name="state", help="Manage session state")
+    app.add_typer(sync_app, name="sync", help="Git-backed sync commands")
+    app.add_typer(adapter_app, name="import", help="Import from adapters/bundles")
+    app.add_typer(export_app, name="export", help="Export to adapters/bundles")
+    app.add_typer(convention_app, name="convention", help="Manage team conventions")
+    app.add_typer(skill_app, name="skill", help="Manage agent skills (SKILL.md)")
+    app.add_typer(config_app, name="config", help="Manage global configuration")
+    app.add_typer(activity_app, name="activity", help="Team activity board")
 
-register_agent_commands(app)
-register_sync_shortcuts(app)
-register_mcp_commands(app)
-app.command("watch")(watch_command)
+    register_agent_commands(app)
+    register_sync_shortcuts(app)
+    register_mcp_commands(app)
+    app.command("watch")(watch_command)
+
+
+_register_subcommands()

@@ -19,7 +19,6 @@ from ctx.mcp.server import (
     context_set_scope,
     resource_conventions,
     resource_convention_item,
-    resource_summary,
     context_onboarding,
 )
 

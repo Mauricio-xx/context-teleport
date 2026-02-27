@@ -5,10 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-import pytest
 
 from ctx.core.schema import ACTIVITY_STALE_HOURS, ActivityEntry
-from ctx.core.store import ContextStore
 
 
 class TestCheckIn:

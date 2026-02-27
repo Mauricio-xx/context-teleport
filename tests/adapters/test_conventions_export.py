@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from ctx.core.store import ContextStore
-from ctx.core.scope import Scope
 
 
 @pytest.fixture

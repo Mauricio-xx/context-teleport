@@ -11,7 +11,7 @@ from ctx.adapters.claude_code import ClaudeCodeAdapter
 from ctx.adapters.cursor import CursorAdapter
 from ctx.adapters.opencode import OpenCodeAdapter
 from ctx.core.store import ContextStore
-from tests.mcp.conftest import spawn_mcp_from_config
+from tests.mcp.conftest import EXPECTED_TOOL_COUNT, spawn_mcp_from_config
 
 pytestmark = pytest.mark.anyio
 
@@ -27,7 +27,7 @@ class TestClaudeCodeRegistrationE2E:
         config_path = store.root / ".claude" / "mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 29
+            assert len(result.tools) == EXPECTED_TOOL_COUNT
 
     async def test_register_sets_env(self, e2e_store):
         store = ContextStore(e2e_store)
@@ -104,7 +104,7 @@ class TestCursorRegistrationE2E:
         config_path = store.root / ".cursor" / "mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 29
+            assert len(result.tools) == EXPECTED_TOOL_COUNT
 
 
 class TestOpenCodeRegistrationE2E:
@@ -118,4 +118,4 @@ class TestOpenCodeRegistrationE2E:
         config_path = store.root / "opencode.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 29
+            assert len(result.tools) == EXPECTED_TOOL_COUNT

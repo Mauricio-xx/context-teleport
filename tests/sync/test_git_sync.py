@@ -626,7 +626,7 @@ class TestPullScopeValidation:
         assert "README.md" in result["error"]
 
         # HEAD should be unchanged (reset happened)
-        repo_b = git.Repo(clone_b)
+        git.Repo(clone_b)
         readme = (clone_b / "README.md").read_text()
         assert readme == "# Test\n"
 

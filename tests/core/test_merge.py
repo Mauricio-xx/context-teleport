@@ -53,7 +53,7 @@ class TestNdjsonMerge:
         theirs = '{"id":"2","text":"b"}\n{"id":"3","text":"c"}\n'
         result = merge_ndjson(ours, theirs)
         assert not result.has_conflicts
-        lines = [l for l in result.content.strip().split("\n") if l]
+        lines = [line for line in result.content.strip().split("\n") if line]
         assert len(lines) == 3  # union of ids 1, 2, 3
 
     def test_empty_inputs(self):

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from ctx.core.dotpath import resolve_dotpath
 

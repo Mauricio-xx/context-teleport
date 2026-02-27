@@ -1,13 +1,9 @@
 """Tests for Claude Code adapter."""
 
-from pathlib import Path
-from unittest.mock import patch
 
-import pytest
 
 from ctx.adapters.claude_code import ClaudeCodeAdapter, _slugify, _strip_ctx_section
 from ctx.core.scope import Scope
-from ctx.core.store import ContextStore
 
 
 class TestSlugify:
@@ -107,7 +103,7 @@ class TestImportExport:
         claude_md = store.root / "CLAUDE.md"
         claude_md.write_text("# Project\n")
 
-        result = adapter.export_context(dry_run=False)
+        adapter.export_context(dry_run=False)
         content = claude_md.read_text()
         assert "public-arch" in content
         assert "private-notes" not in content

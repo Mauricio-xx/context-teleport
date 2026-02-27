@@ -1,6 +1,5 @@
 """Tests for convention CRUD, scope, author tracking, gitignore, ephemeral, summary."""
 
-import pytest
 
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore

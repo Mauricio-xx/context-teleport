@@ -26,6 +26,22 @@ _FALLBACK_INSTRUCTIONS = (
     "Use resources to read project context and tools to modify it."
 )
 
+# Onboarding budget: cap how many entries appear in summaries.
+# Full data is always available via resources (context://knowledge, etc.).
+MAX_ONBOARDING_KNOWLEDGE = 30
+MAX_ONBOARDING_DECISIONS = 20
+MAX_ONBOARDING_CONVENTIONS = 20
+MAX_ONBOARDING_SKILLS = 30
+MAX_INSTRUCTION_KEYS = 15
+
+
+def _truncate_list(items: list[str], limit: int) -> str:
+    """Join items with commas, showing '... and N more' when over limit."""
+    if len(items) <= limit:
+        return ", ".join(items)
+    shown = ", ".join(items[:limit])
+    return f"{shown}, ... and {len(items) - limit} more"
+
 
 def _generate_instructions() -> str:
     """Build a concise instruction string from the current store state.
@@ -64,18 +80,24 @@ def _generate_instructions() -> str:
 
         if conventions:
             keys = [e.key for e in conventions]
-            lines.append(f"Team conventions ({len(keys)} entries): {', '.join(keys)}.")
+            lines.append(
+                f"Team conventions ({len(keys)} entries): {_truncate_list(keys, MAX_INSTRUCTION_KEYS)}."
+            )
 
         if knowledge:
             keys = [e.key for e in knowledge]
-            lines.append(f"Knowledge base ({len(keys)} entries): {', '.join(keys)}.")
+            lines.append(
+                f"Knowledge base ({len(keys)} entries): {_truncate_list(keys, MAX_INSTRUCTION_KEYS)}."
+            )
 
         if decisions:
             lines.append(f"Architectural decisions: {len(decisions)} recorded.")
 
         if skills:
             names = [s.name for s in skills]
-            lines.append(f"Agent skills ({len(names)} available): {', '.join(names)}.")
+            lines.append(
+                f"Agent skills ({len(names)} available): {_truncate_list(names, MAX_INSTRUCTION_KEYS)}."
+            )
 
             # Flag skills needing review
             try:
@@ -139,6 +161,9 @@ def _get_store() -> ContextStore:
     automatically initializes the store using the directory name as
     project name.  This allows the MCP server to work out-of-the-box
     in any git repository without requiring an explicit ``init`` step.
+
+    Set ``CTX_NO_AUTO_INIT=1`` to disable auto-initialization and
+    require an explicit ``context-teleport init`` instead.
     """
     global _store
     if _store is None:
@@ -147,6 +172,13 @@ def _get_store() -> ContextStore:
             raise RuntimeError("Not inside a project with a context store or git repo")
         _store = ContextStore(root)
         if not _store.initialized:
+            import os
+
+            if os.environ.get("CTX_NO_AUTO_INIT"):
+                raise RuntimeError(
+                    "Context store not initialized and CTX_NO_AUTO_INIT is set. "
+                    "Run `context-teleport init` first."
+                )
             logger.info("Auto-initializing context store in %s", root)
             _store.init(project_name=root.name)
     return _store
@@ -1105,23 +1137,34 @@ def context_onboarding() -> str:
     if conventions:
         lines.append("## Team Conventions")
         lines.append("")
-        for entry in conventions:
+        shown_conventions = conventions[:MAX_ONBOARDING_CONVENTIONS]
+        for entry in shown_conventions:
             lines.append(f"### {entry.key}")
             lines.append(entry.content.strip())
+            lines.append("")
+        if len(conventions) > MAX_ONBOARDING_CONVENTIONS:
+            remaining = len(conventions) - MAX_ONBOARDING_CONVENTIONS
+            lines.append(f"*... and {remaining} more (use `context://conventions` resource for full list)*")
             lines.append("")
 
     if knowledge:
         lines.append("## Knowledge Base")
         lines.append("")
-        for entry in knowledge:
+        shown_knowledge = knowledge[:MAX_ONBOARDING_KNOWLEDGE]
+        for entry in shown_knowledge:
             lines.append(f"### {entry.key}")
             lines.append(entry.content.strip())
+            lines.append("")
+        if len(knowledge) > MAX_ONBOARDING_KNOWLEDGE:
+            remaining = len(knowledge) - MAX_ONBOARDING_KNOWLEDGE
+            lines.append(f"*... and {remaining} more (use `context://knowledge` resource for full list)*")
             lines.append("")
 
     if decisions:
         lines.append("## Architectural Decisions")
         lines.append("")
-        for d in decisions:
+        shown_decisions = decisions[:MAX_ONBOARDING_DECISIONS]
+        for d in shown_decisions:
             lines.append(f"### ADR-{d.id:04d}: {d.title} ({d.status.value})")
             if d.context:
                 lines.append(f"**Context:** {d.context}")
@@ -1130,13 +1173,22 @@ def context_onboarding() -> str:
             if d.consequences:
                 lines.append(f"**Consequences:** {d.consequences}")
             lines.append("")
+        if len(decisions) > MAX_ONBOARDING_DECISIONS:
+            remaining = len(decisions) - MAX_ONBOARDING_DECISIONS
+            lines.append(f"*... and {remaining} more (use `context://decisions` resource for full list)*")
+            lines.append("")
 
     if skills:
         lines.append("## Agent Skills")
         lines.append("")
-        for s in skills:
+        shown_skills = skills[:MAX_ONBOARDING_SKILLS]
+        for s in shown_skills:
             lines.append(f"- **{s.name}**: {s.description}")
         lines.append("")
+        if len(skills) > MAX_ONBOARDING_SKILLS:
+            remaining = len(skills) - MAX_ONBOARDING_SKILLS
+            lines.append(f"*... and {remaining} more (use `context://skills` resource for full list)*")
+            lines.append("")
 
     if state.current_task:
         lines.append("## Current State")

@@ -17,6 +17,10 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 
 _SRC_DIR = str(Path(__file__).resolve().parents[2] / "src")
 
+# Update these when adding/removing MCP tools or resources
+EXPECTED_TOOL_COUNT = 29
+EXPECTED_RESOURCE_COUNT = 16
+
 
 @asynccontextmanager
 async def spawn_mcp_session(cwd: Path, extra_env: dict | None = None):

@@ -33,10 +33,12 @@ class TestInitialization:
 class TestToolDiscovery:
     """Verify tool listing via the protocol."""
 
-    async def test_list_tools_returns_17(self, e2e_store):
+    async def test_list_tools_count(self, e2e_store):
+        from tests.mcp.conftest import EXPECTED_TOOL_COUNT
+
         async with spawn_mcp_session(e2e_store) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 29
+            assert len(result.tools) == EXPECTED_TOOL_COUNT
 
     async def test_expected_tool_names_present(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
