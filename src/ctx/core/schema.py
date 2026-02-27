@@ -61,6 +61,16 @@ class KnowledgeEntry(BaseModel):
     agent: str = ""
 
 
+# -- Conventions --
+
+
+class ConventionEntry(BaseModel):
+    key: str
+    content: str
+    updated_at: datetime = Field(default_factory=_now)
+    author: str = ""
+
+
 # -- Skills --
 
 

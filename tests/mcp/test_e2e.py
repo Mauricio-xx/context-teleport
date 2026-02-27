@@ -36,7 +36,7 @@ class TestToolDiscovery:
     async def test_list_tools_returns_17(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:
             result = await session.list_tools()
-            assert len(result.tools) == 23
+            assert len(result.tools) == 27
 
     async def test_expected_tool_names_present(self, e2e_store):
         async with spawn_mcp_session(e2e_store) as session:

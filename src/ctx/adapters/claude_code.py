@@ -187,15 +187,25 @@ class ClaudeCodeAdapter:
     def export_context(self, dry_run: bool = False) -> dict:
         """Inject store content into Claude Code locations (public entries only)."""
         items: list[dict] = []
+        conventions = self.store.list_conventions(scope=Scope.public)
         knowledge = self.store.list_knowledge(scope=Scope.public)
         decisions = self.store.list_decisions(scope=Scope.public)
         skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge and not decisions and not skills:
+        if not conventions and not knowledge and not decisions and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
         # Build the managed section for CLAUDE.md
         section_lines = [CTX_SECTION_MARKER, ""]
+
+        if conventions:
+            section_lines.append("### Team Conventions")
+            section_lines.append("")
+            for entry in conventions:
+                section_lines.append(f"#### {entry.key}")
+                section_lines.append(entry.content.strip())
+                section_lines.append("")
+
         if knowledge:
             for entry in knowledge:
                 # Skip entries that came from CLAUDE.md itself
@@ -216,11 +226,18 @@ class ClaudeCodeAdapter:
 
         items.append({
             "target": "CLAUDE.md",
-            "description": f"Managed section with {len(knowledge)} knowledge entries, {len(decisions)} decisions",
+            "description": f"Managed section with {len(conventions)} conventions, {len(knowledge)} knowledge entries, {len(decisions)} decisions",
         })
 
         # Build MEMORY.md content
         memory_lines = ["# Team Context (synced by ctx)", ""]
+        if conventions:
+            memory_lines.append("## Team Conventions")
+            memory_lines.append("")
+            for entry in conventions:
+                memory_lines.append(f"### {entry.key}")
+                memory_lines.append(entry.content.strip())
+                memory_lines.append("")
         for entry in knowledge:
             if entry.key == "project-instructions":
                 continue

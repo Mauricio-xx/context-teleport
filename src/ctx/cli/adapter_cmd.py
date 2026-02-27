@@ -337,6 +337,156 @@ def import_eda(
             info(f"  {item.key} <- {item.source}")
 
 
+@adapter_app.command("conventions")
+def import_conventions(
+    path: str = typer.Argument(..., help="Path to markdown file with conventions"),
+    scope: Optional[str] = typer.Option(
+        None,
+        "--scope",
+        "-s",
+        help="Scope for imported conventions (public/private/ephemeral)",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import team conventions from a markdown file (split by ## headers)."""
+    from ctx.core.scope import Scope
+
+    target = Path(path)
+    if not target.is_file():
+        error(f"File not found: {path}")
+        raise typer.Exit(1)
+
+    text = target.read_text()
+    sections = _split_conventions_file(text)
+
+    if not sections:
+        info("No conventions found in file")
+        if fmt == "json":
+            output({"items": [], "imported": 0, "dry_run": dry_run}, fmt="json")
+        return
+
+    if dry_run:
+        if fmt == "json":
+            output(
+                {
+                    "items": [{"key": k, "source": str(path)} for k, _ in sections],
+                    "imported": 0,
+                    "dry_run": True,
+                },
+                fmt="json",
+            )
+        else:
+            info("Dry run -- the following conventions would be imported:")
+            for key, content in sections:
+                info(f"  {key} ({len(content)} chars)")
+        return
+
+    # Parse scope
+    scope_val: Scope | None = None
+    if scope:
+        try:
+            scope_val = Scope(scope.lower())
+        except ValueError:
+            error(f"Invalid scope '{scope}'. Use public, private, or ephemeral.")
+            raise typer.Exit(1)
+
+    from ctx.utils.paths import get_author
+
+    store = get_store()
+    author = f"import:conventions ({get_author()})"
+    imported = 0
+    for key, content in sections:
+        store.set_convention(key, content, author=author, scope=scope_val)
+        imported += 1
+
+    if fmt == "json":
+        output(
+            {
+                "items": [{"key": k, "source": str(path)} for k, _ in sections],
+                "imported": imported,
+                "dry_run": False,
+            },
+            fmt="json",
+        )
+    else:
+        success(f"Imported {imported} convention(s) from {path}")
+        for key, _ in sections:
+            info(f"  {key}")
+
+
+def _slugify_header(text: str) -> str:
+    """Convert a header to a convention key."""
+    import re
+
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"-+", "-", text).strip("-")
+    return text or "untitled"
+
+
+def _split_conventions_file(text: str) -> list[tuple[str, str]]:
+    """Split a markdown file into convention entries by headers.
+
+    Strategy:
+    1. Try ## headers first (each becomes a convention)
+    2. If no ## headers, try # headers (skip first if it looks like a title)
+    3. If no headers at all, store as single 'conventions' entry
+    """
+    import re
+
+    sections: list[tuple[str, str]] = []
+
+    # Try ## headers
+    current_key = ""
+    current_lines: list[str] = []
+    for line in text.split("\n"):
+        match = re.match(r"^##\s+(.+)", line)
+        if match:
+            if current_key and current_lines:
+                sections.append((current_key, "\n".join(current_lines).strip()))
+            current_key = _slugify_header(match.group(1))
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_key and current_lines:
+        sections.append((current_key, "\n".join(current_lines).strip()))
+
+    if sections:
+        return sections
+
+    # Try # headers (skip first if it's a document title)
+    current_key = ""
+    current_lines = []
+    first_header = True
+    for line in text.split("\n"):
+        match = re.match(r"^#\s+(.+)", line)
+        if match:
+            if first_header:
+                # Skip title header, but save any accumulated preamble
+                first_header = False
+                current_lines = []
+                continue
+            if current_key and current_lines:
+                sections.append((current_key, "\n".join(current_lines).strip()))
+            current_key = _slugify_header(match.group(1))
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_key and current_lines:
+        sections.append((current_key, "\n".join(current_lines).strip()))
+
+    if sections:
+        return sections
+
+    # No headers at all -- single entry
+    if text.strip():
+        return [("conventions", text.strip())]
+
+    return []
+
+
 @adapter_app.command("github")
 def import_github(
     repo: Optional[str] = typer.Option(

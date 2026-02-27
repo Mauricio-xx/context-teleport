@@ -86,6 +86,7 @@ class GitSync:
 
         changed_knowledge = set()
         changed_decisions = set()
+        changed_conventions = set()
         other_changes = set()
 
         all_paths = [d.a_path or d.b_path for d in diff_index] + untracked
@@ -105,9 +106,15 @@ class GitSync:
                     changed_decisions.add(rel.split("/")[-1])
             elif rel.startswith("knowledge/"):
                 changed_knowledge.add(rel.split("/")[-1].replace(".md", ""))
+            elif rel.startswith("conventions/"):
+                fname = rel.split("/")[-1]
+                if fname.endswith(".md"):
+                    changed_conventions.add(fname.replace(".md", ""))
             else:
                 other_changes.add(rel.split("/")[0])
 
+        if changed_conventions:
+            parts.append(f"update {', '.join(sorted(changed_conventions))} conventions")
         if changed_knowledge:
             parts.append(f"update {', '.join(sorted(changed_knowledge))} knowledge")
         if changed_decisions:
@@ -124,6 +131,7 @@ class GitSync:
         excluded = set()
         knowledge_dir = self.store_dir / "knowledge"
         decisions_dir = knowledge_dir / "decisions"
+        conventions_dir = self.store_dir / "conventions"
 
         if knowledge_dir.is_dir():
             smap = ScopeMap(knowledge_dir)
@@ -134,6 +142,11 @@ class GitSync:
             smap = ScopeMap(decisions_dir)
             for fname in smap.non_public_files():
                 excluded.add(f"{STORE_DIR}/knowledge/decisions/{fname}")
+
+        if conventions_dir.is_dir():
+            smap = ScopeMap(conventions_dir)
+            for fname in smap.non_public_files():
+                excluded.add(f"{STORE_DIR}/conventions/{fname}")
 
         return excluded
 

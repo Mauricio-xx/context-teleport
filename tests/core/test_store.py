@@ -229,13 +229,13 @@ class TestClearEphemeral:
         store.set_knowledge("priv", "Private", scope=Scope.private)
 
         removed = store.clear_ephemeral()
-        assert removed == {"knowledge": 0, "decisions": 0, "skills": 0}
+        assert removed == {"knowledge": 0, "decisions": 0, "conventions": 0, "skills": 0}
         assert store.get_knowledge("pub") is not None
         assert store.get_knowledge("priv") is not None
 
     def test_empty_store(self, store):
         removed = store.clear_ephemeral()
-        assert removed == {"knowledge": 0, "decisions": 0, "skills": 0}
+        assert removed == {"knowledge": 0, "decisions": 0, "conventions": 0, "skills": 0}
 
 
 class TestSkills:

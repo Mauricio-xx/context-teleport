@@ -108,16 +108,17 @@ class OpenCodeAdapter:
     def export_context(self, dry_run: bool = False) -> dict:
         """Export store content to AGENTS.md managed section and skills."""
         items: list[dict] = []
+        conventions = self.store.list_conventions(scope=Scope.public)
         knowledge = self.store.list_knowledge(scope=Scope.public)
         skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge and not skills:
+        if not conventions and not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
 
-        if knowledge:
+        if conventions or knowledge:
             items.append({
                 "target": "AGENTS.md",
-                "description": f"Managed section with {len(knowledge)} knowledge entries",
+                "description": f"Managed section with {len(conventions)} conventions, {len(knowledge)} knowledge entries",
             })
 
         if skills:
@@ -131,10 +132,16 @@ class OpenCodeAdapter:
 
         exported = 0
 
-        if knowledge:
+        if conventions or knowledge:
             agents_md_path = self.store.root / "AGENTS.md"
             existing = agents_md_path.read_text() if agents_md_path.is_file() else ""
-            entries = [(e.key, e.content) for e in knowledge if e.key != "project-instructions"]
+            # Conventions first, then knowledge
+            entries: list[tuple[str, str]] = []
+            for e in conventions:
+                entries.append((f"convention: {e.key}", e.content))
+            for e in knowledge:
+                if e.key != "project-instructions":
+                    entries.append((e.key, e.content))
             result = write_agents_md_section(existing, entries)
             agents_md_path.write_text(result)
             exported += 1

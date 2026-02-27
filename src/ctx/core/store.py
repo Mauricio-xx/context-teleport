@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ctx.core.schema import (
     ActiveState,
+    ConventionEntry,
     Decision,
     DecisionStatus,
     KnowledgeEntry,
@@ -54,6 +55,7 @@ class ContextStore:
         # Create directory structure
         dirs = [
             self.store_dir / "knowledge" / "decisions",
+            self.store_dir / "conventions",
             self.store_dir / "skills",
             self.store_dir / "state",
             self.store_dir / "preferences",
@@ -71,6 +73,7 @@ class ContextStore:
         # Create scope sidecar files
         ScopeMap.ensure_exists(self.store_dir / "knowledge")
         ScopeMap.ensure_exists(self.store_dir / "knowledge" / "decisions")
+        ScopeMap.ensure_exists(self.store_dir / "conventions")
         ScopeMap.ensure_exists(self.store_dir / "skills")
 
         # Create .gitignore for private files
@@ -139,6 +142,8 @@ class ContextStore:
             lines.append(f"knowledge/{fname}")
         for fname in sorted(self._decisions_scope_map().non_public_files()):
             lines.append(f"knowledge/decisions/{fname}")
+        for fname in sorted(self._conventions_scope_map().non_public_files()):
+            lines.append(f"conventions/{fname}")
         for fname in sorted(self._skills_scope_map().non_public_files()):
             lines.append(f"skills/{fname}")
         gitignore = self.store_dir / ".gitignore"
@@ -174,6 +179,128 @@ class ContextStore:
         if dec is None:
             return False
         self._decisions_scope_map().set(dec.filename, scope)
+        self._rebuild_gitignore()
+        return True
+
+    # -- Conventions --
+
+    def conventions_dir(self) -> Path:
+        return self.store_dir / "conventions"
+
+    def _conventions_scope_map(self) -> ScopeMap:
+        return ScopeMap(self.conventions_dir())
+
+    def _convention_meta_path(self) -> Path:
+        return self.conventions_dir() / ".meta.json"
+
+    def _read_convention_meta(self) -> dict[str, dict[str, str]]:
+        path = self._convention_meta_path()
+        if not path.is_file():
+            return {}
+        import json
+        try:
+            data = json.loads(path.read_text())
+            return data if isinstance(data, dict) else {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def _write_convention_meta(self, data: dict[str, dict[str, str]]) -> None:
+        import json
+        self._convention_meta_path().write_text(
+            json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+
+    def _set_convention_author(self, filename: str, author: str) -> None:
+        data = self._read_convention_meta()
+        entry = data.setdefault(filename, {})
+        entry["author"] = author
+        self._write_convention_meta(data)
+
+    def _get_convention_author(self, filename: str) -> str:
+        data = self._read_convention_meta()
+        entry = data.get(filename, {})
+        return entry.get("author", "")
+
+    def list_conventions(self, scope: Scope | None = None) -> list[ConventionEntry]:
+        self._require_init()
+        cdir = self.conventions_dir()
+        if not cdir.is_dir():
+            return []
+        smap = self._conventions_scope_map()
+        entries = []
+        for f in sorted(cdir.glob("*.md")):
+            if scope is not None and smap.get(f.name) != scope:
+                continue
+            entries.append(
+                ConventionEntry(
+                    key=f.stem,
+                    content=f.read_text(),
+                    updated_at=_datetime_from_mtime(f),
+                    author=self._get_convention_author(f.name),
+                )
+            )
+        return entries
+
+    def get_convention(self, key: str) -> ConventionEntry | None:
+        self._require_init()
+        safe_key = sanitize_key(key)
+        path = self.conventions_dir() / f"{safe_key}.md"
+        if not path.is_file():
+            return None
+        return ConventionEntry(
+            key=safe_key,
+            content=path.read_text(),
+            updated_at=_datetime_from_mtime(path),
+            author=self._get_convention_author(f"{safe_key}.md"),
+        )
+
+    def set_convention(
+        self, key: str, content: str, author: str = "", scope: Scope | None = None
+    ) -> ConventionEntry:
+        self._require_init()
+        safe_key = sanitize_key(key)
+        cdir = self.conventions_dir()
+        cdir.mkdir(parents=True, exist_ok=True)
+        path = cdir / f"{safe_key}.md"
+        path.write_text(content)
+        resolved_author = author or get_author()
+        self._set_convention_author(f"{safe_key}.md", resolved_author)
+        if scope is not None:
+            self._conventions_scope_map().set(f"{safe_key}.md", scope)
+            self._rebuild_gitignore()
+        return ConventionEntry(
+            key=safe_key,
+            content=content,
+            author=resolved_author,
+        )
+
+    def rm_convention(self, key: str) -> bool:
+        self._require_init()
+        safe_key = sanitize_key(key)
+        filename = f"{safe_key}.md"
+        path = self.conventions_dir() / filename
+        if path.is_file():
+            path.unlink()
+            self._conventions_scope_map().remove(filename)
+            meta = self._read_convention_meta()
+            if filename in meta:
+                del meta[filename]
+                self._write_convention_meta(meta)
+            self._rebuild_gitignore()
+            return True
+        return False
+
+    def get_convention_scope(self, key: str) -> Scope:
+        safe_key = sanitize_key(key)
+        return self._conventions_scope_map().get(f"{safe_key}.md")
+
+    def set_convention_scope(self, key: str, scope: Scope) -> bool:
+        self._require_init()
+        safe_key = sanitize_key(key)
+        path = self.conventions_dir() / f"{safe_key}.md"
+        if not path.is_file():
+            return False
+        self._conventions_scope_map().set(f"{safe_key}.md", scope)
         self._rebuild_gitignore()
         return True
 
@@ -676,7 +803,7 @@ class ContextStore:
         import shutil as _shutil
 
         self._require_init()
-        removed = {"knowledge": 0, "decisions": 0, "skills": 0}
+        removed = {"knowledge": 0, "decisions": 0, "conventions": 0, "skills": 0}
 
         # Knowledge
         for fname in self._knowledge_scope_map().list_by_scope(Scope.ephemeral):
@@ -698,6 +825,18 @@ class ContextStore:
                 path.unlink()
                 self._decisions_scope_map().remove(fname)
                 removed["decisions"] += 1
+
+        # Conventions
+        for fname in self._conventions_scope_map().list_by_scope(Scope.ephemeral):
+            path = self.conventions_dir() / fname
+            if path.is_file():
+                path.unlink()
+                self._conventions_scope_map().remove(fname)
+                meta = self._read_convention_meta()
+                if fname in meta:
+                    del meta[fname]
+                    self._write_convention_meta(meta)
+                removed["conventions"] += 1
 
         # Skills
         for fname in self._skills_scope_map().list_by_scope(Scope.ephemeral):
@@ -796,6 +935,7 @@ class ContextStore:
         manifest = self.read_manifest()
         knowledge = self.list_knowledge()
         decisions = self.list_decisions()
+        conventions = self.list_conventions()
         skills = self.list_skills()
         state = self.read_active_state()
         sessions = self.list_sessions(limit=5)
@@ -809,6 +949,8 @@ class ContextStore:
             "decisions": [
                 {"id": d.id, "title": d.title, "status": d.status.value} for d in decisions
             ],
+            "convention_count": len(conventions),
+            "convention_keys": [c.key for c in conventions],
             "skill_count": len(skills),
             "skill_names": [s.name for s in skills],
             "current_task": state.current_task,

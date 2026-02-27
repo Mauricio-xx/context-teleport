@@ -88,11 +88,18 @@ class CursorAdapter:
 
     def export_context(self, dry_run: bool = False) -> dict:
         items: list[dict] = []
+        conventions = self.store.list_conventions(scope=Scope.public)
         knowledge = self.store.list_knowledge(scope=Scope.public)
         skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge and not skills:
+        if not conventions and not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
+
+        if conventions:
+            items.append({
+                "target": ".cursor/rules/",
+                "description": f"Export {len(conventions)} conventions as Cursor MDC rules",
+            })
 
         if knowledge:
             items.append({
@@ -110,10 +117,23 @@ class CursorAdapter:
             return {"items": items, "exported": 0, "dry_run": True}
 
         exported = 0
+        rules_dir = self.store.root / ".cursor" / "rules"
+
+        # Export conventions as MDC rules
+        if conventions:
+            rules_dir.mkdir(parents=True, exist_ok=True)
+            for entry in conventions:
+                metadata = {
+                    "description": f"Team convention: {entry.key}",
+                    "alwaysApply": True,
+                }
+                mdc_content = format_mdc(metadata, entry.content)
+                rule_path = rules_dir / f"ctx-convention-{entry.key}.mdc"
+                rule_path.write_text(mdc_content)
+                exported += 1
 
         # Export knowledge as MDC rules
         if knowledge:
-            rules_dir = self.store.root / ".cursor" / "rules"
             rules_dir.mkdir(parents=True, exist_ok=True)
             for entry in knowledge:
                 if entry.key == "project-instructions":

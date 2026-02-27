@@ -91,11 +91,18 @@ class GeminiAdapter:
 
     def export_context(self, dry_run: bool = False) -> dict:
         items: list[dict] = []
+        conventions = self.store.list_conventions(scope=Scope.public)
         knowledge = self.store.list_knowledge(scope=Scope.public)
         skills = self.store.list_skills(scope=Scope.public)
 
-        if not knowledge and not skills:
+        if not conventions and not knowledge and not skills:
             return {"items": [], "exported": 0, "dry_run": dry_run}
+
+        if conventions:
+            items.append({
+                "target": ".gemini/rules/",
+                "description": f"Export {len(conventions)} conventions as Gemini rule files",
+            })
 
         if knowledge:
             items.append({
@@ -113,9 +120,16 @@ class GeminiAdapter:
             return {"items": items, "exported": 0, "dry_run": True}
 
         exported = 0
+        rules_dir = self.store.root / ".gemini" / "rules"
+
+        if conventions:
+            rules_dir.mkdir(parents=True, exist_ok=True)
+            for entry in conventions:
+                rule_path = rules_dir / f"ctx-convention-{entry.key}.md"
+                rule_path.write_text(entry.content.strip() + "\n")
+                exported += 1
 
         if knowledge:
-            rules_dir = self.store.root / ".gemini" / "rules"
             rules_dir.mkdir(parents=True, exist_ok=True)
             for entry in knowledge:
                 if entry.key == "project-instructions":

@@ -45,10 +45,16 @@ def _generate_instructions() -> str:
         skills = store.list_skills()
         state = store.read_active_state()
 
+        conventions = store.list_conventions()
+
         lines = [
             f"Context Teleport is active for project '{project_name}'.",
             "",
         ]
+
+        if conventions:
+            keys = [e.key for e in conventions]
+            lines.append(f"Team conventions ({len(keys)} entries): {', '.join(keys)}.")
 
         if knowledge:
             keys = [e.key for e in knowledge]
@@ -183,6 +189,31 @@ def resource_knowledge_item(key: str) -> str:
     entry = store.get_knowledge(key)
     if entry is None:
         return json.dumps({"error": f"Knowledge entry '{key}' not found"})
+    return json.dumps({"key": entry.key, "content": entry.content}, default=str)
+
+
+@mcp.resource("context://conventions")
+def resource_conventions() -> str:
+    """List all team conventions."""
+    store = _get_store()
+    entries = store.list_conventions()
+    return json.dumps(
+        [
+            {"key": e.key, "content": e.content, "scope": store.get_convention_scope(e.key).value}
+            for e in entries
+        ],
+        indent=2,
+        default=str,
+    )
+
+
+@mcp.resource("context://conventions/{key}")
+def resource_convention_item(key: str) -> str:
+    """Read a specific convention by key."""
+    store = _get_store()
+    entry = store.get_convention(key)
+    if entry is None:
+        return json.dumps({"error": f"Convention '{key}' not found"})
     return json.dumps({"key": entry.key, "content": entry.content}, default=str)
 
 
@@ -360,6 +391,68 @@ def context_remove_knowledge(key: str) -> str:
     """
     store = _get_store()
     removed = store.rm_knowledge(key)
+    if removed:
+        return json.dumps({"status": "removed", "key": key})
+    return json.dumps({"status": "not_found", "key": key})
+
+
+@mcp.tool()
+def context_add_convention(key: str, content: str, scope: str = "") -> str:
+    """Add or update a team convention.
+
+    Conventions are behavioral rules that all team members and agents should follow
+    (e.g. git practices, environment constraints, communication style).
+
+    Args:
+        key: Identifier for the convention (e.g. 'git', 'environment', 'communication')
+        content: Markdown content describing the convention
+        scope: Optional scope (public/private/ephemeral). Empty means no change.
+    """
+    store = _get_store()
+    scope_val = _parse_scope(scope)
+    author = _get_agent_name()
+    entry = store.set_convention(key, content, author=author, scope=scope_val)
+    return json.dumps({"status": "ok", "key": entry.key}, default=str)
+
+
+@mcp.tool()
+def context_get_convention(key: str) -> str:
+    """Read a specific team convention by key.
+
+    Args:
+        key: Identifier of the convention to read
+    """
+    store = _get_store()
+    entry = store.get_convention(key)
+    if entry is None:
+        return json.dumps({"error": f"Convention '{key}' not found"})
+    return json.dumps({"key": entry.key, "content": entry.content}, default=str)
+
+
+@mcp.tool()
+def context_list_conventions() -> str:
+    """List all team conventions with their keys and scopes."""
+    store = _get_store()
+    entries = store.list_conventions()
+    return json.dumps(
+        [
+            {"key": e.key, "scope": store.get_convention_scope(e.key).value}
+            for e in entries
+        ],
+        indent=2,
+        default=str,
+    )
+
+
+@mcp.tool()
+def context_rm_convention(key: str) -> str:
+    """Remove a team convention by key.
+
+    Args:
+        key: Identifier of the convention to remove
+    """
+    store = _get_store()
+    removed = store.rm_convention(key)
     if removed:
         return json.dumps({"status": "removed", "key": key})
     return json.dumps({"status": "not_found", "key": key})
@@ -685,11 +778,11 @@ def context_resolve_conflict(file_path: str, content: str) -> str:
 
 @mcp.tool()
 def context_get_scope(entry_type: str, key: str) -> str:
-    """Get the current scope of a knowledge entry, decision, or skill.
+    """Get the current scope of a knowledge entry, decision, convention, or skill.
 
     Args:
-        entry_type: Either 'knowledge', 'decision', or 'skill'
-        key: The entry key (knowledge key, decision ID/title, or skill name)
+        entry_type: Either 'knowledge', 'decision', 'convention', or 'skill'
+        key: The entry key (knowledge key, decision ID/title, convention key, or skill name)
     """
     store = _get_store()
     if entry_type == "knowledge":
@@ -703,6 +796,12 @@ def context_get_scope(entry_type: str, key: str) -> str:
         if scope is None:
             return json.dumps({"error": f"Decision '{key}' not found"})
         return json.dumps({"key": key, "scope": scope.value})
+    elif entry_type == "convention":
+        entry = store.get_convention(key)
+        if entry is None:
+            return json.dumps({"error": f"Convention '{key}' not found"})
+        scope = store.get_convention_scope(key)
+        return json.dumps({"key": key, "scope": scope.value})
     elif entry_type == "skill":
         entry = store.get_skill(key)
         if entry is None:
@@ -710,16 +809,16 @@ def context_get_scope(entry_type: str, key: str) -> str:
         scope = store.get_skill_scope(key)
         return json.dumps({"key": key, "scope": scope.value})
     else:
-        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', or 'skill'."})
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', 'convention', or 'skill'."})
 
 
 @mcp.tool()
 def context_set_scope(entry_type: str, key: str, scope: str) -> str:
-    """Change the scope of a knowledge entry, decision, or skill.
+    """Change the scope of a knowledge entry, decision, convention, or skill.
 
     Args:
-        entry_type: Either 'knowledge', 'decision', or 'skill'
-        key: The entry key (knowledge key, decision ID/title, or skill name)
+        entry_type: Either 'knowledge', 'decision', 'convention', or 'skill'
+        key: The entry key (knowledge key, decision ID/title, convention key, or skill name)
         scope: New scope (public/private/ephemeral)
     """
     store = _get_store()
@@ -735,12 +834,16 @@ def context_set_scope(entry_type: str, key: str, scope: str) -> str:
         if store.set_decision_scope(key, scope_val):
             return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
         return json.dumps({"error": f"Decision '{key}' not found"})
+    elif entry_type == "convention":
+        if store.set_convention_scope(key, scope_val):
+            return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
+        return json.dumps({"error": f"Convention '{key}' not found"})
     elif entry_type == "skill":
         if store.set_skill_scope(key, scope_val):
             return json.dumps({"status": "ok", "key": key, "scope": scope_val.value})
         return json.dumps({"error": f"Skill '{key}' not found"})
     else:
-        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', or 'skill'."})
+        return json.dumps({"error": f"Invalid entry_type '{entry_type}'. Use 'knowledge', 'decision', 'convention', or 'skill'."})
 
 
 @mcp.tool()
@@ -895,6 +998,7 @@ def context_onboarding() -> str:
     """
     store = _get_store()
     manifest = store.read_manifest()
+    conventions = store.list_conventions(scope=Scope.public)
     knowledge = store.list_knowledge(scope=Scope.public)
     decisions = store.list_decisions(scope=Scope.public)
     skills = store.list_skills(scope=Scope.public)
@@ -906,6 +1010,14 @@ def context_onboarding() -> str:
         f"Schema version: {manifest.schema_version}",
         "",
     ]
+
+    if conventions:
+        lines.append("## Team Conventions")
+        lines.append("")
+        for entry in conventions:
+            lines.append(f"### {entry.key}")
+            lines.append(entry.content.strip())
+            lines.append("")
 
     if knowledge:
         lines.append("## Knowledge Base")

@@ -25,6 +25,16 @@ def resolve_dotpath(store: ContextStore, dotpath: str):
             return None
         return entry.content
 
+    elif section == "conventions":
+        if not rest:
+            entries = store.list_conventions()
+            return {e.key: e.content for e in entries}
+        key = rest[0]
+        entry = store.get_convention(key)
+        if entry is None:
+            return None
+        return entry.content
+
     elif section == "decisions":
         if not rest:
             decisions = store.list_decisions()
@@ -100,6 +110,12 @@ def set_dotpath(store: ContextStore, dotpath: str, value: str):
         if not rest:
             raise ValueError("Specify a knowledge key: knowledge.<key>")
         store.set_knowledge(rest[0], value)
+        return
+
+    if section == "conventions":
+        if not rest:
+            raise ValueError("Specify a convention key: conventions.<key>")
+        store.set_convention(rest[0], value)
         return
 
     if section == "state":
