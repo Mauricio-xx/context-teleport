@@ -32,6 +32,7 @@ This creates the `.context-teleport/` directory structure:
   manifest.json        # Project metadata and schema version
   knowledge/           # Shared knowledge entries
   knowledge/decisions/ # Architecture Decision Records
+  conventions/         # Team behavioral rules
   skills/              # Reusable agent skills
   sessions/            # Session logs
 ```
@@ -75,7 +76,14 @@ You: Also note that our API uses snake_case for all JSON fields.
 
 Agent: [calls context_set_knowledge]
        Added knowledge entry "api-naming-convention"
+
+You: We always use feature branches, no direct commits to main. Save that as a convention.
+
+Agent: [calls context_add_convention]
+       Added convention "git"
 ```
+
+Conventions are team behavioral rules (git workflow, naming standards, environment constraints). They appear before knowledge in agent onboarding, so agents follow them from the start.
 
 ## Step 4: Person A pushes context
 
@@ -207,6 +215,8 @@ Context Teleport
   Store: /path/to/project/.context-teleport
   Knowledge entries: 5
     Keys: api-naming-convention, deployment-targets, ...
+  Conventions: 2
+    Keys: git, environment
   Decisions: 2
   Skills: 3
   Adapters:

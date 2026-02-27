@@ -20,7 +20,7 @@ Navigate to your project root and create a context store:
     context-teleport init --name my-project
     ```
 
-This creates a `.context-teleport/` directory inside your project with a `manifest.json`, empty `knowledge/`, `decisions/`, and `skills/` directories, and a `state/` directory for session tracking.
+This creates a `.context-teleport/` directory inside your project with a `manifest.json`, empty `knowledge/`, `decisions/`, `conventions/`, and `skills/` directories, and a `state/` directory for session tracking.
 
 ```
 my-project/
@@ -28,10 +28,14 @@ my-project/
     manifest.json
     knowledge/
     decisions/
+    conventions/
     skills/
     state/
     sessions/
 ```
+
+!!! tip "Auto-initialization"
+    If you only use Context Teleport via MCP (not the CLI), you can skip `init` entirely. The MCP server auto-creates the store when it starts in a git repository.
 
 !!! tip "Project name"
     The `--name` flag sets the project name stored in the manifest. If omitted, it defaults to the directory name.
@@ -86,7 +90,7 @@ After registration, the agent tool spawns the MCP server automatically when it s
 
 ## 3. Open your agent and start working
 
-Launch your agent tool in the project directory. Context Teleport provides auto-onboarding: on session start, the agent receives a summary of the project's knowledge, decisions, skills, current task, and recent history.
+Launch your agent tool in the project directory. Context Teleport provides auto-onboarding: on session start, the agent receives a summary of the project's conventions, knowledge, decisions, skills, current task, and recent history.
 
 Here is what a typical interaction looks like:
 
@@ -118,6 +122,15 @@ Agent: [calls context_add_skill with name="deploy-staging", description, instruc
 ```
 
 Skills are reusable agent capabilities stored as SKILL.md files with YAML frontmatter and markdown instructions.
+
+### Set a team convention
+
+```
+You: "We always use feature branches and never force-push to main. Save that as a convention."
+Agent: [calls context_add_convention with key="git", content="..."] Done.
+```
+
+Conventions are team behavioral rules that every agent should follow. They appear before knowledge in onboarding instructions.
 
 ### Search context
 
@@ -160,6 +173,9 @@ context-teleport knowledge list
 # Read a specific entry
 context-teleport knowledge get architecture
 
+# List all conventions
+context-teleport convention list
+
 # List all decisions
 context-teleport decision list
 
@@ -174,8 +190,8 @@ context-teleport skill list
 2. **register** writes an MCP server entry to the tool's config file, pointing to `context-teleport` (via `uvx` or local path)
 3. When the agent starts, it spawns `context-teleport` over stdio as an MCP server
 4. The server auto-generates onboarding instructions from the store state
-5. The agent reads context via MCP resources (`context://knowledge`, `context://decisions`, etc.)
-6. The agent writes context via MCP tools (`context_add_knowledge`, `context_record_decision`, etc.)
+5. The agent reads context via MCP resources (`context://conventions`, `context://knowledge`, `context://decisions`, etc.)
+6. The agent writes context via MCP tools (`context_add_convention`, `context_add_knowledge`, `context_record_decision`, etc.)
 7. Sync operations commit to the local git repo and push/pull from the remote
 
 !!! info "Git integration"

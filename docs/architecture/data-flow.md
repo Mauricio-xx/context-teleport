@@ -31,7 +31,7 @@ User terminal
     v
 typer CLI app (src/ctx/cli/main.py)
     |
-    +-- Subcommand dispatch (knowledge, decision, skill, sync, import, export, ...)
+    +-- Subcommand dispatch (knowledge, decision, convention, skill, sync, import, export, ...)
     |
     v
 ContextStore(project_root)
@@ -55,12 +55,14 @@ stdio transport
     v
 FastMCP server (src/ctx/mcp/server.py)
     |
+    +-- Auto-init: creates .context-teleport/ if missing in a git repo
+    |
     +-- _generate_instructions() at startup
     |       Builds project-aware instructions from store state
-    |       Includes: project name, knowledge keys, decision count,
-    |                 skill names, current task, blockers
+    |       Includes: project name, convention keys, knowledge keys,
+    |                 decision count, skill names, current task, blockers
     |
-    +-- 23 tools, 13 resources, 4 prompts
+    +-- 27 tools, 15 resources, 4 prompts
     |       Each call resolves _get_store() -> ContextStore
     |
     +-- _server_lifespan on shutdown
@@ -78,6 +80,7 @@ ContextStore(project_root)
 When the MCP server starts, it calls `_generate_instructions()` to build a dynamic instruction string that replaces the default fallback. This instruction string includes:
 
 - Project name from manifest
+- Team convention keys (listed before knowledge for higher priority)
 - List of knowledge entry keys
 - Decision count
 - Available skill names
@@ -106,6 +109,10 @@ Both the CLI and MCP server need to find the project's context store. The resolu
 4. Returns `None` if neither is found
 
 The MCP server caches the store in a module-level `_store` variable. The CLI creates a new store per invocation.
+
+### Auto-initialization (MCP only)
+
+When the MCP server starts in a git repository that has no `.context-teleport/` directory, it automatically initializes the store using the directory name as the project name. This means registering the MCP server with any agent tool is enough -- no explicit `context-teleport init` step is required. The store is created on first use.
 
 ## Data write flow
 

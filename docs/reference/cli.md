@@ -33,7 +33,10 @@ context-teleport init [--name PROJECT_NAME] [--repo-url URL]
 | `--repo-url` | | `""` | Git remote URL |
 
 Creates the `.context-teleport/` directory with `manifest.json`, `knowledge/`,
-`knowledge/decisions/`, `skills/`, and supporting files.
+`knowledge/decisions/`, `conventions/`, `skills/`, and supporting files.
+
+!!! note "Auto-initialization"
+    When the MCP server starts in a git repository that has no `.context-teleport/` directory, it automatically initializes the store using the directory name as the project name. No explicit `init` is needed for MCP usage.
 
 !!! tip
     If the project root contains EDA markers (LibreLane config, Makefile with
@@ -49,8 +52,8 @@ Show store state, sync status, and adapter info.
 context-teleport status
 ```
 
-Displays project name, schema version, knowledge count, decision count, skill count,
-current task, blockers, and enabled adapters. Also runs EDA project detection if
+Displays project name, schema version, knowledge count, convention count, decision count,
+skill count, current task, blockers, and enabled adapters. Also runs EDA project detection if
 markers are present.
 
 ---
@@ -358,6 +361,62 @@ markdown template containing Context, Decision, and Consequences sections.
 
 ---
 
+### convention
+
+Manage team conventions. Prefix: `context-teleport convention`.
+
+#### list
+
+```bash
+context-teleport convention list [--scope public|private|ephemeral]
+```
+
+| Option | Short | Description |
+|---|---|---|
+| `--scope` | `-s` | Filter by scope |
+
+#### get
+
+```bash
+context-teleport convention get <key>
+```
+
+| Argument | Description |
+|---|---|
+| `key` | Convention key |
+
+#### add
+
+```bash
+context-teleport convention add <key> [content] [--file PATH] [--scope SCOPE]
+```
+
+| Argument / Option | Short | Description |
+|---|---|---|
+| `key` | | Convention key |
+| `content` | | Content string (reads stdin if omitted and no `--file`) |
+| `--file` | `-f` | Read content from file |
+| `--scope` | `-s` | Scope: `public`, `private`, `ephemeral` |
+
+#### rm
+
+```bash
+context-teleport convention rm <key>
+```
+
+#### scope
+
+```bash
+context-teleport convention scope <key> <scope>
+```
+
+| Argument | Description |
+|---|---|
+| `key` | Convention key |
+| `scope` | New scope: `public`, `private`, `ephemeral` |
+
+---
+
 ### skill
 
 Manage agent skills (SKILL.md files). Prefix: `context-teleport skill`.
@@ -615,6 +674,24 @@ Each adapter imports tool-specific files into the context store:
 | `codex` | `AGENTS.md`, `.codex/instructions.md`, `.codex/skills/*/SKILL.md` |
 | `gemini` | `.gemini/rules/*.md`, `STYLEGUIDE.md`, `GEMINI.md`, `.gemini/skills/*/SKILL.md` |
 | `cursor` | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/*/SKILL.md` |
+
+#### Conventions Import
+
+```bash
+context-teleport import conventions <file> [--dry-run] [--scope SCOPE]
+```
+
+| Argument / Option | Short | Description |
+|---|---|---|
+| `file` | | Path to a markdown file containing conventions |
+| `--dry-run` | | Preview what would be imported |
+| `--scope` | `-s` | Scope for all imported conventions (default: `public`) |
+
+The file is split into individual conventions by markdown headers:
+
+1. Try `## ` headers -- each becomes a convention with the slugified header as the key
+2. If no `## ` headers, try `# ` headers (skipping the first if it looks like a title)
+3. If no headers at all, store as a single `conventions` entry
 
 #### Bundle Import
 

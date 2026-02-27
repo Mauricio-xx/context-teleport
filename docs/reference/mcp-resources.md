@@ -1,8 +1,8 @@
 # MCP Resources
 
-Context Teleport exposes **13 MCP resources** that provide read-only access to the context store. Resources follow the `context://` URI scheme and return JSON strings.
+Context Teleport exposes **15 MCP resources** that provide read-only access to the context store. Resources follow the `context://` URI scheme and return JSON strings.
 
-Resources are organized into five groups: [Project Metadata](#project-metadata), [Knowledge](#knowledge), [Decisions](#decisions), [State and History](#state-and-history), and [Skills](#skills).
+Resources are organized into six groups: [Project Metadata](#project-metadata), [Knowledge](#knowledge), [Conventions](#conventions), [Decisions](#decisions), [State and History](#state-and-history), and [Skills](#skills).
 
 ---
 
@@ -49,6 +49,7 @@ High-level project context summary. Returns an aggregated overview computed from
 {
   "project": "my-project",
   "knowledge_count": 12,
+  "convention_count": 3,
   "decisions_count": 5,
   "skills_count": 3,
   "current_task": "Implementing auth middleware",
@@ -111,6 +112,60 @@ Read a single knowledge entry by key. Returns the key and full markdown content.
 
 ```json
 {"error": "Knowledge entry 'nonexistent' not found"}
+```
+
+---
+
+## Conventions
+
+### `context://conventions`
+
+List all team conventions with their keys, content, and scopes.
+
+**URI:** `context://conventions`
+
+**Response schema:**
+
+```json
+[
+  {
+    "key": "git",
+    "content": "Always use feature branches.\nCommit early, commit often.",
+    "scope": "public"
+  },
+  {
+    "key": "environment",
+    "content": "No sudo. Use venvs. Docker when needed.",
+    "scope": "public"
+  }
+]
+```
+
+### `context://conventions/{key}`
+
+Read a single convention by key. Returns the key and full markdown content.
+
+**URI:** `context://conventions/{key}`
+
+**URI parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `key` | `str` | Convention identifier |
+
+**Response schema:**
+
+```json
+{
+  "key": "git",
+  "content": "Always use feature branches.\nCommit early, commit often."
+}
+```
+
+**Error response:**
+
+```json
+{"error": "Convention 'nonexistent' not found"}
 ```
 
 ---
@@ -394,9 +449,9 @@ All improvement proposals for a specific skill. Returns `SkillProposal` records 
 
 Resources are designed for two primary use cases:
 
-1. **Onboarding** -- An agent reads `context://summary`, `context://knowledge`, `context://decisions`, and `context://skills` to understand the project state before starting work. The `context_onboarding` prompt automates this.
+1. **Onboarding** -- An agent reads `context://summary`, `context://conventions`, `context://knowledge`, `context://decisions`, and `context://skills` to understand the project state before starting work. The `context_onboarding` prompt automates this.
 
-2. **Targeted lookup** -- An agent reads a specific entry (`context://knowledge/{key}`, `context://decisions/{id}`, `context://skills/{name}`) when it needs detailed content about a particular topic.
+2. **Targeted lookup** -- An agent reads a specific entry (`context://knowledge/{key}`, `context://conventions/{key}`, `context://decisions/{id}`, `context://skills/{name}`) when it needs detailed content about a particular topic.
 
 !!! warning "Resources are read-only"
     Resources provide read access only. To modify context, use the corresponding [MCP tools](mcp-tools.md). For example, read via `context://knowledge/{key}` and write via `context_add_knowledge()`.

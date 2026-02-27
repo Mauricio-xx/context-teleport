@@ -24,6 +24,12 @@ Visual guide to the `.context-teleport/` directory structure, file purposes, and
 |       +-- 0002-hexagonal-arch.md [synced]  ADR-style markdown
 |       +-- .scope.json ........ [synced]    Decision scope metadata
 |
++-- conventions/ ............... [synced*]   Team conventions
+|   +-- git.md ................. [synced]    One file per convention key
+|   +-- environment.md ......... [synced]    Plain markdown content
+|   +-- .scope.json ............ [synced]    Convention scope metadata
+|   +-- .meta.json ............. [synced]    Author metadata per entry
+|
 +-- skills/ .................... [synced*]   Agent skills
 |   +-- deploy-staging/ ........ [synced]    One directory per skill
 |   |   +-- SKILL.md ........... [synced]    YAML frontmatter + markdown body
@@ -69,6 +75,16 @@ The manifest is the first file created by `context-teleport init` and serves as 
 | `knowledge/.meta.json` | Author and timestamp per entry | JSON dict |
 | `knowledge/decisions/*.md` | ADR-format decision records with sequential numbering | Markdown (ADR) |
 | `knowledge/decisions/.scope.json` | Decision scope metadata | JSON dict |
+
+### Conventions layer
+
+| File | Purpose | Format |
+|------|---------|--------|
+| `conventions/*.md` | One markdown file per convention. Filename = key. | Markdown |
+| `conventions/.scope.json` | Maps filenames to non-default scopes | JSON dict |
+| `conventions/.meta.json` | Author and timestamp per entry | JSON dict |
+
+Conventions describe team behavioral rules (git workflow, naming standards, environment constraints). They are listed before knowledge in onboarding and instructions because they have higher priority.
 
 ### Skills layer
 

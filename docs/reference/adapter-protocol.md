@@ -49,7 +49,7 @@ Available adapter names: `claude-code`, `opencode`, `codex`, `gemini`, `cursor`.
 |--------|--------|
 | **Name** | `claude-code` |
 | **Imports from** | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.claude/skills/*/SKILL.md` |
-| **Exports to** | `CLAUDE.md` (managed section), `MEMORY.md`, `.claude/skills/` |
+| **Exports to** | `CLAUDE.md` (managed section with conventions + knowledge), `MEMORY.md`, `.claude/skills/` |
 | **MCP config** | `.claude/mcp.json` |
 | **Detection** | Checks for `.claude/` directory or `CLAUDE.md` file |
 
@@ -97,7 +97,7 @@ Codex does not support MCP server registration. The adapter only provides import
 | **MCP config** | `.gemini/settings.json` |
 | **Detection** | Checks for `.gemini/` directory or `GEMINI.md` file |
 
-Export writes each knowledge entry as a separate file in `.gemini/rules/` with the `ctx-` prefix to distinguish managed files from user-created rules.
+Export writes each knowledge entry as `ctx-<key>.md` and each convention as `ctx-convention-<key>.md` in `.gemini/rules/`. The `ctx-` prefix distinguishes managed files from user-created rules.
 
 ### Cursor
 
@@ -109,7 +109,7 @@ Export writes each knowledge entry as a separate file in `.gemini/rules/` with t
 | **MCP config** | `.cursor/mcp.json` |
 | **Detection** | Checks for `.cursor/` directory or `.cursorrules` file |
 
-Cursor uses MDC (Markdown with Context) format for rules files. The adapter handles parsing and generating MDC frontmatter. Export uses the `ctx-` prefix for managed files.
+Cursor uses MDC (Markdown with Context) format for rules files. The adapter handles parsing and generating MDC frontmatter. Export writes knowledge as `ctx-<key>.mdc` and conventions as `ctx-convention-<key>.mdc` with `alwaysApply: True`.
 
 ## Shared modules
 
@@ -148,9 +148,20 @@ Content outside the markers is preserved during export.
 ### Export
 
 - Writes only **public-scope** entries to tool locations
+- Conventions are exported **before** knowledge in all formats (higher priority)
 - Preserves existing content outside managed sections
 - Skills are exported as `SKILL.md` files in the tool's skills directory
 - Supports `--dry-run` to preview without writing
+
+Convention export formats per adapter:
+
+| Adapter | Convention format |
+|---------|-----------------|
+| Claude Code | `### Team Conventions` section in `CLAUDE.md` managed block |
+| Cursor | `.cursor/rules/ctx-convention-{key}.mdc` (`alwaysApply: True`) |
+| Gemini | `.gemini/rules/ctx-convention-{key}.md` |
+| OpenCode | `### convention: {key}` entries in `AGENTS.md` managed section |
+| Codex | `### convention: {key}` entries in `AGENTS.md` managed section |
 
 ## MCP registration
 

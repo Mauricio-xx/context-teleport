@@ -8,11 +8,11 @@ multi-tool setups, and portable context bundles.
 
 | Adapter     | Import sources                                          | Export targets                     | MCP registration |
 |-------------|---------------------------------------------------------|------------------------------------|------------------|
-| Claude Code | MEMORY.md, CLAUDE.md, `.claude/skills/*/SKILL.md`      | MEMORY.md, `.claude/skills/`       | `.claude/mcp.json` |
-| Cursor      | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/` | `.cursor/rules/`, `.cursor/skills/` | `.cursor/mcp.json` |
-| OpenCode    | AGENTS.md, SQLite sessions, `opencode/skills/`          | AGENTS.md, `opencode/skills/`      | `opencode.json`    |
-| Codex       | AGENTS.md, `.codex/instructions.md`, `codex/skills/`    | AGENTS.md, `.codex/skills/`        | Not supported      |
-| Gemini      | `.gemini/rules/*.md`, STYLEGUIDE.md, GEMINI.md, `.gemini/skills/` | `.gemini/rules/`, `.gemini/skills/` | `.gemini/settings.json` |
+| Claude Code | MEMORY.md, CLAUDE.md, `.claude/skills/*/SKILL.md`      | CLAUDE.md (conventions + knowledge), MEMORY.md, `.claude/skills/` | `.claude/mcp.json` |
+| Cursor      | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/` | `.cursor/rules/ctx-convention-*.mdc`, `.cursor/rules/ctx-*.mdc`, `.cursor/skills/` | `.cursor/mcp.json` |
+| OpenCode    | AGENTS.md, SQLite sessions, `opencode/skills/`          | AGENTS.md (conventions + knowledge), `opencode/skills/` | `opencode.json`    |
+| Codex       | AGENTS.md, `.codex/instructions.md`, `codex/skills/`    | AGENTS.md (conventions + knowledge), `.codex/skills/` | Not supported      |
+| Gemini      | `.gemini/rules/*.md`, STYLEGUIDE.md, GEMINI.md, `.gemini/skills/` | `.gemini/rules/ctx-convention-*.md`, `.gemini/rules/ctx-*.md`, `.gemini/skills/` | `.gemini/settings.json` |
 
 ## Importing context
 
@@ -252,6 +252,11 @@ context-teleport import claude-code --format json
 ## Additional import sources
 
 Beyond tool adapters, Context Teleport supports importing from other sources:
+
+- **Conventions file:** `context-teleport import conventions <file>` -- parses a
+  markdown file and splits it into individual conventions by `##` headers (or `#` headers
+  as fallback). Use this to import team rules from a CLAUDE.md, AGENTS.md, or any
+  structured markdown file.
 
 - **EDA artifacts:** `context-teleport import eda <path>` -- parses LibreLane configs,
   DRC reports, LVS results, Liberty files, and more. See the EDA documentation for

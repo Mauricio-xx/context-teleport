@@ -1,8 +1,8 @@
 # MCP Tools
 
-Context Teleport exposes **23 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
+Context Teleport exposes **27 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
 
-Tools are organized into seven categories: [Knowledge Management](#knowledge-management), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Scoping](#scoping), [Git Sync](#git-sync), and [Conflict Resolution](#conflict-resolution).
+Tools are organized into eight categories: [Knowledge Management](#knowledge-management), [Conventions](#conventions), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Scoping](#scoping), [Git Sync](#git-sync), and [Conflict Resolution](#conflict-resolution).
 
 ---
 
@@ -133,6 +133,101 @@ Returns `{"status": "error", "error": "..."}` if the path is invalid.
 ```
 context_set(dotpath="state.current_task", value="Implementing auth middleware")
 ```
+
+---
+
+## Conventions
+
+Team conventions are shared behavioral rules (git workflow, environment constraints, communication style) that apply across all agents and tools.
+
+### `context_add_convention`
+
+Add or update a team convention. If the key already exists, the content is overwritten. The calling agent is automatically recorded as the author.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `key` | `str` | *required* | Identifier for the convention (e.g. `git`, `environment`, `naming`) |
+| `content` | `str` | *required* | Markdown content describing the convention |
+| `scope` | `str` | `""` | Optional scope: `public`, `private`, or `ephemeral`. Empty means no change (defaults to `public` for new entries). |
+
+**Returns:**
+
+```json
+{"status": "ok", "key": "git"}
+```
+
+**Example:**
+
+```
+context_add_convention(
+    key="git",
+    content="Always use feature branches.\nCommit early, commit often.\nNo force-push to main.",
+    scope="public"
+)
+```
+
+---
+
+### `context_get_convention`
+
+Read a specific convention by key.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `key` | `str` | *required* | Identifier of the convention to read |
+
+**Returns:**
+
+```json
+{"key": "git", "content": "Always use feature branches.\nCommit early, commit often.\nNo force-push to main."}
+```
+
+Returns `{"error": "Convention 'nonexistent' not found"}` if the key does not exist.
+
+---
+
+### `context_list_conventions`
+
+List all team conventions with their keys and scopes.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| *(none)* | | | |
+
+**Returns:**
+
+```json
+[
+  {
+    "key": "git",
+    "content": "Always use feature branches...",
+    "scope": "public"
+  },
+  {
+    "key": "environment",
+    "content": "No sudo. Use venvs...",
+    "scope": "public"
+  }
+]
+```
+
+---
+
+### `context_rm_convention`
+
+Remove a team convention by key.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `key` | `str` | *required* | Identifier of the convention to remove |
+
+**Returns:**
+
+```json
+{"status": "removed", "key": "git"}
+```
+
+Returns `{"status": "not_found", "key": "..."}` if the key does not exist.
 
 ---
 
@@ -375,12 +470,12 @@ context_append_session(
 
 ### `context_get_scope`
 
-Get the current visibility scope of a knowledge entry, decision, or skill.
+Get the current visibility scope of a knowledge entry, decision, convention, or skill.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `entry_type` | `str` | *required* | Either `knowledge`, `decision`, or `skill` |
-| `key` | `str` | *required* | The entry key (knowledge key, decision ID/title, or skill name) |
+| `entry_type` | `str` | *required* | Either `knowledge`, `decision`, `convention`, or `skill` |
+| `key` | `str` | *required* | The entry key (knowledge key, decision ID/title, convention key, or skill name) |
 
 **Returns:**
 
@@ -392,11 +487,11 @@ Get the current visibility scope of a knowledge entry, decision, or skill.
 
 ### `context_set_scope`
 
-Change the visibility scope of a knowledge entry, decision, or skill.
+Change the visibility scope of a knowledge entry, decision, convention, or skill.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `entry_type` | `str` | *required* | Either `knowledge`, `decision`, or `skill` |
+| `entry_type` | `str` | *required* | Either `knowledge`, `decision`, `convention`, or `skill` |
 | `key` | `str` | *required* | The entry key |
 | `scope` | `str` | *required* | New scope: `public`, `private`, or `ephemeral` |
 

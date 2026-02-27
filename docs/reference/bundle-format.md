@@ -15,6 +15,10 @@ The `.context-teleport/` directory is the on-disk representation of the context 
     decisions/
       0001-decision-title.md         # ADR-style decision records
       .scope.json                    # Decision scope sidecar
+  conventions/
+    *.md                             # Team conventions (one file per key)
+    .scope.json                      # Scope sidecar: maps filenames to private/ephemeral
+    .meta.json                       # Author metadata per entry
   skills/
     <name>/
       SKILL.md                       # Agent skill (YAML frontmatter + markdown body)
@@ -67,6 +71,17 @@ We use hexagonal architecture with FastAPI.
 - Domain: pure Python, no framework deps
 - Ports: abstract interfaces
 - Adapters: FastAPI routes, SQLAlchemy repos
+```
+
+### Convention entries (`conventions/*.md`)
+
+Plain markdown files, one per key. Conventions describe team behavioral rules -- how agents should work, not what the project is about.
+
+```markdown
+Always use feature branches.
+Commit early, commit often.
+No force-push to main.
+Write commit messages in English.
 ```
 
 ### Scope sidecars (`.scope.json`)
@@ -231,6 +246,9 @@ Append-only NDJSON log of session summaries:
 | `knowledge/.scope.json` | Yes | Scope metadata always synced |
 | `knowledge/.meta.json` | Yes | Author metadata always synced |
 | `knowledge/decisions/*.md` | Scope-dependent | Same rules as knowledge |
+| `conventions/*.md` | Scope-dependent | Public: synced. Private/ephemeral: gitignored |
+| `conventions/.scope.json` | Yes | Convention scope metadata always synced |
+| `conventions/.meta.json` | Yes | Convention author metadata always synced |
 | `skills/*/SKILL.md` | Scope-dependent | Same rules as knowledge |
 | `skills/*/.usage.ndjson` | Yes | Tracking data synced |
 | `skills/*/.feedback.ndjson` | Yes | Feedback synced |

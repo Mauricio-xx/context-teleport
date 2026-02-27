@@ -10,12 +10,14 @@ Context Teleport solves this. It provides a structured, git-backed store that an
 
 ## Key features
 
-- **Portable context bundle** -- structured store for knowledge, decisions, skills, state, preferences, and session history
+- **Portable context bundle** -- structured store for knowledge, decisions, conventions, skills, state, preferences, and session history
+- **Team conventions** -- shared behavioral rules (git workflow, environment, communication) across all tools
 - **Git-backed sync** -- push/pull context to any git remote, works like code sync
 - **Section-level merge** -- 3-way merge at markdown section granularity, reduces false conflicts
 - **Cross-tool adapters** -- import/export between Claude Code, OpenCode, Codex, Gemini, and Cursor
 - **Agent skills** -- shareable SKILL.md capabilities with usage tracking, feedback, and auto-improvement
-- **MCP server** -- 23 tools, 13 resources, 4 prompts; works with any MCP-compatible agent
+- **MCP server** -- 27 tools, 15 resources, 4 prompts; works with any MCP-compatible agent
+- **Auto-initialization** -- MCP server auto-creates the store in any git repo, no explicit init needed
 - **Context scoping** -- public (team), private (user-only), ephemeral (session-only) boundaries
 - **Agent attribution** -- tracks which agent wrote each entry
 - **LLM-based conflict resolution** -- agents can inspect and resolve merge conflicts via MCP tools

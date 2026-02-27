@@ -101,6 +101,30 @@ class KnowledgeEntry(BaseModel):
 
 ---
 
+## Conventions
+
+Conventions are stored as markdown files under `.context-teleport/conventions/`.
+Each file corresponds to one `ConventionEntry`.
+
+### ConventionEntry
+
+```python
+class ConventionEntry(BaseModel):
+    key: str
+    content: str
+    updated_at: datetime = Field(default_factory=now)
+    author: str = ""
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `key` | `str` | required | Entry identifier (becomes filename: `<key>.md`) |
+| `content` | `str` | required | Markdown content |
+| `updated_at` | `datetime` | now (UTC) | Last update timestamp |
+| `author` | `str` | `""` | Agent or user that wrote the entry |
+
+---
+
 ## Skills
 
 Skills are stored as directories under `.context-teleport/skills/<name>/SKILL.md`.
@@ -428,7 +452,7 @@ class SkillProposal(BaseModel):
 ## Context Scoping
 
 Scope is not a model field but sidecar metadata stored in `.scope.json` files
-within each directory (`knowledge/`, `knowledge/decisions/`, `skills/`).
+within each directory (`knowledge/`, `knowledge/decisions/`, `conventions/`, `skills/`).
 
 ```python
 class Scope(str, Enum):

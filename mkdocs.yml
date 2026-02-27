@@ -63,6 +63,7 @@ nav:
     - guides/index.md
     - Team Setup: guides/team-setup.md
     - Multi-Agent Workflows: guides/multi-agent.md
+    - Team Conventions: guides/conventions.md
     - Adapter Workflows: guides/adapter-workflows.md
     - Conflict Resolution: guides/conflict-resolution.md
     - Skill Management: guides/skill-management.md

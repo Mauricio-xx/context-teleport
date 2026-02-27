@@ -18,7 +18,7 @@ System design and internal component documentation for Context Teleport.
 |-----------|----------|---------------|
 | Core | `src/ctx/core/` | Schema, store, search, scope, diff, merge, migrations |
 | CLI | `src/ctx/cli/` | Typer app with subcommands |
-| MCP Server | `src/ctx/mcp/` | FastMCP server (23 tools, 13 resources, 4 prompts) |
+| MCP Server | `src/ctx/mcp/` | FastMCP server (27 tools, 15 resources, 4 prompts) |
 | Adapters | `src/ctx/adapters/` | Bidirectional import/export for 5 agent tools |
 | Sync | `src/ctx/sync/` | Git push/pull/conflict detection and resolution |
 | EDA | `src/ctx/eda/` | EDA project detection and artifact parsers |
