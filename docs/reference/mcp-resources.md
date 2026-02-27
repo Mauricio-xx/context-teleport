@@ -1,8 +1,8 @@
 # MCP Resources
 
-Context Teleport exposes **15 MCP resources** that provide read-only access to the context store. Resources follow the `context://` URI scheme and return JSON strings.
+Context Teleport exposes **16 MCP resources** that provide read-only access to the context store. Resources follow the `context://` URI scheme and return JSON strings.
 
-Resources are organized into six groups: [Project Metadata](#project-metadata), [Knowledge](#knowledge), [Conventions](#conventions), [Decisions](#decisions), [State and History](#state-and-history), and [Skills](#skills).
+Resources are organized into seven groups: [Project Metadata](#project-metadata), [Knowledge](#knowledge), [Conventions](#conventions), [Decisions](#decisions), [State and History](#state-and-history), [Skills](#skills), and [Activity](#activity).
 
 ---
 
@@ -442,6 +442,36 @@ All improvement proposals for a specific skill. Returns `SkillProposal` records 
 ```json
 {"error": "Skill 'nonexistent' not found"}
 ```
+
+---
+
+## Activity
+
+### `context://activity`
+
+List all team activity entries with stale indicators. Returns all entries regardless of staleness; stale entries are flagged for the consumer to filter or display as needed.
+
+**URI:** `context://activity`
+
+**Response schema:**
+
+```json
+[
+  {
+    "member": "alice",
+    "agent": "claude-code",
+    "machine": "laptop",
+    "task": "Fixing DRC violations",
+    "issue_ref": "#42",
+    "status": "active",
+    "updated_at": "2025-05-10T14:30:00+00:00",
+    "stale": false
+  }
+]
+```
+
+!!! info "Stale threshold"
+    Entries older than 48 hours are marked `stale: true`. The `context_onboarding` prompt omits stale entries from its output; the resource always returns the full list.
 
 ---
 

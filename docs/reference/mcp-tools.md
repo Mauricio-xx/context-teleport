@@ -1,8 +1,8 @@
 # MCP Tools
 
-Context Teleport exposes **27 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
+Context Teleport exposes **29 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
 
-Tools are organized into eight categories: [Knowledge Management](#knowledge-management), [Conventions](#conventions), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Scoping](#scoping), [Git Sync](#git-sync), and [Conflict Resolution](#conflict-resolution).
+Tools are organized into nine categories: [Knowledge Management](#knowledge-management), [Conventions](#conventions), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Team Activity](#team-activity), [Scoping](#scoping), [Git Sync](#git-sync), and [Conflict Resolution](#conflict-resolution).
 
 ---
 
@@ -463,6 +463,49 @@ context_append_session(
     decisions_added="3"
 )
 ```
+
+---
+
+## Team Activity
+
+### `context_check_in`
+
+Check in to the team activity board. Records what you are currently working on so other team members can see your activity via onboarding or the `context://activity` resource.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `task` | `str` | *required* | Description of what you are working on |
+| `issue_ref` | `str` | `""` | Optional issue reference (e.g. `#42`) |
+
+**Returns:**
+
+```json
+{"status": "ok", "member": "alice", "task": "Fixing DRC violations"}
+```
+
+**Example:**
+
+```
+context_check_in(task="Fixing DRC violations", issue_ref="#42")
+```
+
+---
+
+### `context_check_out`
+
+Check out from the team activity board. Removes your activity entry so other team members know you are no longer actively working.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| *(none)* | | | |
+
+**Returns:**
+
+```json
+{"status": "checked_out"}
+```
+
+Returns `{"status": "not_found"}` if no activity entry exists for the current member.
 
 ---
 
