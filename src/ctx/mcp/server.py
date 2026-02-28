@@ -33,6 +33,14 @@ MAX_ONBOARDING_DECISIONS = 20
 MAX_ONBOARDING_CONVENTIONS = 20
 MAX_ONBOARDING_SKILLS = 30
 MAX_INSTRUCTION_KEYS = 15
+MAX_ONBOARDING_CONTENT_CHARS = 2000
+
+
+def _truncate_content(text: str, limit: int = MAX_ONBOARDING_CONTENT_CHARS) -> str:
+    """Truncate text to *limit* chars, appending an ellipsis marker if cut."""
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "\n... (truncated, see full entry via resource)"
 
 
 def _truncate_list(items: list[str], limit: int) -> str:
@@ -1144,7 +1152,7 @@ def context_onboarding() -> str:
         shown_conventions = conventions[:MAX_ONBOARDING_CONVENTIONS]
         for entry in shown_conventions:
             lines.append(f"### {entry.key}")
-            lines.append(entry.content.strip())
+            lines.append(_truncate_content(entry.content.strip()))
             lines.append("")
         if len(conventions) > MAX_ONBOARDING_CONVENTIONS:
             remaining = len(conventions) - MAX_ONBOARDING_CONVENTIONS
@@ -1157,7 +1165,7 @@ def context_onboarding() -> str:
         shown_knowledge = knowledge[:MAX_ONBOARDING_KNOWLEDGE]
         for entry in shown_knowledge:
             lines.append(f"### {entry.key}")
-            lines.append(entry.content.strip())
+            lines.append(_truncate_content(entry.content.strip()))
             lines.append("")
         if len(knowledge) > MAX_ONBOARDING_KNOWLEDGE:
             remaining = len(knowledge) - MAX_ONBOARDING_KNOWLEDGE
@@ -1171,11 +1179,11 @@ def context_onboarding() -> str:
         for d in shown_decisions:
             lines.append(f"### ADR-{d.id:04d}: {d.title} ({d.status.value})")
             if d.context:
-                lines.append(f"**Context:** {d.context}")
+                lines.append(f"**Context:** {_truncate_content(d.context)}")
             if d.decision:
-                lines.append(f"**Decision:** {d.decision}")
+                lines.append(f"**Decision:** {_truncate_content(d.decision)}")
             if d.consequences:
-                lines.append(f"**Consequences:** {d.consequences}")
+                lines.append(f"**Consequences:** {_truncate_content(d.consequences)}")
             lines.append("")
         if len(decisions) > MAX_ONBOARDING_DECISIONS:
             remaining = len(decisions) - MAX_ONBOARDING_DECISIONS

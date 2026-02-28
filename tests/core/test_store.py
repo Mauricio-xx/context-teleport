@@ -119,6 +119,21 @@ class TestHistory:
         assert sessions[0].agent == "claude-code"
         assert sessions[1].agent == "opencode"
 
+    def test_append_session_caps_at_max(self, store):
+        """Session history is pruned to MAX_SESSIONS entries."""
+        from ctx.core.store import MAX_SESSIONS
+
+        # Write MAX_SESSIONS + 10 entries
+        for i in range(MAX_SESSIONS + 10):
+            store.append_session(SessionSummary(agent="bot", summary=f"Session {i}"))
+
+        sessions = store.list_sessions(limit=MAX_SESSIONS + 10)
+        assert len(sessions) == MAX_SESSIONS
+
+        # Oldest entries should have been pruned -- first remaining is session 10
+        assert sessions[0].summary == "Session 10"
+        assert sessions[-1].summary == f"Session {MAX_SESSIONS + 9}"
+
 
 class TestScoping:
     def test_default_scope_is_public(self, store):

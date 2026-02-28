@@ -446,6 +446,32 @@ class TestPrompts:
         assert "... and 3 more" in result
         assert "context://decisions" in result
 
+    def test_onboarding_truncates_large_content(self, store):
+        """Large knowledge/convention/decision content is truncated in onboarding."""
+        from ctx.mcp.server import MAX_ONBOARDING_CONTENT_CHARS
+
+        big_text = "x" * (MAX_ONBOARDING_CONTENT_CHARS + 500)
+        store.set_knowledge("big-knowledge", big_text)
+        store.set_convention("big-convention", big_text)
+        store.add_decision(
+            title="Big Decision",
+            context=big_text,
+            decision_text=big_text,
+            consequences=big_text,
+        )
+
+        result = context_onboarding()
+
+        # The full big_text should NOT appear verbatim
+        assert big_text not in result
+
+        # Truncation markers should be present (knowledge + convention + 3 decision fields)
+        assert result.count("truncated, see full entry via resource") >= 5
+
+        # The first MAX_ONBOARDING_CONTENT_CHARS chars should be present
+        prefix = big_text[:MAX_ONBOARDING_CONTENT_CHARS]
+        assert prefix in result
+
     def test_handoff(self, store):
         from ctx.core.schema import ActiveState
 

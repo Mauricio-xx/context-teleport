@@ -30,6 +30,9 @@ from ctx.core.scope import Scope, ScopeMap
 from ctx.utils.paths import STORE_DIR, get_author, get_machine_name, get_username, sanitize_key
 
 
+MAX_SESSIONS = 200
+
+
 class StoreError(Exception):
     pass
 
@@ -983,6 +986,10 @@ class ContextStore:
         path = self.store_dir / "history" / "sessions.ndjson"
         with open(path, "a") as f:
             f.write(session.model_dump_json() + "\n")
+        # Prune to last MAX_SESSIONS entries if file has grown too large
+        lines = [ln for ln in path.read_text().split("\n") if ln.strip()]
+        if len(lines) > MAX_SESSIONS:
+            path.write_text("\n".join(lines[-MAX_SESSIONS:]) + "\n")
 
     def list_sessions(self, limit: int = 50) -> list[SessionSummary]:
         self._require_init()
