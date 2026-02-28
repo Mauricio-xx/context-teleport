@@ -38,6 +38,13 @@ Creates the `.context-teleport/` directory with `manifest.json`, `knowledge/`,
 !!! note "Auto-initialization"
     When the MCP server starts in a git repository that has no `.context-teleport/` directory, it automatically initializes the store using the directory name as the project name. No explicit `init` is needed for MCP usage.
 
+!!! info "Manifest auto-detection"
+    During `init`, Context Teleport scans the project root for common marker files
+    (`pyproject.toml`, `Cargo.toml`, `package.json`, `CMakeLists.txt`, `go.mod`, etc.)
+    and auto-populates the `languages` and `build_systems` fields in the manifest.
+    This information is surfaced in onboarding instructions as "Project stack" so
+    agents immediately know the tech stack without scanning the filesystem.
+
 !!! tip
     If the project root contains EDA markers (LibreLane config, Makefile with
     OpenROAD, Liberty files), `init` will print detected EDA project information.
@@ -414,6 +421,44 @@ context-teleport convention scope <key> <scope>
 |---|---|
 | `key` | Convention key |
 | `scope` | New scope: `public`, `private`, `ephemeral` |
+
+---
+
+### activity
+
+Manage the team activity board. Prefix: `context-teleport activity`.
+
+#### list
+
+```bash
+context-teleport activity list
+```
+
+Displays a table of active team members with their current task, issue reference,
+agent name, and staleness indicator. Entries older than 48 hours are marked as stale.
+
+#### check-in
+
+```bash
+context-teleport activity check-in <task> [--issue REF]
+```
+
+| Argument / Option | Short | Description |
+|---|---|---|
+| `task` | | What you are working on |
+| `--issue` | `-i` | Issue reference (e.g. `#42`) |
+
+Registers the current user on the activity board. The member name, agent, and
+machine are detected automatically.
+
+#### check-out
+
+```bash
+context-teleport activity check-out
+```
+
+Removes the current user from the activity board. Returns an error if no active
+check-in exists for this user.
 
 ---
 

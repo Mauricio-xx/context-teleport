@@ -49,7 +49,7 @@ Both projects:
 
 ### Agent intervention
 
-- **context-teleport**: Passive -- MCP server is available, the agent decides when to use it. Since v0.5.x, lifecycle hooks remind agents after compaction and inject context into subagents.
+- **context-teleport**: Passive -- MCP server is available, the agent decides when to use it. Lifecycle hooks remind agents after compaction and inject context into subagents.
 - **context-daddy**: Active -- lifecycle hooks (PreCompact, Stop, PreToolUse) intercept and redirect agent behavior. The Stop hook can block the agent until it reads context files.
 
 ### Code navigation

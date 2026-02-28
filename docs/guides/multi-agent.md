@@ -84,7 +84,7 @@ You: We're implementing a REST API with FastAPI. The auth
      middleware uses JWT tokens with RS256 signing.
      Record this as knowledge.
 
-Agent: [calls context_set_knowledge("auth-middleware", ...)]
+Agent: [calls context_add_knowledge("auth-middleware", ...)]
        (agent field: "mcp:claude-code")
        Added knowledge entry "auth-middleware"
 
@@ -114,7 +114,7 @@ Agent: [reads context://knowledge/auth-middleware]
 You: We're using React Query for all API calls. Add this
      to the project knowledge.
 
-Agent: [calls context_set_knowledge("frontend-data-fetching", ...)]
+Agent: [calls context_add_knowledge("frontend-data-fetching", ...)]
        (agent field: "mcp:cursor")
        Added knowledge entry "frontend-data-fetching"
 ```
@@ -147,6 +147,28 @@ Agent: [calls context_handoff prompt]
 
 The next agent (regardless of which tool) can read this handoff to continue where the
 previous session left off.
+
+## Lifecycle hooks (Claude Code)
+
+When you run `context-teleport register claude-code`, the adapter installs lifecycle hooks into `.claude/settings.json`. These hooks keep the agent context-aware across session events without requiring manual intervention.
+
+### Installed hooks
+
+| Hook | Event | Behavior |
+|------|-------|----------|
+| **PreCompact** | Before context compaction | Reminds the agent to save important context to the store before the window is compressed |
+| **SessionStart** (compact) | Session resumes after compaction | Directs the agent to the `context_onboarding` prompt to re-orient with project context |
+| **SubagentStart** | Subagent is spawned | Injects project context awareness into subagents so they know Context Teleport is available |
+
+### Why hooks matter
+
+Without hooks, an agent that undergoes context compaction loses awareness of the context store entirely. It will not call MCP tools unless reminded. The PreCompact hook acts as a safety net, and the SessionStart hook ensures the agent re-reads project context after compaction.
+
+The SubagentStart hook solves a different problem: subagents (spawned by the main agent for parallel tasks) start with no knowledge of the project's context store. The hook injects a brief instruction so subagents can use Context Teleport tools.
+
+### Uninstalling hooks
+
+Hooks are removed automatically by `context-teleport unregister claude-code`. They can also be manually edited in `.claude/settings.json` -- Context Teleport hooks are prefixed with identifiable markers.
 
 ## Viewing agent contributions
 

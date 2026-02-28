@@ -74,7 +74,7 @@ Agent: [calls context_add_decision]
 
 You: Also note that our API uses snake_case for all JSON fields.
 
-Agent: [calls context_set_knowledge]
+Agent: [calls context_add_knowledge]
        Added knowledge entry "api-naming-convention"
 
 You: We always use feature branches, no direct commits to main. Save that as a convention.

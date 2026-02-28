@@ -5,8 +5,8 @@ Complete API and configuration reference for Context Teleport.
 ## Interfaces
 
 - **[CLI](cli.md)** -- All commands, subcommands, options, and examples
-- **[MCP Tools](mcp-tools.md)** -- All 27 MCP tools with parameters, return values, and examples
-- **[MCP Resources](mcp-resources.md)** -- All 15 resources with URI patterns and response schemas
+- **[MCP Tools](mcp-tools.md)** -- All 32 MCP tools with parameters, return values, and examples
+- **[MCP Resources](mcp-resources.md)** -- All 16 resources with URI patterns and response schemas
 - **[MCP Prompts](mcp-prompts.md)** -- All 4 prompts with descriptions and output format
 
 ## Data Model

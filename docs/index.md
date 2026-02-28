@@ -21,6 +21,9 @@ Context Teleport solves this. It provides a structured, git-backed store that an
 - **Context scoping** -- public (team), private (user-only), ephemeral (session-only) boundaries
 - **Agent attribution** -- tracks which agent wrote each entry
 - **LLM-based conflict resolution** -- agents can inspect and resolve merge conflicts via MCP tools
+- **Activity board** -- team check-in/check-out with staleness detection, visible in onboarding
+- **Lifecycle hooks** -- Claude Code hooks for context persistence across compaction and subagent spawning
+- **Markdown navigation** -- MCP tools for outline, section extraction, and table listing within knowledge entries
 - **EDA/PDK domain support** -- artifact parsers for LibreLane, OpenROAD, Magic DRC, Netgen LVS, and Liberty files
 - **GitHub issue bridge** -- import issues and decisions from GitHub via `gh` CLI
 

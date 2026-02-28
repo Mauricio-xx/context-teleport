@@ -119,7 +119,7 @@ context-teleport --help
 pytest tests/ -v
 ```
 
-The full suite has 700+ tests covering core logic, MCP tools, CLI, adapters, sync, EDA parsers, and source importers.
+The full suite has 930+ tests covering core logic, MCP tools, CLI, adapters, sync, EDA parsers, and source importers.
 
 
 ## Verifying the installation

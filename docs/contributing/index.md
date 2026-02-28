@@ -18,7 +18,7 @@ pip install -e ".[watch]"
 ## Running tests
 
 ```bash
-# Full suite (701 tests)
+# Full suite (930+ tests)
 pytest tests/ -v
 
 # Specific modules

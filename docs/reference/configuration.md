@@ -21,7 +21,7 @@ context-teleport config set default_strategy theirs
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `default_strategy` | `ours` | Default merge strategy for `pull`. Values: `ours`, `theirs`, `agent` |
+| `default_strategy` | `ours` | Default merge strategy for `pull`. Values: `ours`, `theirs`, `interactive`, `agent` |
 | `default_scope` | `public` | Default scope for new entries. Values: `public`, `private`, `ephemeral` |
 
 ### Config file format
@@ -58,6 +58,7 @@ context-teleport set manifest.project.repo_url git@github.com:team/project.git
 | Variable | Description |
 |----------|-------------|
 | `MCP_CALLER` | Agent identity for attribution. Set automatically by adapter registration. Format: `mcp:<tool-name>` (e.g., `mcp:claude-code`) |
+| `CTX_NO_AUTO_INIT` | Set to `1` to disable automatic store initialization when the MCP server starts in a git repo without a `.context-teleport/` directory. The server will return an error instead of silently creating a store. |
 | `PDK_ROOT` | EDA: Path to PDK installation. Used by EDA project detection |
 
 ## Per-project preferences

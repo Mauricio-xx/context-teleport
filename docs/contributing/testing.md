@@ -1,6 +1,6 @@
 # Testing
 
-Context Teleport has 701 tests covering all components. This guide explains the test architecture, how to run specific subsets, and patterns used in the test suite.
+Context Teleport has 930+ tests covering all components. This guide explains the test architecture, how to run specific subsets, and patterns used in the test suite.
 
 ## Running tests
 
@@ -61,6 +61,8 @@ tests/
 | EDA CLI | 11 | Import command integration |
 | Sources (GitHub) | 42 | Mocked `gh` CLI subprocess calls |
 | Sources CLI | 12 | GitHub import command integration |
+
+> **Note:** The individual module counts above are approximate. The actual total is **930+ tests** as of v0.5.2.
 
 ## Key patterns
 

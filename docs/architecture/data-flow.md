@@ -62,7 +62,7 @@ FastMCP server (src/ctx/mcp/server.py)
     |       Includes: project name, convention keys, knowledge keys,
     |                 decision count, skill names, current task, blockers
     |
-    +-- 27 tools, 15 resources, 4 prompts
+    +-- 32 tools, 16 resources, 4 prompts
     |       Each call resolves _get_store() -> ContextStore
     |
     +-- _server_lifespan on shutdown
@@ -88,6 +88,18 @@ When the MCP server starts, it calls `_generate_instructions()` to build a dynam
 - Current task and blockers from active state
 
 This means the agent sees relevant project context immediately at session start, before it even calls any tools.
+
+### Onboarding budget
+
+The instruction string has built-in limits to avoid blowing up the agent's context window on large stores:
+
+- **Content truncation**: Each knowledge, convention, and skill entry is truncated to 2000 characters. A `... (truncated, see full entry via resource)` marker is appended when cut.
+- **Key limits**: At most 15 keys are listed inline per content type. Additional keys show as `... and N more`.
+- **Entry caps**: Up to 30 knowledge entries, 20 decisions, 20 conventions, and 30 skills are included in the onboarding prompt.
+- **Session history cap**: The session history file (`history/sessions.ndjson`) is pruned to the last 200 entries on every write to prevent unbounded growth.
+- **Team activity**: Active team members are listed in instructions with staleness markers. Entries older than 48 hours are flagged.
+
+Full data is always available via resources (`context://knowledge`, `context://skills`, etc.) -- the onboarding summary is intentionally a compressed overview.
 
 ### Shutdown: `_server_lifespan`
 
