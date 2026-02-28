@@ -16,7 +16,7 @@ Context Teleport solves this. It provides a structured, git-backed store that an
 - **Section-level merge** -- 3-way merge at markdown section granularity, reduces false conflicts
 - **Cross-tool adapters** -- import/export between Claude Code, OpenCode, Codex, Gemini, and Cursor
 - **Agent skills** -- shareable SKILL.md capabilities with usage tracking, feedback, and auto-improvement
-- **MCP server** -- 29 tools, 16 resources, 4 prompts; works with any MCP-compatible agent
+- **MCP server** -- 32 tools, 16 resources, 4 prompts; works with any MCP-compatible agent
 - **Auto-initialization** -- MCP server auto-creates the store in any git repo, no explicit init needed
 - **Context scoping** -- public (team), private (user-only), ephemeral (session-only) boundaries
 - **Agent attribution** -- tracks which agent wrote each entry

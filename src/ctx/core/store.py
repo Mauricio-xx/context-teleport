@@ -69,9 +69,14 @@ class ContextStore:
         for d in dirs:
             d.mkdir(parents=True, exist_ok=True)
 
+        # Auto-detect project characteristics
+        languages, build_systems = _detect_project(self.root)
+
         # Create manifest
         manifest = Manifest(
             project=ProjectInfo(name=name, repo_url=repo_url),
+            languages=languages,
+            build_systems=build_systems,
         )
         self._write_json(self.store_dir / "manifest.json", manifest)
 
@@ -1049,3 +1054,49 @@ def _datetime_from_mtime(path: Path):
     from datetime import datetime, timezone
 
     return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+
+
+# -- Project auto-detection --
+
+# Mapping from marker files to (language, build_system) pairs.
+_PROJECT_MARKERS: list[tuple[str, str, str]] = [
+    ("pyproject.toml", "Python", "pyproject.toml"),
+    ("setup.py", "Python", "setuptools"),
+    ("setup.cfg", "Python", "setuptools"),
+    ("Cargo.toml", "Rust", "Cargo"),
+    ("go.mod", "Go", "Go modules"),
+    ("package.json", "JavaScript", "npm"),
+    ("tsconfig.json", "TypeScript", ""),
+    ("CMakeLists.txt", "C/C++", "CMake"),
+    ("Makefile", "", "Make"),
+    ("config.mk", "", "Make"),
+    ("build.gradle", "Java", "Gradle"),
+    ("build.gradle.kts", "Kotlin", "Gradle"),
+    ("pom.xml", "Java", "Maven"),
+    ("Gemfile", "Ruby", "Bundler"),
+    ("mix.exs", "Elixir", "Mix"),
+    ("dune-project", "OCaml", "Dune"),
+    ("stack.yaml", "Haskell", "Stack"),
+    ("flake.nix", "", "Nix"),
+    ("docker-compose.yml", "", "Docker Compose"),
+    ("docker-compose.yaml", "", "Docker Compose"),
+    ("Dockerfile", "", "Docker"),
+]
+
+
+def _detect_project(root: Path) -> tuple[list[str], list[str]]:
+    """Detect languages and build systems from marker files in the project root.
+
+    Returns (languages, build_systems) as sorted deduplicated lists.
+    """
+    languages: set[str] = set()
+    build_systems: set[str] = set()
+
+    for marker, lang, build in _PROJECT_MARKERS:
+        if (root / marker).exists():
+            if lang:
+                languages.add(lang)
+            if build:
+                build_systems.add(build)
+
+    return sorted(languages), sorted(build_systems)

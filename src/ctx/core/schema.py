@@ -48,6 +48,8 @@ class Manifest(BaseModel):
         default_factory=lambda: {"claude_code": AdapterConfig(enabled=True)}
     )
     team: dict[str, list[TeamMember]] = Field(default_factory=lambda: {"members": []})
+    languages: list[str] = Field(default_factory=list)
+    build_systems: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
 

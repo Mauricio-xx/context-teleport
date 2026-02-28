@@ -1,8 +1,8 @@
 # MCP Tools
 
-Context Teleport exposes **29 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
+Context Teleport exposes **32 MCP tools** that agents use to read and write project context. All tools return JSON strings. Agent identity is automatically detected via the `MCP_CALLER` environment variable (set during adapter registration).
 
-Tools are organized into nine categories: [Knowledge Management](#knowledge-management), [Conventions](#conventions), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Team Activity](#team-activity), [Scoping](#scoping), [Git Sync](#git-sync), and [Conflict Resolution](#conflict-resolution).
+Tools are organized into ten categories: [Knowledge Management](#knowledge-management), [Conventions](#conventions), [Skills](#skills), [Decisions](#decisions), [State and History](#state-and-history), [Team Activity](#team-activity), [Scoping](#scoping), [Git Sync](#git-sync), [Conflict Resolution](#conflict-resolution), and [Markdown Navigation](#markdown-navigation).
 
 ---
 
@@ -748,6 +748,43 @@ Common error conditions:
 | Invalid strategy string | `{"status": "error", "error": "Invalid strategy '...' . Use: ours, theirs, agent."}` |
 | Entry not found | `{"status": "not_found", ...}` or `{"error": "... not found"}` |
 | Git operation fails | `{"status": "error", "error": "<GitSyncError message>"}` |
+
+---
+
+## Markdown Navigation
+
+Tools for navigating the structure of large markdown entries.
+
+### `context_outline`
+
+Get the section outline (headings) of a knowledge, convention, or decision entry.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `key` | string | yes | Entry key or dotpath (e.g. `architecture`, `decisions.1`) |
+
+**Returns:** JSON array of headings with `level`, `heading`, and `line` fields.
+
+### `context_get_section`
+
+Extract a specific section from an entry by heading name.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `key` | string | yes | Entry key or dotpath |
+| `heading` | string | yes | Section heading to extract (case-insensitive partial match) |
+
+**Returns:** `{"heading": "## Section", "content": "..."}` or error if not found.
+
+### `context_list_tables`
+
+List markdown tables found in an entry, with their surrounding heading context.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `key` | string | yes | Entry key or dotpath |
+
+**Returns:** JSON array of tables with `heading`, `line`, `content`, and `rows` fields.
 
 ---
 

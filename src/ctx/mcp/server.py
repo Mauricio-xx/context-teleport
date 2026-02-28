@@ -75,8 +75,17 @@ def _generate_instructions() -> str:
 
         lines = [
             f"Context Teleport is active for project '{project_name}'.",
-            "",
         ]
+
+        if manifest.languages or manifest.build_systems:
+            parts = []
+            if manifest.languages:
+                parts.append(f"languages: {', '.join(manifest.languages)}")
+            if manifest.build_systems:
+                parts.append(f"build systems: {', '.join(manifest.build_systems)}")
+            lines.append(f"Project stack: {'; '.join(parts)}.")
+
+        lines.append("")
 
         if activity:
             active = [a for a in activity if not store.is_stale(a)]
@@ -1103,6 +1112,184 @@ def context_set(dotpath: str, value: str) -> str:
         return json.dumps({"status": "ok", "dotpath": dotpath})
     except ValueError as e:
         return json.dumps({"status": "error", "error": str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Markdown navigation tools
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def context_outline(key: str) -> str:
+    """Get the section outline (headings) of a knowledge, convention, or decision entry.
+
+    Returns a list of markdown headings found in the entry, useful for
+    navigating large documents.
+
+    Args:
+        key: The entry key (e.g. 'architecture') or dotpath like 'decisions.1'
+    """
+    content = _resolve_entry_content(key)
+    if content is None:
+        return json.dumps({"error": f"Entry '{key}' not found"})
+
+    import re
+
+    headings: list[dict[str, str | int]] = []
+    for i, line in enumerate(content.split("\n"), 1):
+        match = re.match(r"^(#{1,6})\s+(.+)", line)
+        if match:
+            headings.append({
+                "level": len(match.group(1)),
+                "heading": match.group(2).strip(),
+                "line": i,
+            })
+    return json.dumps(headings, indent=2)
+
+
+@mcp.tool()
+def context_get_section(key: str, heading: str) -> str:
+    """Get a specific section from a knowledge, convention, or decision entry.
+
+    Extracts the section matching the given heading (case-insensitive)
+    and all content until the next heading of the same or higher level.
+
+    Args:
+        key: The entry key (e.g. 'architecture') or dotpath like 'decisions.1'
+        heading: The section heading to extract (case-insensitive partial match)
+    """
+    content = _resolve_entry_content(key)
+    if content is None:
+        return json.dumps({"error": f"Entry '{key}' not found"})
+
+    from ctx.core.merge_sections import parse_sections
+
+    sections = parse_sections(content)
+    heading_lower = heading.lower().strip()
+
+    for section in sections:
+        header_text = section.header.lstrip("#").strip().lower()
+        if header_text and (heading_lower in header_text or header_text in heading_lower):
+            result = section.header + section.content if section.header else section.content
+            return json.dumps({
+                "heading": section.header,
+                "content": result.strip(),
+            })
+
+    # Fall back to broader search across all heading levels
+    import re
+
+    lines = content.split("\n")
+    found_start = -1
+    found_level = 0
+    for i, line in enumerate(lines):
+        match = re.match(r"^(#{1,6})\s+(.+)", line)
+        if match:
+            h_text = match.group(2).strip().lower()
+            h_level = len(match.group(1))
+            if found_start >= 0 and h_level <= found_level:
+                return json.dumps({
+                    "heading": lines[found_start].strip(),
+                    "content": "\n".join(lines[found_start:i]).strip(),
+                })
+            if heading_lower in h_text:
+                found_start = i
+                found_level = h_level
+    if found_start >= 0:
+        return json.dumps({
+            "heading": lines[found_start].strip(),
+            "content": "\n".join(lines[found_start:]).strip(),
+        })
+
+    return json.dumps({"error": f"Section '{heading}' not found in '{key}'"})
+
+
+@mcp.tool()
+def context_list_tables(key: str) -> str:
+    """List markdown tables found in a knowledge, convention, or decision entry.
+
+    Returns tables with their surrounding heading context and content.
+
+    Args:
+        key: The entry key (e.g. 'architecture') or dotpath like 'decisions.1'
+    """
+    content = _resolve_entry_content(key)
+    if content is None:
+        return json.dumps({"error": f"Entry '{key}' not found"})
+
+    import re
+
+    tables: list[dict] = []
+    lines = content.split("\n")
+    current_heading = ""
+    table_lines: list[str] = []
+    table_start = -1
+
+    for i, line in enumerate(lines):
+        h_match = re.match(r"^#{1,6}\s+(.+)", line)
+        if h_match:
+            current_heading = h_match.group(1).strip()
+
+        is_table_line = "|" in line and line.strip().startswith("|")
+        if is_table_line:
+            if not table_lines:
+                table_start = i + 1
+            table_lines.append(line)
+        else:
+            if table_lines:
+                tables.append({
+                    "heading": current_heading,
+                    "line": table_start,
+                    "content": "\n".join(table_lines),
+                    "rows": len([tl for tl in table_lines if not re.match(r"^\|[-:| ]+\|$", tl.strip())]),
+                })
+                table_lines = []
+
+    # Flush last table
+    if table_lines:
+        tables.append({
+            "heading": current_heading,
+            "line": table_start,
+            "content": "\n".join(table_lines),
+            "rows": len([tl for tl in table_lines if not re.match(r"^\|[-:| ]+\|$", tl.strip())]),
+        })
+
+    return json.dumps(tables, indent=2)
+
+
+def _resolve_entry_content(key: str) -> str | None:
+    """Resolve a key to its markdown content, supporting dotpath-style keys."""
+    store = _get_store()
+
+    # Try direct knowledge lookup
+    entry = store.get_knowledge(key)
+    if entry is not None:
+        return entry.content
+
+    # Try convention
+    conv = store.get_convention(key)
+    if conv is not None:
+        return conv.content
+
+    # Try skill
+    skill = store.get_skill(key)
+    if skill is not None:
+        return skill.content
+
+    # Try dotpath for decisions etc.
+    try:
+        from ctx.core.dotpath import resolve_dotpath
+
+        value = resolve_dotpath(store, key)
+        if value is not None:
+            if isinstance(value, str):
+                return value
+            if isinstance(value, dict) and "content" in value:
+                return value["content"]
+    except Exception:
+        pass
+
+    return None
 
 
 # ---------------------------------------------------------------------------

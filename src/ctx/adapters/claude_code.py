@@ -1,7 +1,8 @@
-"""Claude Code adapter: read/write MEMORY.md, CLAUDE.md, rules, MCP registration."""
+"""Claude Code adapter: read/write MEMORY.md, CLAUDE.md, rules, hooks, MCP registration."""
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -315,12 +316,163 @@ class ClaudeCodeAdapter:
         return unregister_mcp_json(self.mcp_config_path())
 
     def register_mcp(self, local: bool = False) -> dict:
-        """Register ctx-mcp (AdapterProtocol method)."""
-        return self.register_mcp_server(local=local)
+        """Register ctx-mcp and install lifecycle hooks (AdapterProtocol method)."""
+        result = self.register_mcp_server(local=local)
+        hooks_result = self.install_hooks()
+        result["hooks"] = hooks_result
+        return result
 
     def unregister_mcp(self) -> dict:
-        """Remove ctx-mcp (AdapterProtocol method)."""
-        return self.unregister_mcp_server()
+        """Remove ctx-mcp and uninstall hooks (AdapterProtocol method)."""
+        result = self.unregister_mcp_server()
+        hooks_result = self.uninstall_hooks()
+        result["hooks"] = hooks_result
+        return result
+
+    # -- Lifecycle hooks --
+
+    def _settings_path(self) -> Path:
+        """Return the project-level settings file for Claude Code."""
+        return self.store.root / ".claude" / "settings.json"
+
+    def _build_hooks_config(self) -> dict:
+        """Build the hooks configuration for Claude Code lifecycle events.
+
+        Generates hooks for:
+        - PreCompact: save active state before context compaction
+        - SessionStart (compact): re-inject context after compaction
+        - SubagentStart: inject project context into subagents
+        """
+        hooks: dict[str, list[dict]] = {}
+
+        # PreCompact: save state before compaction loses context
+        hooks["PreCompact"] = [
+            {
+                "matcher": "manual|auto",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": (
+                            'echo "Context Teleport: saving state before compaction. '
+                            "Use context_onboarding prompt or context_search tool "
+                            'to recover project context after compaction."'
+                        ),
+                    },
+                ],
+            },
+        ]
+
+        # SessionStart (compact): remind agent to re-orient after compaction
+        hooks["SessionStart"] = [
+            {
+                "matcher": "compact",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": (
+                            'echo "Context was just compacted. '
+                            "Use the context_onboarding prompt from context-teleport MCP server "
+                            "to reload full project context including knowledge, conventions, "
+                            'decisions, skills, and team activity."'
+                        ),
+                    },
+                ],
+            },
+        ]
+
+        # SubagentStart: inject context awareness into subagents
+        hooks["SubagentStart"] = [
+            {
+                "matcher": "",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": (
+                            'echo "This project uses context-teleport for shared context. '
+                            "The context-teleport MCP server provides project knowledge, "
+                            "conventions, decisions, and skills. Use context_search to find "
+                            'relevant context before starting work."'
+                        ),
+                    },
+                ],
+            },
+        ]
+
+        return hooks
+
+    def install_hooks(self, dry_run: bool = False) -> dict:
+        """Install Claude Code lifecycle hooks in .claude/settings.json.
+
+        Merges hook entries into existing settings without overwriting
+        non-hook configuration. Idempotent.
+        """
+        hooks_config = self._build_hooks_config()
+        settings_path = self._settings_path()
+
+        if dry_run:
+            return {
+                "status": "dry_run",
+                "path": str(settings_path),
+                "hooks": list(hooks_config.keys()),
+            }
+
+        # Read existing settings
+        settings: dict = {}
+        if settings_path.is_file():
+            try:
+                settings = json.loads(settings_path.read_text())
+            except (json.JSONDecodeError, OSError):
+                settings = {}
+
+        # Merge hooks: replace ctx-managed hooks, preserve others
+        if "hooks" not in settings:
+            settings["hooks"] = {}
+
+        for event, entries in hooks_config.items():
+            settings["hooks"][event] = entries
+
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+
+        return {
+            "status": "installed",
+            "path": str(settings_path),
+            "hooks": list(hooks_config.keys()),
+        }
+
+    def uninstall_hooks(self) -> dict:
+        """Remove ctx-installed hooks from .claude/settings.json."""
+        settings_path = self._settings_path()
+        if not settings_path.is_file():
+            return {"status": "no_settings"}
+
+        try:
+            settings = json.loads(settings_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            return {"status": "no_settings"}
+
+        hooks = settings.get("hooks", {})
+        if not hooks:
+            return {"status": "no_hooks"}
+
+        managed_events = set(self._build_hooks_config().keys())
+        removed = []
+        for event in managed_events:
+            if event in hooks:
+                del hooks[event]
+                removed.append(event)
+
+        if not removed:
+            return {"status": "no_hooks"}
+
+        settings["hooks"] = hooks
+        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+
+        return {
+            "status": "uninstalled",
+            "removed": removed,
+            "path": str(settings_path),
+        }
 
 
 def _slugify(text: str) -> str:

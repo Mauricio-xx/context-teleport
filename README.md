@@ -20,7 +20,7 @@ AI coding agents accumulate deep context over sessions -- architecture decisions
 - **[Git-backed sync](https://mauricio-xx.github.io/context-teleport/architecture/sync-engine/)** -- push/pull with section-level merge for multi-agent workflows
 - **[Cross-tool adapters](https://mauricio-xx.github.io/context-teleport/reference/adapter-protocol/)** -- import/export between Claude Code, OpenCode, Codex, Gemini, and Cursor
 - **[Agent skills](https://mauricio-xx.github.io/context-teleport/guides/skill-management/)** -- shareable SKILL.md with usage tracking, feedback, and auto-improvement
-- **[MCP server](https://mauricio-xx.github.io/context-teleport/reference/mcp-tools/)** -- 29 tools, 16 resources, 4 prompts for any MCP-compatible agent
+- **[MCP server](https://mauricio-xx.github.io/context-teleport/reference/mcp-tools/)** -- 32 tools, 16 resources, 4 prompts for any MCP-compatible agent
 - **[Context scoping](https://mauricio-xx.github.io/context-teleport/guides/context-scoping/)** -- public, private, and ephemeral boundaries
 - **[LLM conflict resolution](https://mauricio-xx.github.io/context-teleport/guides/conflict-resolution/)** -- agents inspect and resolve merge conflicts via MCP tools
 - **[EDA domain support](https://mauricio-xx.github.io/context-teleport/guides/eda-workflows/)** -- parsers for LibreLane, OpenROAD, Magic DRC, Netgen LVS, Liberty
