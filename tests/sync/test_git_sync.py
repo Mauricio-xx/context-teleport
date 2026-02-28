@@ -734,3 +734,174 @@ class TestPullScopeValidation:
         result = gs_b.pull()
         assert result["status"] == "error"
         assert "non-store files" in result["error"]
+
+    def test_pull_rejects_non_store_preserves_dirty_worktree(self, two_repos):
+        """After rejecting non-store changes, user's dirty worktree files must survive."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A: push a non-store change
+        repo_a = git.Repo(clone_a)
+        (clone_a / "README.md").write_text("# Modified by A\n")
+        repo_a.index.add(["README.md"])
+        repo_a.index.commit("A: modify README")
+        repo_a.remotes.origin.push()
+
+        # Clone B: create a dirty (unstaged, uncommitted) user file
+        dirty_file = clone_b / "app.py"
+        dirty_content = "print('user work in progress')\n"
+        dirty_file.write_text(dirty_content)
+
+        # Pull should reject (non-store change)
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull()
+        assert result["status"] == "error"
+        assert "non-store files" in result["error"]
+
+        # The dirty file must still exist with original content
+        assert dirty_file.is_file()
+        assert dirty_file.read_text() == dirty_content
+
+
+class TestConcurrentPush:
+    """Verify behavior when two clones try to push concurrently."""
+
+    def test_concurrent_push_recovery(self, two_repos):
+        """After A pushes, B's diverged commit can be recovered via pull + push."""
+        _, clone_a, clone_b = two_repos
+
+        # Clone A pushes first
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("from-a", "Knowledge from A")
+        gs_a = GitSync(clone_a)
+        result_a = gs_a.push()
+        assert result_a["status"] == "pushed"
+
+        # Clone B commits locally (diverges from remote)
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("from-b", "Knowledge from B")
+        gs_b = GitSync(clone_b)
+        result_b = gs_b.commit()
+        assert result_b["status"] == "committed"
+
+        # Clone B's local commit is preserved
+        repo_b = git.Repo(clone_b)
+        assert "from-b" in repo_b.head.commit.message
+
+        # Recovery: pull merges, then push succeeds
+        pull_result = gs_b.pull()
+        assert pull_result["status"] in ("pulled", "merged")
+
+        store_b2 = ContextStore(clone_b)
+        store_b2.set_knowledge("from-b-extra", "Extra from B")
+        gs_b2 = GitSync(clone_b)
+        push_result = gs_b2.push()
+        assert push_result["status"] == "pushed"
+
+
+class TestTheirsStrategy:
+    """Verify Strategy.theirs works through the full pull() flow."""
+
+    def test_theirs_strategy_uses_remote_content(self, two_repos):
+        """pull(strategy=theirs) resolves same-file conflict with remote content."""
+        _, clone_a, clone_b = two_repos
+
+        # Both modify the same knowledge file
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.theirs)
+        assert result["status"] == "merged"
+        assert result.get("strategy") == "theirs"
+
+        # Content should be from A (remote/theirs)
+        merged = store_b.get_knowledge("arch")
+        assert "Version from A" in merged.content
+
+
+class TestInterruptedMerge:
+    """Verify recovery from an interrupted merge (process restart)."""
+
+    def test_interrupted_merge_recovery(self, two_repos):
+        """After agent strategy aborts and saves state, a fresh instance finds it."""
+        _, clone_a, clone_b = two_repos
+
+        # Create a conflict
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        # Pull with agent strategy -- saves .pending_conflicts.json, aborts merge
+        gs_b1 = GitSync(clone_b)
+        result = gs_b1.pull(strategy=Strategy.agent)
+        assert result["status"] == "conflicts"
+        assert gs_b1.has_pending_conflicts()
+
+        # Simulate process restart: fresh GitSync instance
+        gs_b2 = GitSync(clone_b)
+        assert gs_b2._pending_report is None  # not loaded yet
+
+        # merge_status() should find the pending file
+        status = gs_b2.merge_status()
+        assert status["status"] == "conflicts"
+
+        # Pulling again should re-fetch and re-merge without crash
+        result2 = gs_b2.pull(strategy=Strategy.agent)
+        assert result2["status"] == "conflicts"
+        assert gs_b2.has_pending_conflicts()
+
+    def test_apply_resolutions_with_remote_advance(self, two_repos):
+        """apply_resolutions handles remote advancing after conflict detection."""
+        _, clone_a, clone_b = two_repos
+
+        # Create initial conflict
+        store_a = ContextStore(clone_a)
+        store_a.set_knowledge("arch", "Version from A")
+        repo_a = git.Repo(clone_a)
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: update arch")
+        repo_a.remotes.origin.push()
+
+        store_b = ContextStore(clone_b)
+        store_b.set_knowledge("arch", "Version from B")
+        repo_b = git.Repo(clone_b)
+        repo_b.index.add([STORE_DIR])
+        repo_b.index.commit("B: update arch")
+
+        # Detect conflict with interactive strategy
+        gs_b = GitSync(clone_b)
+        result = gs_b.pull(strategy=Strategy.interactive)
+        assert result["status"] == "conflicts"
+
+        # Remote advances: clone A pushes another change
+        store_a.set_knowledge("stack", "New stack from A")
+        repo_a.index.add([STORE_DIR])
+        repo_a.index.commit("A: add stack")
+        repo_a.remotes.origin.push()
+
+        # Clone B applies stale resolutions -- should handle new remote state
+        conflicts = gs_b._pending_report.conflicts
+        resolutions = [(c.file_path, c.theirs_content) for c in conflicts]
+        apply_result = gs_b.apply_resolutions(resolutions)
+        # Should succeed (re-fetches and re-merges)
+        assert apply_result["status"] == "merged"
+        assert apply_result["strategy"] == "interactive"
