@@ -250,7 +250,7 @@ class GitSync:
             # Validate: only store files should have been touched
             non_store = self._merge_touched_non_store_files(pre_merge)
             if non_store:
-                self.repo.git.reset("--hard", pre_merge)
+                self.repo.git.reset("--merge", pre_merge)
                 return {
                     "status": "error",
                     "error": f"Pull rejected: remote changed non-store files: {', '.join(non_store)}",
