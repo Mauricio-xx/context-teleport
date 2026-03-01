@@ -50,7 +50,7 @@ Available adapter names: `claude-code`, `opencode`, `codex`, `gemini`, `cursor`.
 | **Name** | `claude-code` |
 | **Imports from** | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.claude/skills/*/SKILL.md` |
 | **Exports to** | `CLAUDE.md` (managed section with conventions + knowledge), `MEMORY.md`, `.claude/skills/` |
-| **MCP config** | `.claude/mcp.json` |
+| **MCP config** | `.mcp.json` (project root) |
 | **Detection** | Checks for `.claude/` directory or `CLAUDE.md` file |
 
 Import parses `MEMORY.md` and `CLAUDE.md` as knowledge entries. Rules files are imported with their filename as the key. Skills are imported as-is from `.claude/skills/*/SKILL.md`.

@@ -84,7 +84,7 @@ class TestMcp:
         assert "context-teleport" in config["mcpServers"]
         entry = config["mcpServers"]["context-teleport"]
         assert entry["command"] == "uvx"
-        assert entry["args"] == ["context-teleport"]
+        assert entry["args"] == ["--from", "context-teleport", "python", "-m", "ctx.mcp.server"]
 
     def test_register_creates_parent_dir(self, store):
         adapter = GeminiAdapter(store)

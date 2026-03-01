@@ -156,7 +156,7 @@ class TestRegisterIncludesHooks:
         assert result["hooks"]["status"] == "installed"
 
         # MCP config created
-        assert (store.root / ".claude" / "mcp.json").is_file()
+        assert (store.root / ".mcp.json").is_file()
         # Hooks settings created
         assert (store.root / ".claude" / "settings.json").is_file()
 

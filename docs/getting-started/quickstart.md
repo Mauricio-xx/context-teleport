@@ -51,7 +51,7 @@ Register the MCP server so your agent can discover and use it:
     context-teleport register claude-code
     ```
 
-    This writes to `.claude/mcp.json` in your project.
+    This writes to `.mcp.json` in your project root.
 
 === "Cursor"
 

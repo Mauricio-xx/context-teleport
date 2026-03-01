@@ -71,7 +71,7 @@ Context Teleport solves this. It provides a structured, git-backed store that an
 
 | Tool | Import | Export | MCP Registration | Skills |
 |------|--------|--------|-----------------|--------|
-| Claude Code | Yes | Yes | `.claude/mcp.json` | Yes |
+| Claude Code | Yes | Yes | `.mcp.json` | Yes |
 | OpenCode | Yes | Yes | `opencode.json` | Yes |
 | Codex | Yes | Yes | -- | Yes |
 | Gemini | Yes | Yes | `.gemini/settings.json` | Yes |

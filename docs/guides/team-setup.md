@@ -47,7 +47,7 @@ This creates the `.context-teleport/` directory structure:
 context-teleport register claude-code
 ```
 
-This writes the MCP server configuration into `.claude/mcp.json` (or the equivalent
+This writes the MCP server configuration into `.mcp.json` (or the equivalent
 config for other tools), enabling the agent to read and write context automatically.
 
 If you use multiple tools, you can auto-detect and register all of them:

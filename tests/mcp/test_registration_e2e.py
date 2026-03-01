@@ -24,7 +24,7 @@ class TestClaudeCodeRegistrationE2E:
         adapter = ClaudeCodeAdapter(store)
         adapter.register_mcp_server()
 
-        config_path = store.root / ".claude" / "mcp.json"
+        config_path = store.root / ".mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.list_tools()
             assert len(result.tools) == EXPECTED_TOOL_COUNT
@@ -34,7 +34,7 @@ class TestClaudeCodeRegistrationE2E:
         adapter = ClaudeCodeAdapter(store)
         adapter.register_mcp_server()
 
-        config_path = store.root / ".claude" / "mcp.json"
+        config_path = store.root / ".mcp.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
         assert entry["env"]["MCP_CALLER"] == "mcp:claude-code"
@@ -45,7 +45,7 @@ class TestClaudeCodeRegistrationE2E:
         adapter = ClaudeCodeAdapter(store)
         adapter.register_mcp_server()
 
-        config_path = store.root / ".claude" / "mcp.json"
+        config_path = store.root / ".mcp.json"
         async with spawn_mcp_from_config(e2e_store, config_path) as session:
             result = await session.call_tool(
                 "context_add_knowledge",
@@ -66,7 +66,7 @@ class TestClaudeCodeRegistrationE2E:
         adapter = ClaudeCodeAdapter(store)
         adapter.register_mcp_server()
 
-        config_path = store.root / ".claude" / "mcp.json"
+        config_path = store.root / ".mcp.json"
         config = json.loads(config_path.read_text())
         entry = config["mcpServers"]["context-teleport"]
 

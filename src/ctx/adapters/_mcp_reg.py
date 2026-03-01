@@ -11,19 +11,21 @@ SERVER_NAME = "context-teleport"
 def _server_entry(caller_name: str = "", local: bool = False) -> dict:
     """Build the MCP server entry dict, optionally setting MCP_CALLER env.
 
-    When local=False (default), uses ``uvx context-teleport`` so the package
-    is resolved automatically without needing an activated venv.
-    When local=True, uses ``context-teleport`` directly (requires PATH/venv).
+    When local=False (default), uses ``uvx --from context-teleport python -m
+    ctx.mcp.server`` so the MCP server is launched directly, bypassing the
+    TTY-based CLI/MCP dispatch in the entry point.
+    When local=True, uses ``python -m ctx.mcp.server`` (requires PATH/venv).
     """
     if local:
         entry: dict = {
-            "command": "context-teleport",
+            "command": "python",
+            "args": ["-m", "ctx.mcp.server"],
             "type": "stdio",
         }
     else:
         entry = {
             "command": "uvx",
-            "args": ["context-teleport"],
+            "args": ["--from", "context-teleport", "python", "-m", "ctx.mcp.server"],
             "type": "stdio",
         }
     if caller_name:

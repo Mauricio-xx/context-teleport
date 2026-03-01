@@ -28,7 +28,7 @@ uvx context-teleport register claude-code
 ```
 
 !!! tip "How uvx registration works"
-    After `register`, the MCP config file (e.g. `.claude/mcp.json`) contains an entry that runs `uvx context-teleport` as the server command. You do not need to activate anything -- the agent tool handles startup automatically.
+    After `register`, the MCP config file (e.g. `.mcp.json` for Claude Code) contains an entry that runs the MCP server via `uvx`. You do not need to activate anything -- the agent tool handles startup automatically.
 
 !!! info "Installing uv"
     If you do not have `uv` installed yet:

@@ -304,15 +304,15 @@ class ClaudeCodeAdapter:
         return {"items": items, "exported": exported, "dry_run": False}
 
     def mcp_config_path(self) -> Path:
-        """Return the path to Claude Code's MCP config file."""
-        return self.store.root / ".claude" / "mcp.json"
+        """Return the path to Claude Code's MCP config file (.mcp.json at project root)."""
+        return self.store.root / ".mcp.json"
 
     def register_mcp_server(self, local: bool = False) -> dict:
-        """Register the ctx-mcp server in .claude/mcp.json."""
+        """Register the ctx-mcp server in .mcp.json (project-scope config)."""
         return register_mcp_json(self.mcp_config_path(), caller_name="mcp:claude-code", local=local)
 
     def unregister_mcp_server(self) -> dict:
-        """Remove the ctx-mcp server from .claude/mcp.json."""
+        """Remove the ctx-mcp server from .mcp.json."""
         return unregister_mcp_json(self.mcp_config_path())
 
     def register_mcp(self, local: bool = False) -> dict:

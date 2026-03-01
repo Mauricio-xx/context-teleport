@@ -8,7 +8,7 @@ multi-tool setups, and portable context bundles.
 
 | Adapter     | Import sources                                          | Export targets                     | MCP registration |
 |-------------|---------------------------------------------------------|------------------------------------|------------------|
-| Claude Code | MEMORY.md, CLAUDE.md, `.claude/skills/*/SKILL.md`      | CLAUDE.md (conventions + knowledge), MEMORY.md, `.claude/skills/` | `.claude/mcp.json` |
+| Claude Code | MEMORY.md, CLAUDE.md, `.claude/skills/*/SKILL.md`      | CLAUDE.md (conventions + knowledge), MEMORY.md, `.claude/skills/` | `.mcp.json` |
 | Cursor      | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/` | `.cursor/rules/ctx-convention-*.mdc`, `.cursor/rules/ctx-*.mdc`, `.cursor/skills/` | `.cursor/mcp.json` |
 | OpenCode    | AGENTS.md, SQLite sessions, `opencode/skills/`          | AGENTS.md (conventions + knowledge), `opencode/skills/` | `opencode.json`    |
 | Codex       | AGENTS.md, `.codex/instructions.md`, `codex/skills/`    | AGENTS.md (conventions + knowledge), `.codex/skills/` | Not supported      |
