@@ -12,10 +12,10 @@ run() {
     echo "--- $label"
     if "$@"; then
         echo "    OK"
-        ((PASS++))
+        PASS=$((PASS + 1))
     else
         echo "    FAIL"
-        ((FAIL++))
+        FAIL=$((FAIL + 1))
     fi
 }
 
@@ -57,6 +57,62 @@ check_clean() {
     fi
 }
 run "Clean worktree (src/)" check_clean
+
+# 5. CHANGELOG.md exists and mentions the current version
+check_changelog() {
+    if [ ! -f CHANGELOG.md ]; then
+        echo "    CHANGELOG.md not found"
+        return 1
+    fi
+    local ver
+    ver=$(python -c "from ctx import __version__; print(__version__)")
+    if grep -q "\[$ver\]" CHANGELOG.md; then
+        echo "    CHANGELOG.md contains [$ver]"
+        return 0
+    else
+        echo "    CHANGELOG.md does not mention [$ver]"
+        return 1
+    fi
+}
+run "CHANGELOG" check_changelog
+
+# 6. Minimum test count (collected, not executed)
+check_test_count() {
+    local count
+    count=$(python -m pytest --co -q 2>/dev/null | tail -1 | grep -oP '^\d+')
+    if [ -z "$count" ]; then
+        echo "    Could not determine test count"
+        return 1
+    fi
+    if [ "$count" -ge 900 ]; then
+        echo "    Test count: $count (>= 900)"
+        return 0
+    else
+        echo "    Test count too low: $count (need >= 900)"
+        return 1
+    fi
+}
+run "Minimum test count" check_test_count
+
+# 7. Schema version consistency (source vs docs)
+check_schema_version() {
+    local src_ver
+    src_ver=$(python -c "from ctx.core.migrations import SCHEMA_VERSION; print(SCHEMA_VERSION)")
+    local doc_ver
+    doc_ver=$(grep -oP 'current schema version is \*\*\K[0-9.]+' docs/reference/schema.md || true)
+    if [ -z "$doc_ver" ]; then
+        echo "    Could not extract schema version from docs/reference/schema.md"
+        return 1
+    fi
+    if [ "$src_ver" = "$doc_ver" ]; then
+        echo "    Schema versions match: $src_ver"
+        return 0
+    else
+        echo "    Mismatch: source=$src_ver, docs=$doc_ver"
+        return 1
+    fi
+}
+run "Schema version consistency" check_schema_version
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

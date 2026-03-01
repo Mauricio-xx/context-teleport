@@ -90,6 +90,7 @@ nav:
     - Skill Lifecycle: architecture/skill-lifecycle.md
     - Sync Engine: architecture/sync-engine.md
     - Bundle Layout: architecture/bundle-layout.md
+    - Governance: architecture/governance.md
   - Examples:
     - examples/index.md
     - Solo Developer: examples/solo-developer.md

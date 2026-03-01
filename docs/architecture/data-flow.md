@@ -91,6 +91,8 @@ This means the agent sees relevant project context immediately at session start,
 
 ### Onboarding budget
 
+See [Governance](governance.md) for the full table of limits and thresholds.
+
 The instruction string has built-in limits to avoid blowing up the agent's context window on large stores:
 
 - **Content truncation**: Each knowledge, convention, and skill entry is truncated to 2000 characters. A `... (truncated, see full entry via resource)` marker is appended when cut.

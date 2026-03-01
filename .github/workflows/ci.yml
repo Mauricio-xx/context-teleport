@@ -36,3 +36,7 @@ jobs:
 
       - name: Test
         run: pytest tests/ -v
+
+      - name: Release gate
+        if: matrix.python-version == '3.12'
+        run: bash scripts/release-check.sh

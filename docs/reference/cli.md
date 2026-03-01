@@ -6,6 +6,9 @@ non-interactively with no arguments it starts the MCP server.
 
 Most commands accept `--format json` (short: `-F json`) for machine-readable output. The `watch` command is an exception (foreground streaming process).
 
+!!! note "CLI vs MCP response conventions"
+    The CLI and MCP server produce identical **store side-effects** (same files written, same entries created) but use different status strings in their responses. MCP write tools uniformly return `"status": "ok"` and remove tools return `"status": "removed"`, following the convention for machine-to-machine communication. The CLI uses human-readable descriptive statuses (e.g. `"checked_in"`, `"written"`) in its text output. This asymmetry is intentional: both interfaces drive the same `ContextStore` methods, so the on-disk result is identical regardless of which interface is used.
+
 ---
 
 ## Global Options

@@ -111,6 +111,13 @@ class TestPromptDiscovery:
             }
             assert expected.issubset(names), f"Missing prompts: {expected - names}"
 
+    async def test_list_prompts_count(self, e2e_store):
+        from tests.mcp.conftest import EXPECTED_PROMPT_COUNT
+
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.list_prompts()
+            assert len(result.prompts) == EXPECTED_PROMPT_COUNT
+
 
 class TestResourceReads:
     """Read resources via MCP protocol and verify content."""
@@ -300,6 +307,48 @@ class TestRoundTrip:
             content = _extract_text(result)
             data = json.loads(content)
             assert data["current_task"] == "Integration testing"
+
+
+class TestPayloadShapes:
+    """Verify response shapes of critical MCP tools."""
+
+    async def test_add_knowledge_response_shape(self, e2e_store):
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.call_tool(
+                "context_add_knowledge",
+                {"key": "shape-test", "content": "Testing payload shape"},
+            )
+            data = json.loads(result.content[0].text)
+            assert set(data.keys()) >= {"status", "key"}
+            assert data["status"] == "ok"
+            assert data["key"] == "shape-test"
+
+    async def test_check_in_response_shape(self, e2e_store):
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.call_tool(
+                "context_check_in",
+                {"task": "testing shapes"},
+            )
+            data = json.loads(result.content[0].text)
+            assert set(data.keys()) >= {"status", "member", "task"}
+            assert data["status"] == "ok"
+            assert isinstance(data["member"], str) and len(data["member"]) > 0
+            assert data["task"] == "testing shapes"
+
+    async def test_sync_push_response_shape(self, e2e_store):
+        async with spawn_mcp_session(e2e_store) as session:
+            await session.call_tool(
+                "context_add_knowledge", {"key": "push-test", "content": "data"}
+            )
+            result = await session.call_tool("context_sync_push", {})
+            data = json.loads(result.content[0].text)
+            assert "status" in data
+
+    async def test_sync_pull_response_shape(self, e2e_store):
+        async with spawn_mcp_session(e2e_store) as session:
+            result = await session.call_tool("context_sync_pull", {"strategy": "ours"})
+            data = json.loads(result.content[0].text)
+            assert "status" in data
 
 
 def _extract_text(result) -> str:

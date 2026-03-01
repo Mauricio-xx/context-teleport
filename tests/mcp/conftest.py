@@ -17,9 +17,10 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 
 _SRC_DIR = str(Path(__file__).resolve().parents[2] / "src")
 
-# Update these when adding/removing MCP tools or resources
+# Update these when adding/removing MCP tools, resources, or prompts
 EXPECTED_TOOL_COUNT = 32
 EXPECTED_RESOURCE_COUNT = 16
+EXPECTED_PROMPT_COUNT = 4
 
 
 @asynccontextmanager

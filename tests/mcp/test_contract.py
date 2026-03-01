@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from tests.mcp.conftest import EXPECTED_RESOURCE_COUNT, EXPECTED_TOOL_COUNT
+from tests.mcp.conftest import (
+    EXPECTED_PROMPT_COUNT,
+    EXPECTED_RESOURCE_COUNT,
+    EXPECTED_TOOL_COUNT,
+)
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _SERVER_PY = _PROJECT_ROOT / "src" / "ctx" / "mcp" / "server.py"
@@ -39,6 +43,14 @@ class TestMCPContract:
             f"EXPECTED_RESOURCE_COUNT is {EXPECTED_RESOURCE_COUNT}"
         )
 
+    def test_prompt_count_matches_source(self):
+        """EXPECTED_PROMPT_COUNT must match the number of @mcp.prompt() decorators."""
+        actual = _count_decorators(self.source, r"@mcp\.prompt\(\)")
+        assert actual == EXPECTED_PROMPT_COUNT, (
+            f"Source has {actual} @mcp.prompt() decorators but "
+            f"EXPECTED_PROMPT_COUNT is {EXPECTED_PROMPT_COUNT}"
+        )
+
     @pytest.mark.parametrize(
         "doc_path,pattern",
         [
@@ -46,8 +58,9 @@ class TestMCPContract:
             ("docs/index.md", r"(\d+) tools,\s*(\d+) resources"),
             ("docs/reference/mcp-tools.md", r"\*\*(\d+) MCP tools\*\*"),
             ("docs/reference/mcp-resources.md", r"\*\*(\d+) MCP resources\*\*"),
+            ("docs/reference/mcp-prompts.md", r"\*\*(\d+) MCP prompts\*\*"),
         ],
-        ids=["README", "docs-index", "mcp-tools-doc", "mcp-resources-doc"],
+        ids=["README", "docs-index", "mcp-tools-doc", "mcp-resources-doc", "mcp-prompts-doc"],
     )
     def test_doc_counts_match(self, doc_path, pattern):
         """Documentation counts must match EXPECTED constants."""
@@ -75,4 +88,9 @@ class TestMCPContract:
             count = int(match.group(1))
             assert count == EXPECTED_RESOURCE_COUNT, (
                 f"{doc_path} says {count} resources but expected {EXPECTED_RESOURCE_COUNT}"
+            )
+        elif "prompts" in doc_path:
+            count = int(match.group(1))
+            assert count == EXPECTED_PROMPT_COUNT, (
+                f"{doc_path} says {count} prompts but expected {EXPECTED_PROMPT_COUNT}"
             )

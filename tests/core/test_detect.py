@@ -1,7 +1,6 @@
 """Tests for project auto-detection in ContextStore.init()."""
 
 import json
-from pathlib import Path
 
 import git
 
