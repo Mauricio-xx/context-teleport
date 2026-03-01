@@ -87,7 +87,20 @@ class TestMcp:
         result = adapter.register_mcp()
         assert result["status"] == "registered"
         config = json.loads((store.root / "opencode.json").read_text())
-        assert "context-teleport" in config["mcpServers"]
+        assert "context-teleport" in config["mcp"]
+        entry = config["mcp"]["context-teleport"]
+        assert entry["type"] == "local"
+        assert entry["command"] == ["uvx", "--from", "context-teleport", "python", "-m", "ctx.mcp.server"]
+        assert entry["environment"] == {"MCP_CALLER": "mcp:opencode"}
+
+    def test_register_local(self, store):
+        adapter = OpenCodeAdapter(store)
+        result = adapter.register_mcp(local=True)
+        assert result["status"] == "registered"
+        config = json.loads((store.root / "opencode.json").read_text())
+        entry = config["mcp"]["context-teleport"]
+        assert entry["type"] == "local"
+        assert entry["command"] == ["python", "-m", "ctx.mcp.server"]
 
     def test_unregister(self, store):
         adapter = OpenCodeAdapter(store)

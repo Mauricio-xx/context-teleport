@@ -120,10 +120,10 @@ class TestRegisterMCPEnv:
 
         config_path = store.root / "opencode.json"
         config = json.loads(config_path.read_text())
-        entry = config["mcpServers"]["context-teleport"]
-        assert entry["command"] == "uvx"
-        assert entry["args"] == _UVX_ARGS
-        assert entry["env"] == {"MCP_CALLER": "mcp:opencode"}
+        entry = config["mcp"]["context-teleport"]
+        assert entry["type"] == "local"
+        assert entry["command"] == ["uvx", "--from", "context-teleport", "python", "-m", "ctx.mcp.server"]
+        assert entry["environment"] == {"MCP_CALLER": "mcp:opencode"}
 
     def test_cursor_sets_env(self, store):
         adapter = CursorAdapter(store)

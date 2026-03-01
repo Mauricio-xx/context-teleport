@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from ctx.adapters._agents_md import parse_agents_md, write_agents_md_section
-from ctx.adapters._mcp_reg import register_mcp_json, unregister_mcp_json
+from ctx.adapters._mcp_reg import register_mcp_opencode, unregister_mcp_opencode
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import get_author
@@ -160,7 +160,7 @@ class OpenCodeAdapter:
         return self.store.root / "opencode.json"
 
     def register_mcp(self, local: bool = False) -> dict:
-        return register_mcp_json(self.mcp_config_path(), caller_name="mcp:opencode", local=local)
+        return register_mcp_opencode(self.mcp_config_path(), caller_name="mcp:opencode", local=local)
 
     def unregister_mcp(self) -> dict:
-        return unregister_mcp_json(self.mcp_config_path())
+        return unregister_mcp_opencode(self.mcp_config_path())

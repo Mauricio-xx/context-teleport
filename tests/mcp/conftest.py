@@ -49,12 +49,18 @@ async def spawn_mcp_from_config(cwd: Path, config_path: Path):
     read its mcp.json, find the server entry, and spawn the process.
     """
     config = json.loads(config_path.read_text())
-    entry = config["mcpServers"]["context-teleport"]
+    # Support both mcpServers (Claude/Cursor/Gemini) and mcp (OpenCode) formats
+    if "mcpServers" in config:
+        entry = config["mcpServers"]["context-teleport"]
+    else:
+        entry = config["mcp"]["context-teleport"]
 
     # Merge env from config into process env
     env = {**os.environ, "PYTHONPATH": _SRC_DIR}
-    if "env" in entry:
-        env.update(entry["env"])
+    # Support both "env" (Claude/Cursor) and "environment" (OpenCode)
+    entry_env = entry.get("env") or entry.get("environment")
+    if entry_env:
+        env.update(entry_env)
 
     # Use sys.executable -m ctx.mcp.server instead of the entry command
     # (the entry uses ctx-mcp which may not be on PATH during tests)
