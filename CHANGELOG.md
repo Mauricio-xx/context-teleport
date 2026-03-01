@@ -5,6 +5,20 @@ All notable changes to Context Teleport are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-03-01
+
+### Added
+- MCP prompt count contract tests and payload shape E2E assertions
+- CLI/MCP parity tests verifying identical store side-effects across interfaces
+- Adapter export-import round-trip tests for all 5 adapters
+- CHANGELOG.md in Keep a Changelog format
+- Context governance reference doc with all limits and thresholds
+- Release gate in CI (CHANGELOG, minimum test count, schema version consistency)
+
+### Fixed
+- Bash arithmetic bug in release-check.sh (`set -e` incompatibility)
+- Unused import lint error in test_detect.py
+
 ## [0.5.2] - 2025-06-10
 
 ### Added
