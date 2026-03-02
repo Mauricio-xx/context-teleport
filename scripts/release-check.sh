@@ -114,6 +114,9 @@ check_schema_version() {
 }
 run "Schema version consistency" check_schema_version
 
+# 8. MCP registration schema contract tests
+run "MCP schema contracts" python -m pytest tests/adapters/test_schema_contracts.py -x -q
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ]

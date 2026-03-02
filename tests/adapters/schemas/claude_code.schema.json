@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Claude Code MCP config (.mcp.json). Based on Claude Code docs and observed behavior.",
+  "type": "object",
+  "required": ["mcpServers"],
+  "properties": {
+    "mcpServers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["command", "args"],
+        "properties": {
+          "command": {"type": "string"},
+          "args": {"type": "array", "items": {"type": "string"}},
+          "type": {"type": "string", "const": "stdio"},
+          "env": {"type": "object", "additionalProperties": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "OpenCode MCP config (opencode.json). Strict -- from sst/opencode Zod schema.",
+  "type": "object",
+  "required": ["mcp"],
+  "properties": {
+    "mcp": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "command"],
+        "properties": {
+          "type": {"type": "string", "const": "local"},
+          "command": {"type": "array", "items": {"type": "string"}},
+          "environment": {"type": "object", "additionalProperties": {"type": "string"}},
+          "enabled": {"type": "boolean"},
+          "timeout": {"type": "integer", "exclusiveMinimum": 0}
+        }
+      }
+    }
+  }
+}

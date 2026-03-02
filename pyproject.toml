@@ -38,6 +38,7 @@ dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
     "anyio>=4.0",
+    "jsonschema>=4.0",
 ]
 watch = [
     "watchdog>=3.0",
