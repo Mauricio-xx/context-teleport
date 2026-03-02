@@ -5,6 +5,14 @@ All notable changes to Context Teleport are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-03-02
+
+### Added
+- MCP registration schema contract tests validating configs against each tool's real JSON schema
+- JSON schemas for Claude Code, Cursor, Gemini, and OpenCode MCP config formats
+- Schema contract check added to release gate (check 8)
+- `jsonschema` dev dependency for contract validation
+
 ## [0.5.3] - 2026-03-01
 
 ### Added
