@@ -85,6 +85,21 @@ def find_claude_project_dir(project_root: Path | None = None) -> Path | None:
     return None
 
 
+def opencode_data_dir() -> Path:
+    """Return the OpenCode data directory.
+
+    Respects OPENCODE_DATA_DIR env var, falls back to
+    XDG_DATA_HOME/opencode/ or ~/.local/share/opencode/.
+    """
+    env = os.environ.get("OPENCODE_DATA_DIR")
+    if env:
+        return Path(env)
+    xdg = os.environ.get("XDG_DATA_HOME")
+    if xdg:
+        return Path(xdg) / "opencode"
+    return Path.home() / ".local" / "share" / "opencode"
+
+
 def sanitize_key(key: str) -> str:
     """Sanitize a key for use as a filename (no path traversal, no special chars)."""
     key = key.strip().lower()
