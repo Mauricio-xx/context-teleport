@@ -39,6 +39,7 @@ def _ensure_loaded() -> dict[str, ArtifactImporter]:
         return _registry
 
     _registry = {}
+    _builtin_classes: set[type] = set()
 
     # 1. Built-in importers from ctx.eda.parsers
     try:
@@ -46,6 +47,7 @@ def _ensure_loaded() -> dict[str, ArtifactImporter]:
 
         for name, cls in builtin_map.items():
             _registry[name] = cls()
+            _builtin_classes.add(cls)
     except Exception as exc:
         logger.warning("Failed to load built-in EDA importers: %s", exc)
 
@@ -58,7 +60,9 @@ def _ensure_loaded() -> dict[str, ArtifactImporter]:
             try:
                 cls = ep.load()
                 instance = cls()
-                if ep.name in _registry:
+                if ep.name in _registry and cls not in _builtin_classes:
+                    # Only warn for genuine third-party collisions, not our
+                    # own entry-points re-registering the same built-in class.
                     logger.warning(
                         "Importer '%s' from '%s' shadows existing importer",
                         ep.name,

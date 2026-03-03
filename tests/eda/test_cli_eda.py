@@ -122,7 +122,7 @@ class TestImportEda:
         p.write_text("just some text")
         result = runner.invoke(app, ["import", "eda", str(p)])
         assert result.exit_code == 1
-        assert "No importer" in result.output
+        assert "No plugin found" in result.output
 
     def test_reimport_overwrites(self, initialized_project, librelane_config):
         """Reimporting the same file overwrites the knowledge entry."""

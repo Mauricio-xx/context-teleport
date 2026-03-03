@@ -284,8 +284,11 @@ def import_eda(
     else:
         importer = auto_detect_importer(target)
         if importer is None:
-            error(f"No importer recognized: {path}")
-            info(f"Try --type with one of: {', '.join(list_importers())}")
+            error(
+                "No plugin found. You might need to install a third-party "
+                "importer for this file format."
+            )
+            info(f"Available EDA importers: {', '.join(list_importers())}")
             raise typer.Exit(1)
 
     # Parse
@@ -394,8 +397,12 @@ def import_artifacts(
     else:
         importer = auto_detect_importer(target)
         if importer is None:
-            error(f"No importer recognized: {path}")
-            info(f"Try --type with one of: {', '.join(list_importers())}")
+            error(
+                "No plugin found. You might need to install a third-party "
+                "importer for this file format."
+            )
+            info(f"Installed importers: {', '.join(list_importers()) or '(none)'}")
+            info("Try --type to force a specific importer, or --list to see all available.")
             raise typer.Exit(1)
 
     # Parse

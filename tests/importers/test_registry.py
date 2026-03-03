@@ -189,6 +189,19 @@ class TestNameCollision:
         assert imp.name == "another"
 
 
+    def test_same_class_no_warning(self, caplog):
+        """Built-in class re-registered via entry-point should not warn."""
+        from ctx.eda.parsers.liberty import LibertyParser
+
+        ep = _make_entry_point("liberty", LibertyParser)
+        with self._patch_entry_points([ep]):
+            reset_registry()
+            with caplog.at_level(logging.WARNING, logger="ctx.importers"):
+                imp = get_importer("liberty")
+        assert imp is not None
+        assert "shadows existing importer" not in caplog.text
+
+
 class TestAutoDetect:
     def test_auto_detect_with_plugin(self, tmp_path):
         ep = _make_entry_point("fake-web", _FakeImporter)
