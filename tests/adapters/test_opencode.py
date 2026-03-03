@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from ctx.adapters.opencode import OpenCodeAdapter
 from ctx.utils.paths import opencode_data_dir
 

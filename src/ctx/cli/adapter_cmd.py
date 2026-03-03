@@ -337,6 +337,116 @@ def import_eda(
             info(f"  {item.key} <- {item.source}")
 
 
+@adapter_app.command("artifacts")
+def import_artifacts(
+    path: Optional[str] = typer.Argument(None, help="Path to artifact (file or directory)"),
+    importer_type: Optional[str] = typer.Option(
+        None,
+        "--type",
+        "-t",
+        help="Force importer type",
+    ),
+    list_available: bool = typer.Option(
+        False,
+        "--list",
+        help="Show all registered importers (built-in + plugins)",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported"),
+    fmt: Optional[str] = FORMAT_OPTION,
+) -> None:
+    """Import knowledge from artifacts using the plugin registry (EDA, web, etc.)."""
+    from ctx.importers import auto_detect_importer, get_importer, list_importers
+    from ctx.utils.paths import get_author
+
+    if list_available:
+        names = list_importers()
+        if fmt == "json":
+            output({"importers": names}, fmt="json")
+        elif names:
+            info("Available importers:")
+            for name in names:
+                imp = get_importer(name)
+                desc = imp.describe() if imp else ""
+                info(f"  {name}: {desc}")
+        else:
+            info("No importers registered")
+        return
+
+    if path is None:
+        error("Path argument is required (or use --list to see available importers)")
+        raise typer.Exit(1)
+
+    target = Path(path)
+    if not target.exists():
+        error(f"Path not found: {path}")
+        raise typer.Exit(1)
+
+    # Resolve importer
+    if importer_type:
+        importer = get_importer(importer_type)
+        if importer is None:
+            error(f"Unknown importer type: {importer_type}")
+            info(f"Available: {', '.join(list_importers())}")
+            raise typer.Exit(1)
+        if not importer.can_parse(target):
+            error(f"Importer '{importer_type}' cannot parse: {path}")
+            raise typer.Exit(1)
+    else:
+        importer = auto_detect_importer(target)
+        if importer is None:
+            error(f"No importer recognized: {path}")
+            info(f"Try --type with one of: {', '.join(list_importers())}")
+            raise typer.Exit(1)
+
+    # Parse
+    items = importer.parse(target)
+    if not items:
+        info(f"No items extracted by {importer.name}")
+        if fmt == "json":
+            output({"items": [], "imported": 0, "dry_run": dry_run}, fmt="json")
+        return
+
+    if dry_run:
+        if fmt == "json":
+            output(
+                {
+                    "items": [{"type": i.type, "key": i.key, "source": i.source} for i in items],
+                    "imported": 0,
+                    "dry_run": True,
+                    "importer": importer.name,
+                },
+                fmt="json",
+            )
+        else:
+            info(f"Dry run ({importer.name}) -- the following would be imported:")
+            for item in items:
+                info(f"  {item.type}: {item.key} ({item.source})")
+        return
+
+    # Write to store
+    store = get_store()
+    author = f"import:artifact-{importer.name} ({get_author()})"
+    imported = 0
+    for item in items:
+        store.set_knowledge(item.key, item.content, author=author)
+        imported += 1
+
+    if fmt == "json":
+        output(
+            {
+                "items": [{"type": i.type, "key": i.key, "source": i.source} for i in items],
+                "imported": imported,
+                "dry_run": False,
+                "importer": importer.name,
+            },
+            fmt="json",
+        )
+    else:
+        success(f"Imported {imported} item(s) via {importer.name}")
+        for item in items:
+            info(f"  {item.key} <- {item.source}")
+
+
 @adapter_app.command("conventions")
 def import_conventions(
     path: str = typer.Argument(..., help="Path to markdown file with conventions"),

@@ -137,7 +137,11 @@ class OpenCodeAdapter:
             repo = Repo(self.store.root, search_parent_directories=True)
             root_commits = repo.git.rev_list("HEAD", max_parents=0).strip().split("\n")
             return root_commits[0] if root_commits else None
-        except (InvalidGitRepositoryError, Exception):
+        except InvalidGitRepositoryError:
+            logger.warning("Not a git repository, cannot determine OpenCode project ID: %s", self.store.root)
+            return None
+        except Exception as exc:
+            logger.warning("Failed to get git root commit: %s", exc)
             return None
 
     def _read_session_summaries(self) -> list[dict]:
@@ -148,6 +152,7 @@ class OpenCodeAdapter:
 
         sessions_dir = opencode_data_dir() / "storage" / "session" / project_id
         if not sessions_dir.is_dir():
+            logger.warning("OpenCode session data directory not found: %s", sessions_dir)
             return []
 
         # Collect session files with their timestamps for sorting
@@ -160,7 +165,8 @@ class OpenCodeAdapter:
                 if not ts:
                     ts = json_path.stat().st_mtime
                 session_entries.append((ts, json_path))
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning("Failed to parse session file %s: %s", json_path, exc)
                 continue
 
         # Sort by timestamp descending, limit to 20

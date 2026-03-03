@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 SERVER_NAME = "context-teleport"
 
@@ -39,7 +42,8 @@ def _safe_read_json(path: Path) -> dict:
         return {}
     try:
         return json.loads(path.read_text())
-    except (json.JSONDecodeError, OSError):
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Failed to parse MCP config %s: %s", path, exc)
         return {}
 
 

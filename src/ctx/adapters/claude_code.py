@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shutil
 from pathlib import Path
@@ -15,6 +16,8 @@ from ctx.utils.paths import (
     find_claude_project_dir,
     get_author,
 )
+
+logger = logging.getLogger(__name__)
 
 
 CTX_SECTION_MARKER = "## Team Context (managed by ctx)"
@@ -46,9 +49,11 @@ class ClaudeCodeAdapter:
         """Read MEMORY.md from Claude Code project directory."""
         project_dir = self._find_project_dir()
         if project_dir is None:
+            logger.warning("No Claude Code project memory directory found for %s", self.store.root)
             return None
         memory_dir = project_dir / "memory"
         if not memory_dir.is_dir():
+            logger.warning("Claude Code memory directory missing: %s", memory_dir)
             return None
         memory_file = memory_dir / "MEMORY.md"
         if memory_file.is_file():
@@ -421,7 +426,8 @@ class ClaudeCodeAdapter:
         if settings_path.is_file():
             try:
                 settings = json.loads(settings_path.read_text())
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning("Failed to parse %s, starting fresh: %s", settings_path, exc)
                 settings = {}
 
         # Merge hooks: replace ctx-managed hooks, preserve others

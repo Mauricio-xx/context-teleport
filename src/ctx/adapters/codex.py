@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from ctx.adapters._agents_md import parse_agents_md, write_agents_md_section
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import get_author
+
+logger = logging.getLogger(__name__)
 
 
 class CodexAdapter:

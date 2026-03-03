@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from ctx.adapters._mcp_reg import register_mcp_json, unregister_mcp_json
 from ctx.core.scope import Scope
 from ctx.core.store import ContextStore
 from ctx.utils.paths import get_author
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiAdapter:
