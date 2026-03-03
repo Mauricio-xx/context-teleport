@@ -46,7 +46,7 @@
     (importlabel) {Import Sources};
 
 \node[filebox, below=0.15cm of importlabel] (im1) {\texttt{MEMORY.md} / \texttt{CLAUDE.md}};
-\node[filebox, below=0.2cm of im1] (im2) {\texttt{AGENTS.md}};
+\node[filebox, below=0.2cm of im1] (im2) {\texttt{AGENTS.md}, JSON sessions, \texttt{agents/}};
 \node[filebox, below=0.2cm of im2] (im3) {\texttt{.cursorrules} / \texttt{.cursor/rules/}};
 \node[filebox, below=0.2cm of im3] (im4) {\texttt{.gemini/rules/*.md}};
 \node[filebox, below=0.2cm of im4] (im5) {\texttt{.codex/instructions.md}};
@@ -106,7 +106,13 @@
 
 % All adapters skills note
 \node[font=\sffamily\tiny\itshape, text=fsgray, below=0.1cm of im5.south, align=center]
-    {+ \texttt{<tool>/skills/*/SKILL.md}\\for all adapters};
+    (skillsnote) {+ \texttt{<tool>/skills/*/SKILL.md}\\for all adapters};
+
+% Plugin registry note
+\node[modbox, minimum width=8cm, below=0.4cm of mcpconf] (plugin)
+    {\textbf{Plugin Registry:} \texttt{ctx.importers} entry-point group (built-in + third-party)};
+
+\draw[dotted, thick, color=fsgray!50] (mcpconf.south) -- (plugin.north);
 
 \end{tikzpicture}
 \end{document}

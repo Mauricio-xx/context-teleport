@@ -39,7 +39,7 @@
 \node[box=ifgreen, minimum width=5.5cm] (cli)
     {\textbf{CLI}\\\textcolor{ifgreen!70!black}{\scriptsize typer -- interactive commands}};
 \node[box=ifgreen, minimum width=5.5cm, right=1cm of cli] (mcp)
-    {\textbf{MCP Server}\\\textcolor{ifgreen!70!black}{\scriptsize FastMCP -- 23 tools, 13 resources}};
+    {\textbf{MCP Server}\\\textcolor{ifgreen!70!black}{\scriptsize FastMCP -- 32 tools, 16 resources, 4 prompts}};
 
 % Interface label
 \node[label=ifgreen, above=0.1cm of cli.north west, anchor=south west] {INTERFACES};
@@ -82,11 +82,11 @@
 \draw[arr=syncpurple] (gitsync.east) -- (remote.west);
 
 % Right: Domain Extensions
-\node[box=domteal, minimum width=3.6cm, minimum height=2.4cm,
+\node[box=domteal, minimum width=3.6cm, minimum height=3.0cm,
     below right=1.2cm and 1.6cm of coreframe.south] (domain) {};
 \node[label=domteal, above=0.05cm of domain.north west, anchor=south west] {\textbf{DOMAIN}};
 \node[font=\sffamily\scriptsize, align=left, text=domteal!80!black] at (domain.center) {
-    EDA Parsers\\{\scriptsize (6 formats)}\\[2pt]GitHub Source\\{\scriptsize (issue bridge)}
+    EDA Parsers\\{\scriptsize (6 formats)}\\[2pt]Plugin Registry\\{\scriptsize (\texttt{ctx.importers} entry points)}\\[2pt]GitHub Source\\{\scriptsize (issue bridge)}
 };
 
 % === Bottom: Filesystem ===
