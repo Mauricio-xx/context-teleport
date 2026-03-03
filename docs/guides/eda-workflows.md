@@ -153,6 +153,25 @@ context-teleport import eda results/signoff/inverter.drc
 
 The entry is overwritten with the updated results. No duplicate keys accumulate.
 
+## Generic Artifact Import
+
+The `import eda` command is a convenient shortcut for EDA-specific files, but
+Context Teleport also provides a generic `import artifacts` command that uses
+the full plugin registry. This registry includes all built-in EDA parsers plus
+any third-party importers installed via the `ctx.importers` entry-point group.
+
+```bash
+# Equivalent to "import eda" but uses the plugin registry
+context-teleport import artifacts /path/to/config.json
+
+# List all registered importers (built-in + plugins)
+context-teleport import artifacts --list
+```
+
+If you have domain-specific artifact formats beyond EDA, you can write a plugin
+importer and it will be available through this command. See
+[Adding Domain Importers](../contributing/adding-eda-parsers.md) for details.
+
 ## EDA Skills Pack
 
 Context Teleport provides a separate git repository (`eda-skills-pack`) containing pre-built `SKILL.md` files for common EDA tasks. These skills teach AI agents how to:

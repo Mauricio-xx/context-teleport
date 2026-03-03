@@ -177,4 +177,21 @@ Re-importing the same artifact overwrites the existing knowledge entry with the 
 
 The parser registry (`src/ctx/eda/parsers/__init__.py`) maintains the list of all available parsers. Auto-detection iterates through all registered parsers and uses the first one where `can_parse()` returns `True`.
 
-To add a new parser, see [Adding EDA Parsers](../contributing/adding-eda-parsers.md).
+To add a new parser, see [Adding Domain Importers](../contributing/adding-eda-parsers.md).
+
+## Plugin system
+
+Since v0.5.5, importers are also discoverable via Python entry points.
+Third-party packages can register importers in the `ctx.importers`
+entry-point group without modifying Context Teleport source code.
+
+The generic `import artifacts` command uses this registry, which combines
+built-in EDA parsers with any installed plugins. Use `--list` to see all
+registered importers:
+
+```bash
+context-teleport import artifacts --list
+```
+
+See [Adding Domain Importers](../contributing/adding-eda-parsers.md) for
+details on writing and registering your own importers.

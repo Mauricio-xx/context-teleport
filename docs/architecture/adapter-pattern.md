@@ -11,7 +11,7 @@ Each AI coding tool stores context differently:
 | Tool | Format |
 |------|--------|
 | Claude Code | `MEMORY.md`, `CLAUDE.md`, `.claude/rules/*.md` |
-| OpenCode | `AGENTS.md`, SQLite sessions |
+| OpenCode | `AGENTS.md`, JSON sessions, `.opencode/agents/`, `.opencode/commands/` |
 | Codex | `AGENTS.md`, `.codex/instructions.md` |
 | Gemini | `.gemini/rules/*.md`, `GEMINI.md` |
 | Cursor | `.cursor/rules/*.mdc` (MDC format), `.cursorrules` |

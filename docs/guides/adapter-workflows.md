@@ -10,7 +10,7 @@ multi-tool setups, and portable context bundles.
 |-------------|---------------------------------------------------------|------------------------------------|------------------|
 | Claude Code | MEMORY.md, CLAUDE.md, `.claude/skills/*/SKILL.md`      | CLAUDE.md (conventions + knowledge), MEMORY.md, `.claude/skills/` | `.mcp.json` |
 | Cursor      | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/` | `.cursor/rules/ctx-convention-*.mdc`, `.cursor/rules/ctx-*.mdc`, `.cursor/skills/` | `.cursor/mcp.json` |
-| OpenCode    | AGENTS.md, SQLite sessions, `opencode/skills/`          | AGENTS.md (conventions + knowledge), `opencode/skills/` | `opencode.json`    |
+| OpenCode    | AGENTS.md, JSON sessions, `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/` | AGENTS.md (conventions + knowledge), `.opencode/skills/` | `opencode.json`    |
 | Codex       | AGENTS.md, `.codex/instructions.md`, `codex/skills/`    | AGENTS.md (conventions + knowledge), `.codex/skills/` | Not supported      |
 | Gemini      | `.gemini/rules/*.md`, STYLEGUIDE.md, GEMINI.md, `.gemini/skills/` | `.gemini/rules/ctx-convention-*.md`, `.gemini/rules/ctx-*.md`, `.gemini/skills/` | `.gemini/settings.json` |
 
@@ -69,8 +69,10 @@ No files are written during a dry run. Use it to verify before committing to an 
 
 **OpenCode:**
 - `AGENTS.md` -> knowledge entry `agents-md`
-- SQLite session database -> session entries
-- `opencode/skills/*/SKILL.md` -> skills
+- `.opencode/agents/` -> agent definition entries
+- `.opencode/commands/` -> command definition entries
+- JSON session files -> session entries
+- `.opencode/skills/*/SKILL.md` -> skills
 
 **Codex:**
 - `AGENTS.md` -> knowledge entry `agents-md`

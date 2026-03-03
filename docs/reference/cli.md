@@ -718,7 +718,7 @@ Each adapter imports tool-specific files into the context store:
 | Tool | Sources |
 |---|---|
 | `claude-code` | `MEMORY.md`, `CLAUDE.md`, `.claude/skills/*/SKILL.md` |
-| `opencode` | `AGENTS.md`, SQLite sessions, `.opencode/skills/*/SKILL.md` |
+| `opencode` | `AGENTS.md`, JSON sessions, `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/*/SKILL.md` |
 | `codex` | `AGENTS.md`, `.codex/instructions.md`, `.codex/skills/*/SKILL.md` |
 | `gemini` | `.gemini/rules/*.md`, `STYLEGUIDE.md`, `GEMINI.md`, `.gemini/skills/*/SKILL.md` |
 | `cursor` | `.cursor/rules/*.mdc`, `.cursorrules`, `.cursor/skills/*/SKILL.md` |
@@ -762,6 +762,34 @@ context-teleport import eda <path> [--type TYPE] [--dry-run]
 
 Available importer types: `librelane-config`, `librelane-metrics`, `magic-drc`,
 `netgen-lvs`, `orfs-config`, `liberty`.
+
+#### Artifact Import (Generic)
+
+```bash
+context-teleport import artifacts <path> [--type TYPE] [--list] [--dry-run]
+```
+
+| Option | Short | Description |
+|---|---|---|
+| `--list` | | Show all registered importers (built-in + plugins) |
+| `--type` | `-t` | Force importer type |
+| `--dry-run` | | Preview what would be imported |
+
+Uses the plugin registry which includes built-in EDA parsers and any
+third-party importers installed via the `ctx.importers` entry-point group.
+See [Adding Domain Importers](../contributing/adding-eda-parsers.md) for
+details on writing plugins.
+
+```bash
+# List all available importers
+context-teleport import artifacts --list
+
+# Auto-detect and import
+context-teleport import artifacts /path/to/config.json
+
+# Force a specific importer
+context-teleport import artifacts /path/to/file --type liberty
+```
 
 #### GitHub Import
 

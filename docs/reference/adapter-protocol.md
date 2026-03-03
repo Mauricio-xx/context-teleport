@@ -68,12 +68,12 @@ Export writes a managed section in `CLAUDE.md` delimited by markers:
 | Aspect | Detail |
 |--------|--------|
 | **Name** | `opencode` |
-| **Imports from** | `AGENTS.md`, `.opencode/opencode.db` (SQLite sessions), `.opencode/skills/*/SKILL.md` |
+| **Imports from** | `AGENTS.md`, `.opencode/agents/`, `.opencode/commands/`, JSON session files, `.opencode/skills/*/SKILL.md` |
 | **Exports to** | `AGENTS.md` (managed section), `.opencode/skills/` |
 | **MCP config** | `opencode.json` |
 | **Detection** | Checks for `AGENTS.md` or `.opencode/` directory |
 
-Session import reads from OpenCode's SQLite database to extract session history. Knowledge is imported from the `AGENTS.md` file.
+Import reads agent definitions from `.opencode/agents/`, command definitions from `.opencode/commands/`, and session history from JSON files in the OpenCode data directory. Knowledge is also imported from the `AGENTS.md` file.
 
 ### Codex
 
