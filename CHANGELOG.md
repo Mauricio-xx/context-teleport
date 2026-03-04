@@ -5,6 +5,39 @@ All notable changes to Context Teleport are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-03-04
+
+### Added
+- **Plugin system for domain importers**: `ctx.importers` entry-point group allows third-party packages to register artifact importers without forking the repo
+- `ArtifactImporter` protocol in `ctx.importers.base` as the public API for plugin authors
+- Lazy registry merging built-in EDA parsers with entry-point discovered plugins (broken plugins logged and skipped, name collisions warned)
+- All 6 EDA parsers registered as `ctx.importers` entry points in pyproject.toml
+- `context-teleport import artifacts` CLI command with `--list`, `--type`, `--dry-run`
+- Warning-level logging across all adapters and MCP registration for silent failure paths (missing directories, JSON parse errors, git failures)
+- OpenCode agent definition import from `.opencode/agents/` (with nested path support)
+- OpenCode command definition import from `.opencode/commands/`
+- Decisions export to AGENTS.md managed section for OpenCode adapter
+- `opencode_data_dir()` utility respecting OPENCODE_DATA_DIR and XDG_DATA_HOME
+
+### Fixed
+- `__version__` mismatch (`0.5.4` -> `0.5.5`) now matches pyproject.toml
+- Unused `import pytest` lint error in test_opencode.py
+- Plugin registry suppresses shadow warnings when entry-point resolves to the same class as a built-in (no noise in installed environments)
+- "No importer recognized" error replaced with actionable message: "No plugin found. You might need to install a third-party importer for this file format."
+- OpenCode session import: replaced broken SQLite reader with JSON file reading from actual data directory
+- OpenCode sessions now imported as knowledge entries instead of being silently discarded
+
+### Documentation
+- Replaced stale SQLite session references with JSON sessions, `.opencode/agents/`, `.opencode/commands/` across all adapter docs
+- Documented `import artifacts` CLI command in reference, EDA workflows, and EDA parsers pages
+- Documented plugin system (`ctx.importers` entry-point group) in EDA parsers reference and contributing guide
+- Retitled "Adding EDA Parsers" to "Adding Domain Importers" with third-party plugin guide, `ArtifactImporter` protocol, `pyproject.toml` entry-point examples
+- Updated adapter-pattern diagram: OpenCode import sources, Plugin Registry box
+- Updated architecture-overview diagram: MCP counts (32 tools, 16 resources, 4 prompts), Plugin Registry in Domain box
+
+### Removed
+- SQLite dependency from OpenCode adapter (was reading wrong path, wrong schema)
+
 ## [0.5.4] - 2026-03-02
 
 ### Added
