@@ -82,11 +82,11 @@
 \draw[arr=syncpurple] (gitsync.east) -- (remote.west);
 
 % Right: Domain Extensions
-\node[box=domteal, minimum width=3.6cm, minimum height=3.0cm,
+\node[box=domteal, minimum width=3.6cm, minimum height=2.4cm,
     below right=1.2cm and 1.6cm of coreframe.south] (domain) {};
 \node[label=domteal, above=0.05cm of domain.north west, anchor=south west] {\textbf{DOMAIN}};
-\node[font=\sffamily\scriptsize, align=left, text=domteal!80!black] at (domain.center) {
-    EDA Parsers\\{\scriptsize (6 formats)}\\[2pt]Plugin Registry\\{\scriptsize (\texttt{ctx.importers} entry points)}\\[2pt]GitHub Source\\{\scriptsize (issue bridge)}
+\node[font=\sffamily\scriptsize, align=left, text=domteal!80!black] at ([yshift=0.2cm]domain.center) {
+    EDA Parsers (6 built-in)\\Plugin Registry (entry points)\\GitHub Source (issue bridge)
 };
 
 % === Bottom: Filesystem ===
